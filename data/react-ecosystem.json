@@ -1,0 +1,269 @@
+{
+  "title": "React Ecosystem Mastery",
+  "description": "Master advanced React patterns, state management, performance optimization, and component design principles",
+  "sections": [
+    {
+      "id": "react-19-advanced-patterns",
+      "title": "React 19 Advanced Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "React 19 Advanced Hooks"
+        },
+        {
+          "type": "paragraph",
+          "text": "React 19 introduces several new hooks and patterns that enhance component functionality and performance. Understanding these advanced patterns is crucial for building scalable applications."
+        },
+        {
+          "type": "heading",
+          "text": "useState and useReducer Advanced Patterns"
+        },
+        {
+          "type": "paragraph",
+          "text": "useState is perfect for simple state, but useReducer shines with complex state logic. Here's when to use each:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Complex state with useReducer\nconst initialState = {\n  loading: false,\n  data: null,\n  error: null\n};\n\nfunction dataReducer(state, action) {\n  switch (action.type) {\n    case 'FETCH_START':\n      return { ...state, loading: true, error: null };\n    case 'FETCH_SUCCESS':\n      return { ...state, loading: false, data: action.payload };\n    case 'FETCH_ERROR':\n      return { ...state, loading: false, error: action.payload };\n    default:\n      return state;\n  }\n}\n\nfunction DataComponent() {\n  const [state, dispatch] = useReducer(dataReducer, initialState);\n  \n  const fetchData = async () => {\n    dispatch({ type: 'FETCH_START' });\n    try {\n      const response = await api.getData();\n      dispatch({ type: 'FETCH_SUCCESS', payload: response.data });\n    } catch (error) {\n      dispatch({ type: 'FETCH_ERROR', payload: error.message });\n    }\n  };\n  \n  return (\n    <div>\n      {state.loading && <Spinner />}\n      {state.error && <Error message={state.error} />}\n      {state.data && <DataDisplay data={state.data} />}\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Custom Hooks Best Practices"
+        },
+        {
+          "type": "paragraph",
+          "text": "Custom hooks are functions that use other hooks. They let you extract component logic into reusable functions:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Custom hook for API data fetching\nfunction useApi(url) {\n  const [state, setState] = useState({\n    data: null,\n    loading: true,\n    error: null\n  });\n  \n  useEffect(() => {\n    let cancelled = false;\n    \n    const fetchData = async () => {\n      try {\n        setState(prev => ({ ...prev, loading: true, error: null }));\n        const response = await fetch(url);\n        const data = await response.json();\n        \n        if (!cancelled) {\n          setState({ data, loading: false, error: null });\n        }\n      } catch (error) {\n        if (!cancelled) {\n          setState({ data: null, loading: false, error: error.message });\n        }\n      }\n    };\n    \n    fetchData();\n    \n    return () => {\n      cancelled = true;\n    };\n  }, [url]);\n  \n  return state;\n}\n\n// Usage\nfunction UserProfile({ userId }) {\n  const { data: user, loading, error } = useApi(`/api/users/${userId}`);\n  \n  if (loading) return <Spinner />;\n  if (error) return <Error message={error} />;\n  if (!user) return <div>User not found</div>;\n  \n  return <div>{user.name}</div>;\n}"
+        }
+      ]
+    },
+    {
+      "id": "state-management",
+      "title": "State Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Redux Toolkit Modern Patterns"
+        },
+        {
+          "type": "paragraph",
+          "text": "Redux Toolkit (RTK) is the modern way to write Redux. It includes utilities to simplify common use cases like store setup, creating reducers, and writing immutable update logic."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Modern Redux Toolkit slice\nimport { createSlice, createAsyncThunk } from '@reduxjs/toolkit';\n\n// Async thunk for API calls\nexport const fetchUsers = createAsyncThunk(\n  'users/fetchUsers',\n  async (_, { rejectWithValue }) => {\n    try {\n      const response = await fetch('/api/users');\n      if (!response.ok) {\n        throw new Error('Failed to fetch users');\n      }\n      return await response.json();\n    } catch (error) {\n      return rejectWithValue(error.message);\n    }\n  }\n);\n\nconst usersSlice = createSlice({\n  name: 'users',\n  initialState: {\n    items: [],\n    loading: false,\n    error: null,\n    selectedUser: null\n  },\n  reducers: {\n    selectUser: (state, action) => {\n      state.selectedUser = action.payload;\n    },\n    clearError: (state) => {\n      state.error = null;\n    }\n  },\n  extraReducers: (builder) => {\n    builder\n      .addCase(fetchUsers.pending, (state) => {\n        state.loading = true;\n        state.error = null;\n      })\n      .addCase(fetchUsers.fulfilled, (state, action) => {\n        state.loading = false;\n        state.items = action.payload;\n      })\n      .addCase(fetchUsers.rejected, (state, action) => {\n        state.loading = false;\n        state.error = action.payload;\n      });\n  }\n});\n\nexport const { selectUser, clearError } = usersSlice.actions;\nexport default usersSlice.reducer;"
+        },
+        {
+          "type": "heading",
+          "text": "Zustand - Lightweight State Management"
+        },
+        {
+          "type": "paragraph",
+          "text": "Zustand is a small, fast, and scalable state management solution. It's perfect for when Redux feels too heavy:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { create } from 'zustand';\nimport { devtools, persist } from 'zustand/middleware';\n\n// Zustand store with middleware\nconst useStore = create(\n  devtools(\n    persist(\n      (set, get) => ({\n        // State\n        user: null,\n        theme: 'light',\n        notifications: [],\n        \n        // Actions\n        setUser: (user) => set({ user }, false, 'setUser'),\n        \n        toggleTheme: () => set(\n          (state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' }),\n          false,\n          'toggleTheme'\n        ),\n        \n        addNotification: (notification) => set(\n          (state) => ({\n            notifications: [...state.notifications, {\n              id: Date.now(),\n              ...notification\n            }]\n          }),\n          false,\n          'addNotification'\n        )\n      }),\n      {\n        name: 'app-storage',\n        partialize: (state) => ({ theme: state.theme, user: state.user })\n      }\n    )\n  )\n);\n\n// Usage in components\nfunction Header() {\n  const { user, theme, toggleTheme } = useStore();\n  \n  return (\n    <header className={`header ${theme}`}>\n      <h1>Welcome, {user?.name}</h1>\n      <button onClick={toggleTheme}>Toggle Theme</button>\n    </header>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "performance-optimization",
+      "title": "Performance Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Memoization Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "React provides several memoization tools to prevent unnecessary re-renders. Understanding when and how to use them is crucial for performance."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// React.memo for component memoization\nconst ExpensiveComponent = React.memo(({ data, onUpdate }) => {\n  console.log('ExpensiveComponent rendered');\n  \n  return (\n    <div>\n      {data.map(item => (\n        <ComplexItem \n          key={item.id} \n          item={item} \n          onUpdate={onUpdate}\n        />\n      ))}\n    </div>\n  );\n});\n\n// useMemo for expensive calculations\nfunction DataAnalysis({ rawData, filters }) {\n  const processedData = useMemo(() => {\n    console.log('Processing data...');\n    return rawData\n      .filter(item => filters.every(filter => filter(item)))\n      .map(item => ({\n        ...item,\n        computed: expensiveCalculation(item)\n      }))\n      .sort((a, b) => b.computed - a.computed);\n  }, [rawData, filters]);\n  \n  return (\n    <div>\n      <DataTable data={processedData} />\n    </div>\n  );\n}\n\n// useCallback for stable function references\nfunction TodoList({ todos, onToggle, onDelete }) {\n  const [filter, setFilter] = useState('all');\n  \n  const handleToggle = useCallback((id) => {\n    onToggle(id);\n  }, [onToggle]);\n  \n  const handleDelete = useCallback((id) => {\n    onDelete(id);\n  }, [onDelete]);\n  \n  return (\n    <div>\n      <FilterButtons filter={filter} onFilterChange={setFilter} />\n      {todos.map(todo => (\n        <TodoItem\n          key={todo.id}\n          todo={todo}\n          onToggle={handleToggle}\n          onDelete={handleDelete}\n        />\n      ))}\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Code Splitting and Lazy Loading"
+        },
+        {
+          "type": "paragraph",
+          "text": "Code splitting allows you to split your bundle into smaller chunks, loading only what's needed when it's needed:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Route-based code splitting\nimport { lazy, Suspense } from 'react';\nimport { Routes, Route } from 'react-router-dom';\n\n// Lazy load components\nconst Dashboard = lazy(() => import('./Dashboard'));\nconst UserProfile = lazy(() => import('./UserProfile'));\nconst Settings = lazy(() => import('./Settings'));\n\nfunction App() {\n  return (\n    <div className=\"app\">\n      <Navigation />\n      <Suspense fallback={<PageLoader />}>\n        <Routes>\n          <Route path=\"/\" element={<Home />} />\n          <Route path=\"/dashboard\" element={<Dashboard />} />\n          <Route path=\"/profile\" element={<UserProfile />} />\n          <Route path=\"/settings\" element={<Settings />} />\n        </Routes>\n      </Suspense>\n    </div>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "component-design",
+      "title": "Component Design & Reusability",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Atomic Design Principles"
+        },
+        {
+          "type": "paragraph",
+          "text": "Atomic design is a methodology for creating design systems. It breaks down interfaces into smaller, reusable components organized in a hierarchical structure."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Atoms: Basic building blocks (buttons, inputs, labels)",
+            "Molecules: Groups of atoms (search form, navigation item)",
+            "Organisms: Groups of molecules (header, footer, product grid)",
+            "Templates: Page-level objects (layout structures)",
+            "Pages: Specific instances of templates"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Compound Components Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Compound components work together to form a complete UI. They share state and communicate with each other through context:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Compound component for modal\nconst ModalContext = createContext();\n\nfunction Modal({ children, isOpen, onClose }) {\n  const value = { isOpen, onClose };\n  \n  return (\n    <ModalContext.Provider value={value}>\n      {isOpen && (\n        <div className=\"fixed inset-0 z-50 flex items-center justify-center\">\n          <div className=\"fixed inset-0 bg-black bg-opacity-50\" onClick={onClose} />\n          <div className=\"relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4\">\n            {children}\n          </div>\n        </div>\n      )}\n    </ModalContext.Provider>\n  );\n}\n\nModal.Header = function ModalHeader({ children }) {\n  const { onClose } = useContext(ModalContext);\n  \n  return (\n    <div className=\"flex items-center justify-between p-6 border-b\">\n      <h2 className=\"text-xl font-semibold\">{children}</h2>\n      <button \n        onClick={onClose}\n        className=\"text-gray-400 hover:text-gray-600\"\n      >\n        ×\n      </button>\n    </div>\n  );\n};\n\n// Usage\nfunction App() {\n  const [isModalOpen, setIsModalOpen] = useState(false);\n  \n  return (\n    <div>\n      <Button onClick={() => setIsModalOpen(true)}>\n        Open Modal\n      </Button>\n      \n      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>\n        <Modal.Header>\n          Confirm Action\n        </Modal.Header>\n      </Modal>\n    </div>\n  );\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "When should you use useReducer instead of useState?",
+      "options": [
+        "When you have simple boolean state",
+        "When you have complex state logic with multiple sub-values or when the next state depends on the previous one",
+        "When you need to update state from multiple components",
+        "When you want to optimize performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "useReducer is preferable when you have complex state logic that involves multiple sub-values or when the next state depends on the previous one. It's also useful when you want to optimize performance for components that trigger deep updates."
+    },
+    {
+      "id": 2,
+      "question": "What is the main benefit of using React.memo?",
+      "options": [
+        "It automatically optimizes all components",
+        "It prevents a component from re-rendering if its props haven't changed",
+        "It caches the component's state",
+        "It improves the component's loading time"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React.memo is a higher-order component that prevents a functional component from re-rendering if its props haven't changed, which can help optimize performance by avoiding unnecessary renders."
+    },
+    {
+      "id": 3,
+      "question": "What is the primary purpose of useCallback?",
+      "options": [
+        "To cache expensive calculations",
+        "To prevent components from re-rendering",
+        "To return a memoized callback function that only changes if dependencies change",
+        "To handle asynchronous operations"
+      ],
+      "correctAnswer": 2,
+      "explanation": "useCallback returns a memoized callback function that only changes if one of its dependencies has changed. This is useful for preventing unnecessary re-renders of child components that depend on callback props."
+    },
+    {
+      "id": 4,
+      "question": "In Redux Toolkit, what is the purpose of createAsyncThunk?",
+      "options": [
+        "To create synchronous actions",
+        "To handle asynchronous operations and automatically dispatch pending/fulfilled/rejected actions",
+        "To create reducers",
+        "To configure the store"
+      ],
+      "correctAnswer": 1,
+      "explanation": "createAsyncThunk is used to handle asynchronous operations in Redux Toolkit. It automatically generates action creators and action types for pending, fulfilled, and rejected states of an async operation."
+    },
+    {
+      "id": 5,
+      "question": "What is the main advantage of using React Query (TanStack Query)?",
+      "options": [
+        "It replaces Redux for all state management",
+        "It provides powerful data synchronization, caching, and server state management",
+        "It makes components render faster",
+        "It simplifies component styling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React Query excels at managing server state by providing features like automatic caching, background updates, optimistic updates, and synchronization between multiple components that use the same data."
+    },
+    {
+      "id": 6,
+      "question": "When should you use code splitting in React?",
+      "options": [
+        "Only for small applications",
+        "When you want to reduce the initial bundle size and load code on demand",
+        "When using class components",
+        "When you have performance issues with state updates"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Code splitting is used to reduce the initial bundle size by splitting your code into smaller chunks that can be loaded on demand. This improves the initial loading time of your application."
+    },
+    {
+      "id": 7,
+      "question": "What is the compound components pattern?",
+      "options": [
+        "A way to combine multiple apps into one",
+        "A pattern where components work together to form a complete UI, sharing state through context",
+        "A method for creating complex animations",
+        "A technique for server-side rendering"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Compound components is a pattern where multiple components work together to form a complete UI. They typically share state and communicate through React Context, providing a flexible and intuitive API."
+    },
+    {
+      "id": 8,
+      "question": "What problem does virtualization solve in React applications?",
+      "options": [
+        "Memory leaks in components",
+        "Performance issues when rendering large lists by only rendering visible items",
+        "State management complexity",
+        "Component styling conflicts"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Virtualization solves performance issues when rendering large lists or datasets by only rendering the items that are currently visible in the viewport, significantly reducing the number of DOM nodes."
+    },
+    {
+      "id": 9,
+      "question": "What is the render props pattern?",
+      "options": [
+        "A way to style components dynamically",
+        "A technique for sharing code between components using a prop whose value is a function",
+        "A method for optimizing component renders",
+        "A pattern for handling form submissions"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Render props is a technique for sharing code between React components using a prop whose value is a function. The component calls this function instead of implementing its own render logic."
+    },
+    {
+      "id": 10,
+      "question": "In atomic design, what are 'molecules'?",
+      "options": [
+        "The smallest UI components",
+        "Groups of atoms functioning together as a unit",
+        "Page-level components",
+        "Complex interactive components"
+      ],
+      "correctAnswer": 1,
+      "explanation": "In atomic design methodology, molecules are groups of atoms bonded together to form relatively simple groups of UI elements functioning together as a unit, like a search form combining an input and button."
+    }
+  ]
+} 

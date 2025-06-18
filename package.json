@@ -1,0 +1,47 @@
+{
+  "name": "frontend-learning-hub",
+  "version": "1.0.0",
+  "description": "A modern, interactive learning site for frontend development roadmaps and skill tracking",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next build && next export"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.2.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "antd": "^5.12.0",
+    "next": "^14.2.24",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-syntax-highlighter": "^5.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "13.5.6",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5.3.3"
+  },
+  "keywords": [
+    "learning",
+    "frontend",
+    "react",
+    "nextjs",
+    "antd",
+    "roadmap",
+    "progress-tracking"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
