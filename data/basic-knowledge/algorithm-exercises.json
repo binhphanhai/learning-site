@@ -1,0 +1,661 @@
+{
+  "title": "Algorithm Exercises & Problem Solving",
+  "description": "Master algorithmic problem solving with comprehensive exercises covering arrays, strings, trees, graphs, dynamic programming, and modern optimization techniques for 2024",
+  "sections": [
+    {
+      "id": "array-fundamentals",
+      "title": "Array Fundamentals & Two Pointers",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Two Sum Problem (Easy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Given an array of integers and a target, return indices of two numbers that add up to the target. This is a fundamental problem that introduces hash table optimization and two-pointer techniques."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Brute Force Approach - O(n²) time, O(1) space\nfunction twoSumBruteForce(nums, target) {\n  for (let i = 0; i < nums.length; i++) {\n    for (let j = i + 1; j < nums.length; j++) {\n      if (nums[i] + nums[j] === target) {\n        return [i, j];\n      }\n    }\n  }\n  return [];\n}\n\n// Hash Map Approach - O(n) time, O(n) space (Optimal)\nfunction twoSum(nums, target) {\n  const map = {};\n  \n  for (let i = 0; i < nums.length; i++) {\n    const n = nums[i];\n    if (map[target - n] !== undefined) {\n      return [map[target - n], i];\n    }\n    map[n] = i;\n  }\n  \n  return [];\n}\n\n// Two Pointers (for sorted array) - O(n) time, O(1) space\nfunction twoSumSorted(nums, target) {\n  let left = 0;\n  let right = nums.length - 1;\n  \n  while (left < right) {\n    const sum = nums[left] + nums[right];\n    \n    if (sum === target) {\n      return [left, right];\n    } else if (sum < target) {\n      left++;\n    } else {\n      right--;\n    }\n  }\n  \n  return [];\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Three Sum Problem (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Find all unique triplets that sum to zero. This problem extends two-sum and introduces duplicate handling and sorting optimization."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Brute Force Approach - O(n³) time, O(1) space\nfunction threeSumBruteForce(nums) {\n  const result = [];\n  const n = nums.length;\n  \n  for (let i = 0; i < n - 2; i++) {\n    for (let j = i + 1; j < n - 1; j++) {\n      for (let k = j + 1; k < n; k++) {\n        if (nums[i] + nums[j] + nums[k] === 0) {\n          result.push([nums[i], nums[j], nums[k]]);\n        }\n      }\n    }\n  }\n  \n  return result;\n}\n\n// Optimized Three Sum - O(n²) time, O(1) space\nfunction threeSum(nums, target = 0) {\n  nums.sort((a, b) => a - b);\n  const triplets = [];\n  const n = nums.length;\n  \n  for (let i = 0; i < n - 2; i++) {\n    if (i > 0 && nums[i] === nums[i - 1]) continue; // prevent duplicates\n    \n    let left = i + 1;\n    let right = n - 1;\n    const sum = target - nums[i];\n    \n    while (left < right) {\n      if (nums[left] + nums[right] === sum) {\n        triplets.push([nums[i], nums[left], nums[right]]);\n        \n        while (nums[left + 1] === nums[left] && left < n - 1) left++;\n        while (nums[right - 1] === nums[right] && right > 0) right--;\n        \n        left++;\n        right--;\n      } else if (nums[left] + nums[right] < sum) {\n        left++;\n      } else {\n        right--;\n      }\n    }\n  }\n  \n  return triplets;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Count Primes (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Count the number of prime numbers less than n using the Sieve of Eratosthenes algorithm."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Brute Force Approach - O(n²) time, O(1) space\nfunction countPrimesBruteForce(n) {\n  if (n < 2) return 0;\n  \n  let count = 0;\n  \n  for (let i = 2; i < n; i++) {\n    let isPrime = true;\n    for (let j = 2; j * j <= i; j++) {\n      if (i % j === 0) {\n        isPrime = false;\n        break;\n      }\n    }\n    if (isPrime) count++;\n  }\n  \n  return count;\n}\n\n// Sieve of Eratosthenes - O(n log log n) time, O(n) space\nfunction countPrimes(n) {\n  if (n < 2) return 0;\n  \n  // Build an array to check prime\n  const isPrime = new Array(n).fill(true);\n  \n  for (let i = 2; i * i < n; i++) {\n    // If it is still true, it is prime\n    if (isPrime[i]) {\n      for (let num = i * i; num < n; num += i) {\n        // Mark all multiples of i as false\n        isPrime[num] = false;\n      }\n    }\n  }\n  \n  let count = 0;\n  for (let i = 2; i < n; i++) {\n    if (isPrime[i]) count++;\n  }\n  \n  return count;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Diagonal Traverse (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Given an m x n matrix, return an array of all elements in diagonal order."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Diagonal Traversal - O(m*n) time, O(m*n) space\nfunction findDiagonalOrder(mat) {\n  const result = [];\n  const m = mat.length;\n  const n = mat[0].length;\n  \n  // Number of diagonals is m + n - 1\n  for (let d = 0; d < m + n - 1; d++) {\n    if (d % 2 !== 0) {\n      // Odd diagonal: start from top and go down\n      let i = d < n ? 0 : d - n + 1;\n      let j = d < n ? d : n - 1;\n      \n      while (i <= m - 1 && j >= 0) {\n        result.push(mat[i][j]);\n        i++;\n        j--;\n      }\n    } else {\n      // Even diagonal: start from bottom and go up\n      let i = d < m ? d : m - 1;\n      let j = d < m ? 0 : d - m + 1;\n      \n      while (j <= n - 1 && i >= 0) {\n        result.push(mat[i][j]);\n        i--;\n        j++;\n      }\n    }\n  }\n  \n  return result;\n}\n\n// Modern approach with array methods\nfunction findDiagonalOrderModern(mat) {\n  const m = mat.length;\n  const n = mat[0].length;\n  const diagonals = Array(m + n - 1).fill().map(() => []);\n  \n  // Group elements by diagonal index\n  for (let i = 0; i < m; i++) {\n    for (let j = 0; j < n; j++) {\n      diagonals[i + j].push(mat[i][j]);\n    }\n  }\n  \n  // Reverse odd-indexed diagonals\n  return diagonals.flatMap((diagonal, index) => \n    index % 2 === 0 ? diagonal : diagonal.reverse()\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "array-advanced",
+      "title": "Advanced Array Problems",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Container With Most Water (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Find two lines that form a container holding the most water. This problem demonstrates the two-pointer technique for optimization problems."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Brute Force Approach - O(n²) time, O(1) space\nfunction maxAreaBruteForce(heights) {\n  let maxWater = 0;\n  \n  for (let i = 0; i < heights.length; i++) {\n    for (let j = i + 1; j < heights.length; j++) {\n      const width = j - i;\n      const height = Math.min(heights[i], heights[j]);\n      const area = width * height;\n      maxWater = Math.max(maxWater, area);\n    }\n  }\n  \n  return maxWater;\n}\n\n// Two Pointers Approach - O(n) time, O(1) space (Optimal)\nfunction maxArea(heights) {\n  let p1 = 0;\n  let p2 = heights.length - 1;\n  let max = 0;\n  \n  while (p1 < p2) {\n    const height = Math.min(heights[p1], heights[p2]);\n    const width = p2 - p1;\n    const area = height * width;\n    max = Math.max(max, area);\n    \n    // Keep the higher column, move the other\n    if (heights[p1] > heights[p2]) {\n      p2--;\n    } else {\n      p1++;\n    }\n  }\n  \n  return max;\n}\n\n// Modern approach with array destructuring\nfunction maxAreaModern(heights) {\n  let [left, right] = [0, heights.length - 1];\n  let maxWater = 0;\n  \n  while (left < right) {\n    const [leftHeight, rightHeight] = [heights[left], heights[right]];\n    const area = (right - left) * Math.min(leftHeight, rightHeight);\n    \n    maxWater = Math.max(maxWater, area);\n    \n    // Use ternary for concise pointer movement\n    leftHeight < rightHeight ? left++ : right--;\n  }\n  \n  return maxWater;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Trapping Rain Water (Hard)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Calculate trapped rainwater after raining. This problem showcases multiple solution approaches from brute force to optimal two-pointer technique."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Brute Force Approach - O(n²) time, O(1) space\nfunction trapBruteForce(heights) {\n  const n = heights.length;\n  let totalWater = 0;\n  \n  for (let i = 1; i < n - 1; i++) {\n    let maxLeft = 0;\n    let maxRight = 0;\n    \n    // Find max height to the left\n    for (let j = 0; j <= i; j++) {\n      maxLeft = Math.max(maxLeft, heights[j]);\n    }\n    \n    // Find max height to the right\n    for (let j = i; j < n; j++) {\n      maxRight = Math.max(maxRight, heights[j]);\n    }\n    \n    // Calculate trapped water at current position\n    const waterLevel = Math.min(maxLeft, maxRight);\n    totalWater += Math.max(0, waterLevel - heights[i]);\n  }\n  \n  return totalWater;\n}\n\n// Dynamic Programming Approach - O(n) time, O(n) space\nfunction trapDP(heights) {\n  const n = heights.length;\n  if (n <= 2) return 0;\n  \n  const leftMax = new Array(n);\n  const rightMax = new Array(n);\n  \n  // Build leftMax array\n  leftMax[0] = heights[0];\n  for (let i = 1; i < n; i++) {\n    leftMax[i] = Math.max(leftMax[i - 1], heights[i]);\n  }\n  \n  // Build rightMax array from right to left\n  rightMax[n - 1] = heights[n - 1];\n  for (let i = n - 2; i >= 0; i--) {\n    rightMax[i] = Math.max(rightMax[i + 1], heights[i]);\n  }\n  \n  // Calculate trapped water\n  let totalWater = 0;\n  for (let i = 0; i < n; i++) {\n    const waterLevel = Math.min(leftMax[i], rightMax[i]);\n    totalWater += Math.max(0, waterLevel - heights[i]);\n  }\n  \n  return totalWater;\n}\n\n// Two Pointers Approach - O(n) time, O(1) space (Optimal)\nfunction trap(heights) {\n  let left = 0;\n  let right = heights.length - 1;\n  let total = 0;\n  let maxLeft = 0;\n  let maxRight = 0;\n  \n  while (left < right) {\n    if (heights[left] <= heights[right]) {\n      if (heights[left] >= maxLeft) {\n        maxLeft = heights[left];\n      } else {\n        total += maxLeft - heights[left];\n      }\n      left++;\n    } else {\n      if (heights[right] >= maxRight) {\n        maxRight = heights[right];\n      } else {\n        total += maxRight - heights[right];\n      }\n      right--;\n    }\n  }\n  \n  return total;\n}\n\n// Modern ES2023 approach with reduce\nfunction trapModern(heights) {\n  if (heights.length <= 2) return 0;\n  \n  // Calculate prefix max using reduce\n  const leftMax = heights.reduce((acc, curr, i) => {\n    acc[i] = i === 0 ? curr : Math.max(acc[i - 1], curr);\n    return acc;\n  }, []);\n  \n  // Calculate suffix max using reduceRight\n  const rightMax = heights.reduceRight((acc, curr, i) => {\n    acc[i] = i === heights.length - 1 ? curr : Math.max(acc[i + 1], curr);\n    return acc;\n  }, []);\n  \n  return heights.reduce((water, height, i) => {\n    const level = Math.min(leftMax[i], rightMax[i]);\n    return water + Math.max(0, level - height);\n  }, 0);\n}"
+        }
+      ]
+    },
+    {
+      "id": "string-algorithms",
+      "title": "String Algorithms & Sliding Window",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Backspace String Compare (Easy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Compare two strings after processing backspace characters using two pointers technique."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Two Pointers Approach - O(m + n) time, O(1) space\nfunction backspaceCompare(s, t) {\n  let p1 = s.length - 1;\n  let p2 = t.length - 1;\n  \n  while (p1 >= 0 || p2 >= 0) {\n    if (s[p1] === '#' || t[p2] === '#') {\n      if (s[p1] === '#') {\n        let backCount = 2;\n        while (backCount > 0) {\n          p1--;\n          backCount--;\n          if (s[p1] === '#') {\n            backCount += 2;\n          }\n        }\n      }\n      if (t[p2] === '#') {\n        let backCount = 2;\n        while (backCount > 0) {\n          p2--;\n          backCount--;\n          if (t[p2] === '#') {\n            backCount += 2;\n          }\n        }\n      }\n    } else {\n      if (s[p1] !== t[p2]) {\n        return false;\n      } else {\n        p1--;\n        p2--;\n      }\n    }\n  }\n  \n  return true;\n}\n\n// Stack Approach - O(m + n) time, O(m + n) space\nfunction backspaceCompareStack(s, t) {\n  function buildString(str) {\n    const stack = [];\n    for (const char of str) {\n      if (char === '#') {\n        stack.pop();\n      } else {\n        stack.push(char);\n      }\n    }\n    return stack.join('');\n  }\n  \n  return buildString(s) === buildString(t);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Longest Substring Without Repeating Characters (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Find the length of the longest substring without repeating characters using the sliding window technique. This is a classic example of the sliding window pattern."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Sliding Window with Map - O(n) time, O(min(m,n)) space\nfunction lengthOfLongestSubstring(s) {\n  const charMap = new Map();\n  let left = 0;\n  let maxLength = 0;\n  \n  for (let right = 0; right < s.length; right++) {\n    const char = s[right];\n    \n    // If character is seen and is within current window\n    if (charMap.has(char) && charMap.get(char) >= left) {\n      left = charMap.get(char) + 1;\n    }\n    \n    charMap.set(char, right);\n    maxLength = Math.max(maxLength, right - left + 1);\n  }\n  \n  return maxLength;\n}\n\n// Modern approach with Set and sliding window\nfunction lengthOfLongestSubstringSet(s) {\n  const seen = new Set();\n  let left = 0;\n  let maxLength = 0;\n  \n  for (let right = 0; right < s.length; right++) {\n    // Shrink window until no duplicates\n    while (seen.has(s[right])) {\n      seen.delete(s[left]);\n      left++;\n    }\n    \n    seen.add(s[right]);\n    maxLength = Math.max(maxLength, right - left + 1);\n  }\n  \n  return maxLength;\n}\n\n// ES2023 approach with array methods\nfunction lengthOfLongestSubstringModern(s) {\n  if (!s.length) return 0;\n  \n  let maxLength = 0;\n  \n  for (let i = 0; i < s.length; i++) {\n    const seen = new Set();\n    let currentLength = 0;\n    \n    for (let j = i; j < s.length && !seen.has(s[j]); j++) {\n      seen.add(s[j]);\n      currentLength++;\n    }\n    \n    maxLength = Math.max(maxLength, currentLength);\n  }\n  \n  return maxLength;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Valid Palindrome Problems"
+        },
+        {
+          "type": "paragraph",
+          "text": "Palindrome validation with modern JavaScript techniques including regex and two-pointer approaches."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Valid Palindrome I - O(n) time, O(1) space\nfunction isPalindrome(s) {\n  // Modern regex approach\n  const cleaned = s.toLowerCase().replace(/[^a-z0-9]/g, '');\n  let left = 0;\n  let right = cleaned.length - 1;\n  \n  while (left < right) {\n    if (cleaned[left] !== cleaned[right]) {\n      return false;\n    }\n    left++;\n    right--;\n  }\n  \n  return true;\n}\n\n// ES2023 one-liner approach\nfunction isPalindromeOneLiner(s) {\n  const cleaned = s.toLowerCase().replace(/[^a-z0-9]/g, '');\n  return cleaned === cleaned.split('').reverse().join('');\n}\n\n// Valid Palindrome II (can remove one character)\nfunction validPalindromeII(s) {\n  function isPalindromeRange(left, right) {\n    while (left < right) {\n      if (s[left] !== s[right]) {\n        return false;\n      }\n      left++;\n      right--;\n    }\n    return true;\n  }\n  \n  let left = 0;\n  let right = s.length - 1;\n  \n  while (left < right) {\n    if (s[left] !== s[right]) {\n      // Try removing either left or right character\n      return isPalindromeRange(left + 1, right) || \n             isPalindromeRange(left, right - 1);\n    }\n    left++;\n    right--;\n  }\n  \n  return true;\n}\n\n// Modern approach with array methods\nfunction validPalindromeModern(s) {\n  const chars = [...s.toLowerCase().replace(/[^a-z0-9]/g, '')];\n  \n  const checkPalindrome = (arr) => {\n    return arr.every((char, i) => char === arr[arr.length - 1 - i]);\n  };\n  \n  // Try removing each character\n  for (let i = 0; i < chars.length; i++) {\n    const modified = chars.toSpliced(i, 1); // ES2023 toSpliced\n    if (checkPalindrome(modified)) {\n      return true;\n    }\n  }\n  \n  return checkPalindrome(chars);\n}"
+        }
+      ]
+    },
+    {
+      "id": "matrix-2d-arrays",
+      "title": "2D Arrays & Matrix Problems",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Matrix Traversal Patterns"
+        },
+        {
+          "type": "paragraph",
+          "text": "Understanding DFS and BFS traversal patterns for 2D arrays with modern JavaScript implementations."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Direction vectors for 4-directional movement\nconst DIRECTIONS = [\n  [-1, 0], // up\n  [0, 1],  // right\n  [1, 0],  // down\n  [0, -1]  // left\n];\n\n// DFS Traversal\nfunction dfsMatrix(matrix, startRow, startCol, visited = null) {\n  if (!matrix.length) return [];\n  \n  const rows = matrix.length;\n  const cols = matrix[0].length;\n  const result = [];\n  \n  if (!visited) {\n    visited = Array(rows).fill().map(() => Array(cols).fill(false));\n  }\n  \n  function dfs(row, col) {\n    // Boundary and visited checks\n    if (row < 0 || row >= rows || col < 0 || col >= cols || visited[row][col]) {\n      return;\n    }\n    \n    visited[row][col] = true;\n    result.push(matrix[row][col]);\n    \n    // Explore all 4 directions\n    for (const [dr, dc] of DIRECTIONS) {\n      dfs(row + dr, col + dc);\n    }\n  }\n  \n  dfs(startRow, startCol);\n  return result;\n}\n\n// BFS Traversal\nfunction bfsMatrix(matrix, startRow, startCol) {\n  if (!matrix.length) return [];\n  \n  const rows = matrix.length;\n  const cols = matrix[0].length;\n  const result = [];\n  const visited = Array(rows).fill().map(() => Array(cols).fill(false));\n  const queue = [[startRow, startCol]];\n  \n  while (queue.length > 0) {\n    const [row, col] = queue.shift();\n    \n    // Skip if out of bounds or already visited\n    if (row < 0 || row >= rows || col < 0 || col >= cols || visited[row][col]) {\n      continue;\n    }\n    \n    visited[row][col] = true;\n    result.push(matrix[row][col]);\n    \n    // Add neighbors to queue\n    for (const [dr, dc] of DIRECTIONS) {\n      queue.push([row + dr, col + dc]);\n    }\n  }\n  \n  return result;\n}\n\n// Modern ES2023 approach with generators\nfunction* matrixTraversal(matrix, startRow, startCol, method = 'dfs') {\n  if (!matrix.length) return;\n  \n  const rows = matrix.length;\n  const cols = matrix[0].length;\n  const visited = new Set();\n  \n  const getKey = (r, c) => `${r},${c}`;\n  const isValid = (r, c) => r >= 0 && r < rows && c >= 0 && c < cols;\n  \n  if (method === 'dfs') {\n    function* dfs(row, col) {\n      const key = getKey(row, col);\n      if (!isValid(row, col) || visited.has(key)) return;\n      \n      visited.add(key);\n      yield matrix[row][col];\n      \n      for (const [dr, dc] of DIRECTIONS) {\n        yield* dfs(row + dr, col + dc);\n      }\n    }\n    \n    yield* dfs(startRow, startCol);\n  } else {\n    const queue = [[startRow, startCol]];\n    \n    while (queue.length > 0) {\n      const [row, col] = queue.shift();\n      const key = getKey(row, col);\n      \n      if (!isValid(row, col) || visited.has(key)) continue;\n      \n      visited.add(key);\n      yield matrix[row][col];\n      \n      for (const [dr, dc] of DIRECTIONS) {\n        queue.push([row + dr, col + dc]);\n      }\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Number of Islands (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Count connected components in a 2D grid. This problem demonstrates graph traversal in matrix form with BFS being more space-efficient."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Direction vectors for 4-directional movement\nconst directions = [\n  [-1, 0], // up\n  [0, 1],  // right\n  [1, 0],  // down\n  [0, -1]  // left\n];\n\n// BFS Approach - O(m*n) time, O(min(m,n)) space (Optimal)\nfunction numIslands(matrix) {\n  if (matrix.length === 0) return 0;\n  \n  let islandCount = 0;\n  const queue = [];\n  \n  for (let row = 0; row < matrix.length; row++) {\n    for (let col = 0; col < matrix[0].length; col++) {\n      if (matrix[row][col] === '1') {\n        islandCount++;\n        matrix[row][col] = '0';\n        queue.push([row, col]);\n        \n        while (queue.length) {\n          const pos = queue.shift();\n          const curRow = pos[0];\n          const curCol = pos[1];\n          \n          for (let i = 0; i < directions.length; i++) {\n            const direction = directions[i];\n            const nextRow = curRow + direction[0];\n            const nextCol = curCol + direction[1];\n            \n            if (\n              nextRow < 0 ||\n              nextCol < 0 ||\n              nextRow >= matrix.length ||\n              nextCol >= matrix[0].length ||\n              matrix[nextRow][nextCol] === '0'\n            ) {\n              continue;\n            }\n            \n            matrix[nextRow][nextCol] = '0';\n            queue.push([nextRow, nextCol]);\n          }\n        }\n      }\n    }\n  }\n  \n  return islandCount;\n}\n\n// DFS Approach - O(m*n) time, O(m*n) space (worst case)\nfunction numIslandsDFS(grid) {\n  if (!grid.length || !grid[0].length) return 0;\n  \n  const rows = grid.length;\n  const cols = grid[0].length;\n  let islandCount = 0;\n  \n  function dfsIsland(row, col) {\n    // Base case: out of bounds or water\n    if (row < 0 || row >= rows || col < 0 || col >= cols || grid[row][col] === '0') {\n      return;\n    }\n    \n    // Mark as visited\n    grid[row][col] = '0';\n    \n    // Explore all 4 directions\n    for (const [dr, dc] of directions) {\n      dfsIsland(row + dr, col + dc);\n    }\n  }\n  \n  for (let row = 0; row < rows; row++) {\n    for (let col = 0; col < cols; col++) {\n      if (grid[row][col] === '1') {\n        islandCount++;\n        dfsIsland(row, col);\n      }\n    }\n  }\n  \n  return islandCount;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Rotting Oranges (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Multi-source BFS problem to find minimum time for all oranges to rot."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const ROTTEN = 2;\nconst FRESH = 1;\nconst EMPTY = 0;\n\n// BFS Approach - O(m*n) time, O(m*n) space\nfunction orangesRotting(matrix) {\n  if (matrix.length === 0) return 0;\n  \n  const queue = [];\n  let freshOranges = 0;\n  \n  // Find all initial rotten oranges and count fresh ones\n  for (let row = 0; row < matrix.length; row++) {\n    for (let col = 0; col < matrix[0].length; col++) {\n      if (matrix[row][col] === ROTTEN) {\n        queue.push([row, col]);\n      } else if (matrix[row][col] === FRESH) {\n        freshOranges++;\n      }\n    }\n  }\n  \n  let curQueueSize = queue.length;\n  let minutes = 0;\n  \n  while (queue.length > 0) {\n    if (curQueueSize === 0) {\n      minutes++;\n      curQueueSize = queue.length;\n    }\n    \n    const orange = queue.shift();\n    curQueueSize--;\n    const row = orange[0];\n    const col = orange[1];\n    \n    directions.forEach(direction => {\n      const nextRow = direction[0] + row;\n      const nextCol = direction[1] + col;\n      \n      if (\n        nextRow < 0 ||\n        nextCol < 0 ||\n        nextRow >= matrix.length ||\n        nextCol >= matrix[0].length ||\n        matrix[nextRow][nextCol] !== FRESH\n      ) {\n        return;\n      }\n      \n      matrix[nextRow][nextCol] = ROTTEN;\n      freshOranges--;\n      queue.push([nextRow, nextCol]);\n    });\n  }\n  \n  return freshOranges > 0 ? -1 : minutes;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Walls and Gates (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Fill each empty room with distance to nearest gate using multi-source BFS."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const GATE = 0;\nconst WALL = -1;\nconst INF = 2147483647;\n\n// DFS Approach - O(m*n) time, O(m*n) space\nfunction wallsAndGatesDFS(matrix) {\n  if (matrix.length === 0) return matrix;\n  \n  function dfs(row, col, currentStep) {\n    if (\n      row < 0 ||\n      col < 0 ||\n      row >= matrix.length ||\n      col >= matrix[0].length ||\n      matrix[row][col] < currentStep\n    ) {\n      return;\n    }\n    \n    matrix[row][col] = currentStep;\n    \n    for (let i = 0; i < directions.length; i++) {\n      const direction = directions[i];\n      dfs(row + direction[0], col + direction[1], currentStep + 1);\n    }\n  }\n  \n  for (let row = 0; row < matrix.length; row++) {\n    for (let col = 0; col < matrix[0].length; col++) {\n      if (matrix[row][col] === GATE) {\n        dfs(row, col, 0);\n      }\n    }\n  }\n  \n  return matrix;\n}\n\n// BFS Approach (More efficient) - O(m*n) time, O(m+n) space\nfunction wallsAndGates(matrix) {\n  if (matrix.length === 0) return matrix;\n  \n  const queue = [];\n  \n  // Find all gates and add to queue\n  for (let row = 0; row < matrix.length; row++) {\n    for (let col = 0; col < matrix[0].length; col++) {\n      if (matrix[row][col] === GATE) {\n        queue.push([row, col]);\n      }\n    }\n  }\n  \n  // Multi-source BFS\n  while (queue.length > 0) {\n    const [row, col] = queue.shift();\n    \n    for (const [dr, dc] of directions) {\n      const newRow = row + dr;\n      const newCol = col + dc;\n      \n      if (\n        newRow < 0 ||\n        newCol < 0 ||\n        newRow >= matrix.length ||\n        newCol >= matrix[0].length ||\n        matrix[newRow][newCol] !== INF\n      ) {\n        continue;\n      }\n      \n      matrix[newRow][newCol] = matrix[row][col] + 1;\n      queue.push([newRow, newCol]);\n    }\n  }\n  \n  return matrix;\n}"
+        }
+      ]
+    },
+    {
+      "id": "tree-algorithms",
+      "title": "Tree Algorithms & Binary Trees",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Binary Tree Traversals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Comprehensive tree traversal implementations with both recursive and iterative approaches using modern JavaScript."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Tree Node Definition\nclass TreeNode {\n  constructor(val, left = null, right = null) {\n    this.val = val;\n    this.left = left;\n    this.right = right;\n  }\n}\n\n// Recursive Traversals\nfunction inorderTraversal(root) {\n  const result = [];\n  \n  function inorder(node) {\n    if (!node) return;\n    \n    inorder(node.left);\n    result.push(node.val);\n    inorder(node.right);\n  }\n  \n  inorder(root);\n  return result;\n}\n\nfunction preorderTraversal(root) {\n  const result = [];\n  \n  function preorder(node) {\n    if (!node) return;\n    \n    result.push(node.val);\n    preorder(node.left);\n    preorder(node.right);\n  }\n  \n  preorder(root);\n  return result;\n}\n\nfunction postorderTraversal(root) {\n  const result = [];\n  \n  function postorder(node) {\n    if (!node) return;\n    \n    postorder(node.left);\n    postorder(node.right);\n    result.push(node.val);\n  }\n  \n  postorder(root);\n  return result;\n}\n\n// Iterative Traversals\nfunction inorderIterative(root) {\n  const result = [];\n  const stack = [];\n  let current = root;\n  \n  while (current || stack.length > 0) {\n    // Go to leftmost node\n    while (current) {\n      stack.push(current);\n      current = current.left;\n    }\n    \n    // Process current node\n    current = stack.pop();\n    result.push(current.val);\n    \n    // Move to right subtree\n    current = current.right;\n  }\n  \n  return result;\n}\n\nfunction preorderIterative(root) {\n  if (!root) return [];\n  \n  const result = [];\n  const stack = [root];\n  \n  while (stack.length > 0) {\n    const node = stack.pop();\n    result.push(node.val);\n    \n    // Push right first, then left (stack is LIFO)\n    if (node.right) stack.push(node.right);\n    if (node.left) stack.push(node.left);\n  }\n  \n  return result;\n}\n\n// Level Order Traversal (BFS)\nfunction levelOrder(root) {\n  if (!root) return [];\n  \n  const result = [];\n  const queue = [root];\n  \n  while (queue.length > 0) {\n    const levelSize = queue.length;\n    const currentLevel = [];\n    \n    for (let i = 0; i < levelSize; i++) {\n      const node = queue.shift();\n      currentLevel.push(node.val);\n      \n      if (node.left) queue.push(node.left);\n      if (node.right) queue.push(node.right);\n    }\n    \n    result.push(currentLevel);\n  }\n  \n  return result;\n}\n\n// Modern ES2023 approach with generators\nfunction* inorderGenerator(root) {\n  if (!root) return;\n  \n  yield* inorderGenerator(root.left);\n  yield root.val;\n  yield* inorderGenerator(root.right);\n}\n\nfunction* levelOrderGenerator(root) {\n  if (!root) return;\n  \n  const queue = [root];\n  \n  while (queue.length > 0) {\n    const node = queue.shift();\n    yield node.val;\n    \n    if (node.left) queue.push(node.left);\n    if (node.right) queue.push(node.right);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Binary Tree Properties"
+        },
+        {
+          "type": "paragraph",
+          "text": "Calculate important tree properties like height, diameter, and validate tree structures."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Maximum Depth/Height\nfunction maxDepth(root) {\n  if (!root) return 0;\n  \n  return Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;\n}\n\n// Iterative approach using level order\nfunction maxDepthIterative(root) {\n  if (!root) return 0;\n  \n  const queue = [root];\n  let depth = 0;\n  \n  while (queue.length > 0) {\n    const levelSize = queue.length;\n    depth++;\n    \n    for (let i = 0; i < levelSize; i++) {\n      const node = queue.shift();\n      \n      if (node.left) queue.push(node.left);\n      if (node.right) queue.push(node.right);\n    }\n  }\n  \n  return depth;\n}\n\n// Diameter of Binary Tree\nfunction diameterOfBinaryTree(root) {\n  let maxDiameter = 0;\n  \n  function height(node) {\n    if (!node) return 0;\n    \n    const leftHeight = height(node.left);\n    const rightHeight = height(node.right);\n    \n    // Update diameter at this node\n    maxDiameter = Math.max(maxDiameter, leftHeight + rightHeight);\n    \n    return Math.max(leftHeight, rightHeight) + 1;\n  }\n  \n  height(root);\n  return maxDiameter;\n}\n\n// Validate Binary Search Tree\nfunction isValidBST(root, min = -Infinity, max = Infinity) {\n  if (!root) return true;\n  \n  if (root.val <= min || root.val >= max) {\n    return false;\n  }\n  \n  return isValidBST(root.left, min, root.val) && \n         isValidBST(root.right, root.val, max);\n}\n\n// Iterative BST validation using inorder\nfunction isValidBSTIterative(root) {\n  const stack = [];\n  let current = root;\n  let prev = -Infinity;\n  \n  while (current || stack.length > 0) {\n    while (current) {\n      stack.push(current);\n      current = current.left;\n    }\n    \n    current = stack.pop();\n    \n    if (current.val <= prev) {\n      return false;\n    }\n    \n    prev = current.val;\n    current = current.right;\n  }\n  \n  return true;\n}\n\n// Tree construction from traversals\nfunction buildTreeFromPreorderInorder(preorder, inorder) {\n  if (!preorder.length || !inorder.length) return null;\n  \n  // Create index map for inorder for O(1) lookup\n  const inorderMap = new Map();\n  inorder.forEach((val, index) => {\n    inorderMap.set(val, index);\n  });\n  \n  let preorderIndex = 0;\n  \n  function build(inorderStart, inorderEnd) {\n    if (inorderStart > inorderEnd) return null;\n    \n    const rootVal = preorder[preorderIndex++];\n    const root = new TreeNode(rootVal);\n    \n    const inorderIndex = inorderMap.get(rootVal);\n    \n    // Build left subtree first (preorder: root -> left -> right)\n    root.left = build(inorderStart, inorderIndex - 1);\n    root.right = build(inorderIndex + 1, inorderEnd);\n    \n    return root;\n  }\n  \n  return build(0, inorder.length - 1);\n}\n\n// Modern approach with array destructuring\nfunction buildTreeModern(preorder, inorder) {\n  if (!preorder.length) return null;\n  \n  const [rootVal, ...restPreorder] = preorder;\n  const rootIndex = inorder.indexOf(rootVal);\n  \n  const leftInorder = inorder.slice(0, rootIndex);\n  const rightInorder = inorder.slice(rootIndex + 1);\n  \n  const leftPreorder = restPreorder.slice(0, leftInorder.length);\n  const rightPreorder = restPreorder.slice(leftInorder.length);\n  \n  return new TreeNode(\n    rootVal,\n    buildTreeModern(leftPreorder, leftInorder),\n    buildTreeModern(rightPreorder, rightInorder)\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-programming",
+      "title": "Dynamic Programming & Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Dynamic Programming Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Master dynamic programming with memoization and tabulation approaches, including modern JavaScript optimization techniques."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Fibonacci - Classic DP Example\n// Naive Recursive - O(2^n) time, O(n) space\nfunction fibonacciNaive(n) {\n  if (n <= 1) return n;\n  return fibonacciNaive(n - 1) + fibonacciNaive(n - 2);\n}\n\n// Memoization (Top-down) - O(n) time, O(n) space\nfunction fibonacciMemo(n, memo = new Map()) {\n  if (n <= 1) return n;\n  \n  if (memo.has(n)) {\n    return memo.get(n);\n  }\n  \n  const result = fibonacciMemo(n - 1, memo) + fibonacciMemo(n - 2, memo);\n  memo.set(n, result);\n  return result;\n}\n\n// Tabulation (Bottom-up) - O(n) time, O(n) space\nfunction fibonacciTab(n) {\n  if (n <= 1) return n;\n  \n  const dp = [0, 1];\n  \n  for (let i = 2; i <= n; i++) {\n    dp[i] = dp[i - 1] + dp[i - 2];\n  }\n  \n  return dp[n];\n}\n\n// Space Optimized - O(n) time, O(1) space\nfunction fibonacciOptimal(n) {\n  if (n <= 1) return n;\n  \n  let prev2 = 0;\n  let prev1 = 1;\n  \n  for (let i = 2; i <= n; i++) {\n    const current = prev1 + prev2;\n    prev2 = prev1;\n    prev1 = current;\n  }\n  \n  return prev1;\n}\n\n// Modern ES2023 approach with destructuring\nfunction fibonacciModern(n) {\n  if (n <= 1) return n;\n  \n  let [a, b] = [0, 1];\n  \n  for (let i = 2; i <= n; i++) {\n    [a, b] = [b, a + b];\n  }\n  \n  return b;\n}\n\n// Generator approach for infinite sequence\nfunction* fibonacciGenerator() {\n  let [a, b] = [0, 1];\n  \n  while (true) {\n    yield a;\n    [a, b] = [b, a + b];\n  }\n}\n\n// Usage: Get first n fibonacci numbers\nfunction getFibonacci(n) {\n  const fib = fibonacciGenerator();\n  return Array.from({ length: n }, () => fib.next().value);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Classic DP Problems"
+        },
+        {
+          "type": "paragraph",
+          "text": "Solve classic dynamic programming problems with multiple approaches and optimizations."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Coin Change Problem\nfunction coinChange(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity);\n  dp[0] = 0;\n  \n  for (let i = 1; i <= amount; i++) {\n    for (const coin of coins) {\n      if (coin <= i) {\n        dp[i] = Math.min(dp[i], dp[i - coin] + 1);\n      }\n    }\n  }\n  \n  return dp[amount] === Infinity ? -1 : dp[amount];\n}\n\n// Longest Increasing Subsequence\nfunction lengthOfLIS(nums) {\n  if (!nums.length) return 0;\n  \n  const dp = new Array(nums.length).fill(1);\n  let maxLength = 1;\n  \n  for (let i = 1; i < nums.length; i++) {\n    for (let j = 0; j < i; j++) {\n      if (nums[j] < nums[i]) {\n        dp[i] = Math.max(dp[i], dp[j] + 1);\n      }\n    }\n    maxLength = Math.max(maxLength, dp[i]);\n  }\n  \n  return maxLength;\n}\n\n// Binary Search Optimization for LIS - O(n log n)\nfunction lengthOfLISOptimal(nums) {\n  if (!nums.length) return 0;\n  \n  const tails = [];\n  \n  for (const num of nums) {\n    let left = 0;\n    let right = tails.length;\n    \n    // Binary search for insertion position\n    while (left < right) {\n      const mid = Math.floor((left + right) / 2);\n      if (tails[mid] < num) {\n        left = mid + 1;\n      } else {\n        right = mid;\n      }\n    }\n    \n    if (left === tails.length) {\n      tails.push(num);\n    } else {\n      tails[left] = num;\n    }\n  }\n  \n  return tails.length;\n}\n\n// House Robber Problem\nfunction rob(nums) {\n  if (!nums.length) return 0;\n  if (nums.length === 1) return nums[0];\n  \n  let prev2 = 0;\n  let prev1 = 0;\n  \n  for (const num of nums) {\n    const current = Math.max(prev1, prev2 + num);\n    prev2 = prev1;\n    prev1 = current;\n  }\n  \n  return prev1;\n}\n\n// 0/1 Knapsack Problem\nfunction knapsack(weights, values, capacity) {\n  const n = weights.length;\n  const dp = Array(n + 1).fill().map(() => Array(capacity + 1).fill(0));\n  \n  for (let i = 1; i <= n; i++) {\n    for (let w = 1; w <= capacity; w++) {\n      // Don't take current item\n      dp[i][w] = dp[i - 1][w];\n      \n      // Take current item if it fits\n      if (weights[i - 1] <= w) {\n        dp[i][w] = Math.max(\n          dp[i][w],\n          dp[i - 1][w - weights[i - 1]] + values[i - 1]\n        );\n      }\n    }\n  }\n  \n  return dp[n][capacity];\n}\n\n// Space Optimized Knapsack - O(capacity) space\nfunction knapsackOptimal(weights, values, capacity) {\n  const dp = new Array(capacity + 1).fill(0);\n  \n  for (let i = 0; i < weights.length; i++) {\n    // Traverse backwards to avoid using updated values\n    for (let w = capacity; w >= weights[i]; w--) {\n      dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i]);\n    }\n  }\n  \n  return dp[capacity];\n}\n\n// Edit Distance (Levenshtein Distance)\nfunction minDistance(word1, word2) {\n  const m = word1.length;\n  const n = word2.length;\n  \n  const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));\n  \n  // Initialize base cases\n  for (let i = 0; i <= m; i++) dp[i][0] = i;\n  for (let j = 0; j <= n; j++) dp[0][j] = j;\n  \n  for (let i = 1; i <= m; i++) {\n    for (let j = 1; j <= n; j++) {\n      if (word1[i - 1] === word2[j - 1]) {\n        dp[i][j] = dp[i - 1][j - 1];\n      } else {\n        dp[i][j] = Math.min(\n          dp[i - 1][j] + 1,     // deletion\n          dp[i][j - 1] + 1,     // insertion\n          dp[i - 1][j - 1] + 1  // substitution\n        );\n      }\n    }\n  }\n  \n  return dp[m][n];\n}\n\n// Modern approach with Map for memoization\nfunction minDistanceMemo(word1, word2) {\n  const memo = new Map();\n  \n  function dp(i, j) {\n    if (i === 0) return j;\n    if (j === 0) return i;\n    \n    const key = `${i},${j}`;\n    if (memo.has(key)) return memo.get(key);\n    \n    let result;\n    if (word1[i - 1] === word2[j - 1]) {\n      result = dp(i - 1, j - 1);\n    } else {\n      result = Math.min(\n        dp(i - 1, j) + 1,\n        dp(i, j - 1) + 1,\n        dp(i - 1, j - 1) + 1\n      );\n    }\n    \n    memo.set(key, result);\n    return result;\n  }\n  \n  return dp(word1.length, word2.length);\n}"
+        }
+      ]
+    },
+    {
+      "id": "linked-list",
+      "title": "Linked List Algorithms",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Reverse Linked List (Easy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Reverse a singly linked list iteratively and recursively."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Iterative Approach - O(n) time, O(1) space\nfunction reverseList(head) {\n  let prev = null;\n  let cur = head;\n  \n  while (cur) {\n    const next = cur.next;\n    cur.next = prev;\n    prev = cur;\n    cur = next;\n  }\n  \n  return prev;\n}\n\n// Recursive Approach - O(n) time, O(n) space\nfunction reverseListRecursive(head) {\n  if (!head || !head.next) return head;\n  \n  const newHead = reverseListRecursive(head.next);\n  head.next.next = head;\n  head.next = null;\n  \n  return newHead;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Reverse Linked List II (Medium)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Reverse nodes of a list from position left to right."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// O(n) time, O(1) space\nfunction reverseBetween(head, left, right) {\n  let pos = 1;\n  let cur = head;\n  let start = null;\n  \n  // Find the node before reversal starts\n  while (pos < left) {\n    start = cur;\n    cur = cur.next;\n    pos++;\n  }\n  \n  let prev = null;\n  let tail = cur; // Will be the tail after reversal\n  \n  // Reverse the sublist\n  while (pos <= right) {\n    const next = cur.next;\n    cur.next = prev;\n    prev = cur;\n    cur = next;\n    pos++;\n  }\n  \n  // Connect the reversed sublist\n  if (start) {\n    start.next = prev;\n  }\n  tail.next = cur;\n  \n  return left === 1 ? prev : head;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Linked List Cycle (Easy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Detect cycle in linked list using Floyd's Tortoise and Hare algorithm."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Floyd's Algorithm - O(n) time, O(1) space\nfunction hasCycle(head) {\n  if (!head) return false;\n  \n  let slow = head;\n  let fast = head;\n  \n  while (fast.next && fast.next.next) {\n    slow = slow.next;\n    fast = fast.next.next;\n    \n    if (fast === slow) return true;\n  }\n  \n  return false;\n}\n\n// Find cycle starting node\nfunction detectCycle(head) {\n  if (!head) return null;\n  \n  let slow = head;\n  let fast = head;\n  \n  // Detect if cycle exists\n  while (fast && fast.next) {\n    slow = slow.next;\n    fast = fast.next.next;\n    \n    if (slow === fast) break;\n  }\n  \n  if (!fast || !fast.next) return null;\n  \n  // Find the start of cycle\n  slow = head;\n  while (slow !== fast) {\n    slow = slow.next;\n    fast = fast.next;\n  }\n  \n  return slow;\n}"
+        }
+      ]
+    },
+    {
+      "id": "stack-queue",
+      "title": "Stack and Queue Problems",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Valid Parentheses (Easy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Check if parentheses are valid using stack data structure."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Stack Approach - O(n) time, O(n) space\nfunction isValid(s) {\n  const stack = [];\n  const mapParen = {\n    '[': ']',\n    '(': ')',\n    '{': '}'\n  };\n  \n  for (let i = 0; i < s.length; i++) {\n    const cur = s[i];\n    \n    if (mapParen[cur]) {\n      stack.push(cur);\n    } else {\n      const open = stack.pop();\n      if (mapParen[open] !== cur) return false;\n    }\n  }\n  \n  return stack.length === 0;\n}\n\n// Modern approach with Map\nfunction isValidModern(s) {\n  const stack = [];\n  const pairs = new Map([['(', ')'], ['[', ']'], ['{', '}']]);\n  \n  for (const char of s) {\n    if (pairs.has(char)) {\n      stack.push(char);\n    } else if (stack.length === 0 || pairs.get(stack.pop()) !== char) {\n      return false;\n    }\n  }\n  \n  return stack.length === 0;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Implement Queue using Stacks (Easy)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Implement FIFO queue using two stacks."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class MyQueue {\n  constructor() {\n    this.in = [];\n    this.out = [];\n  }\n  \n  push(x) {\n    this.in.push(x);\n  }\n  \n  pop() {\n    if (this.out.length === 0) {\n      while (this.in.length) {\n        this.out.push(this.in.pop());\n      }\n    }\n    return this.out.pop();\n  }\n  \n  peek() {\n    if (this.out.length !== 0) {\n      return this.out[this.out.length - 1];\n    } else {\n      return this.in[0];\n    }\n  }\n  \n  empty() {\n    return this.in.length === 0 && this.out.length === 0;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "modern-techniques",
+      "title": "Modern JavaScript Techniques (2024)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "ES2023+ Features in Algorithms"
+        },
+        {
+          "type": "paragraph",
+          "text": "Leverage modern JavaScript features for cleaner, more efficient algorithm implementations."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Array.prototype.toSorted() - ES2023\nfunction quickSort(arr) {\n  if (arr.length <= 1) return arr;\n  \n  const pivot = arr[Math.floor(arr.length / 2)];\n  const left = arr.filter(x => x < pivot);\n  const middle = arr.filter(x => x === pivot);\n  const right = arr.filter(x => x > pivot);\n  \n  return [...quickSort(left), ...middle, ...quickSort(right)];\n}\n\n// Using toSorted for immutable sorting\nfunction sortArray(nums) {\n  return nums.toSorted((a, b) => a - b); // Immutable sort\n}\n\n// Array.prototype.findLast() and findLastIndex() - ES2023\nfunction findLastOccurrence(arr, target) {\n  const lastIndex = arr.findLastIndex(x => x === target);\n  const lastValue = arr.findLast(x => x === target);\n  return { lastIndex, lastValue };\n}\n\n// Modern binary search with findLast\nfunction binarySearchRange(nums, target) {\n  const firstIndex = nums.findIndex(x => x === target);\n  const lastIndex = nums.findLastIndex(x => x === target);\n  \n  return firstIndex === -1 ? [-1, -1] : [firstIndex, lastIndex];\n}\n\n// Array.prototype.toReversed() - ES2023\nfunction reverseArray(arr) {\n  return arr.toReversed(); // Immutable reverse\n}\n\n// Array.prototype.toSpliced() - ES2023\nfunction removeElement(arr, index) {\n  return arr.toSpliced(index, 1); // Immutable splice\n}\n\n// Array.prototype.with() - ES2023\nfunction updateArray(arr, index, value) {\n  return arr.with(index, value); // Immutable update\n}\n\n// Modern sliding window with destructuring\nfunction maxSlidingWindow(nums, k) {\n  const result = [];\n  const deque = []; // Store indices\n  \n  for (let i = 0; i < nums.length; i++) {\n    // Remove elements outside window\n    while (deque.length && deque[0] <= i - k) {\n      deque.shift();\n    }\n    \n    // Remove smaller elements from back\n    while (deque.length && nums[deque.at(-1)] <= nums[i]) {\n      deque.pop();\n    }\n    \n    deque.push(i);\n    \n    // Add to result if window is complete\n    if (i >= k - 1) {\n      result.push(nums[deque[0]]);\n    }\n  }\n  \n  return result;\n}\n\n// Using Array.from with mapping\nfunction generateMatrix(n) {\n  return Array.from({ length: n }, (_, i) =>\n    Array.from({ length: n }, (_, j) => i * n + j + 1)\n  );\n}\n\n// Modern approach with Set operations\nfunction intersection(arr1, arr2) {\n  const set1 = new Set(arr1);\n  return arr2.filter(x => set1.has(x));\n}\n\nfunction union(arr1, arr2) {\n  return [...new Set([...arr1, ...arr2])];\n}\n\nfunction difference(arr1, arr2) {\n  const set2 = new Set(arr2);\n  return arr1.filter(x => !set2.has(x));\n}\n\n// WeakMap for memoization with object keys\nclass GraphMemoizer {\n  constructor() {\n    this.cache = new WeakMap();\n  }\n  \n  memoize(fn) {\n    return (graph, ...args) => {\n      if (!this.cache.has(graph)) {\n        this.cache.set(graph, new Map());\n      }\n      \n      const graphCache = this.cache.get(graph);\n      const key = JSON.stringify(args);\n      \n      if (!graphCache.has(key)) {\n        graphCache.set(key, fn(graph, ...args));\n      }\n      \n      return graphCache.get(key);\n    };\n  }\n}\n\n// Modern Promise-based algorithms\nasync function parallelProcess(items, processor, concurrency = 3) {\n  const results = [];\n  \n  for (let i = 0; i < items.length; i += concurrency) {\n    const batch = items.slice(i, i + concurrency);\n    const batchResults = await Promise.all(\n      batch.map(item => processor(item))\n    );\n    results.push(...batchResults);\n  }\n  \n  return results;\n}\n\n// AbortController for cancellable algorithms\nfunction cancellableSearch(arr, target, signal) {\n  return new Promise((resolve, reject) => {\n    if (signal?.aborted) {\n      reject(new Error('Search cancelled'));\n      return;\n    }\n    \n    let index = 0;\n    \n    function search() {\n      if (signal?.aborted) {\n        reject(new Error('Search cancelled'));\n        return;\n      }\n      \n      if (index >= arr.length) {\n        resolve(-1);\n        return;\n      }\n      \n      if (arr[index] === target) {\n        resolve(index);\n        return;\n      }\n      \n      index++;\n      setTimeout(search, 0); // Allow cancellation\n    }\n    \n    search();\n  });\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the time complexity of the two-pointer approach for the Two Sum problem on a sorted array?",
+      "options": ["O(n²)", "O(n log n)", "O(n)", "O(1)"],
+      "correctAnswer": 2,
+      "explanation": "The two-pointer approach scans the array once with two pointers moving inward, resulting in O(n) time complexity."
+    },
+    {
+      "id": 2,
+      "question": "Which data structure is most efficient for implementing a sliding window maximum?",
+      "options": [
+        "Stack",
+        "Queue",
+        "Deque (Double-ended queue)",
+        "Priority Queue"
+      ],
+      "correctAnswer": 2,
+      "explanation": "A deque allows efficient insertion and deletion from both ends, making it ideal for maintaining the sliding window maximum."
+    },
+    {
+      "id": 3,
+      "question": "What is the optimal space complexity for the trapping rainwater problem?",
+      "options": ["O(n)", "O(log n)", "O(1)", "O(n²)"],
+      "correctAnswer": 2,
+      "explanation": "Using the two-pointer technique, we can solve trapping rainwater in O(1) space by maintaining left and right max values."
+    },
+    {
+      "id": 4,
+      "question": "In the context of matrix traversal, what is the space complexity of BFS compared to DFS?",
+      "options": [
+        "BFS: O(V), DFS: O(V)",
+        "BFS: O(min(M,N)), DFS: O(M*N)",
+        "BFS: O(M*N), DFS: O(min(M,N))",
+        "Both have the same space complexity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "BFS uses a queue that can grow to O(min(M,N)) in the worst case (widest part), while DFS uses recursion stack that can go O(M*N) deep in worst case."
+    },
+    {
+      "id": 5,
+      "question": "Which JavaScript ES2023 method creates a new array with an element changed at a specific index?",
+      "options": ["toSpliced()", "with()", "toReversed()", "findLast()"],
+      "correctAnswer": 1,
+      "explanation": "Array.prototype.with() creates a new array with the element at the given index replaced with the given value."
+    },
+    {
+      "id": 6,
+      "question": "What is the time complexity of the optimal solution for Longest Increasing Subsequence?",
+      "options": ["O(n²)", "O(n log n)", "O(n)", "O(2ⁿ)"],
+      "correctAnswer": 1,
+      "explanation": "Using binary search with the patience sorting approach, LIS can be solved in O(n log n) time."
+    },
+    {
+      "id": 7,
+      "question": "In dynamic programming, what is the main difference between memoization and tabulation?",
+      "options": [
+        "Memoization is faster than tabulation",
+        "Memoization is top-down, tabulation is bottom-up",
+        "Tabulation uses more memory than memoization",
+        "They are the same technique"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Memoization is a top-down approach using recursion with caching, while tabulation is bottom-up using iteration to fill a table."
+    },
+    {
+      "id": 8,
+      "question": "Which approach is most suitable for detecting cycles in a linked list?",
+      "options": [
+        "Two pointers (Floyd's algorithm)",
+        "Hash set to track visited nodes",
+        "Recursion with memoization",
+        "Binary search"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Floyd's Tortoise and Hare algorithm uses two pointers moving at different speeds to detect cycles in O(1) space."
+    },
+    {
+      "id": 9,
+      "question": "What is the optimal time complexity for the 3Sum problem?",
+      "options": ["O(n³)", "O(n² log n)", "O(n²)", "O(n log n)"],
+      "correctAnswer": 2,
+      "explanation": "After sorting the array in O(n log n), we use one loop with two pointers for each element, resulting in O(n²) overall."
+    },
+    {
+      "id": 10,
+      "question": "In the context of tree traversal, which method is most memory-efficient for a very deep tree?",
+      "options": [
+        "Recursive inorder",
+        "Iterative inorder",
+        "Level-order traversal",
+        "Recursive preorder"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Iterative traversal uses an explicit stack that can be controlled, avoiding the risk of stack overflow in very deep trees."
+    },
+    {
+      "id": 11,
+      "question": "What is the key insight behind the two-pointer technique for container with most water?",
+      "options": [
+        "Always move both pointers inward",
+        "Move the pointer with the larger height",
+        "Move the pointer with the smaller height",
+        "Move pointers randomly"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Moving the pointer with the smaller height gives the possibility of finding a larger area, as the height is the limiting factor."
+    },
+    {
+      "id": 12,
+      "question": "Which data structure is most efficient for implementing Union-Find operations?",
+      "options": [
+        "Array with path compression",
+        "Linked list",
+        "Binary search tree",
+        "Hash table"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Arrays with path compression and union by rank provide nearly O(1) amortized time for Union-Find operations."
+    },
+    {
+      "id": 13,
+      "question": "In binary tree problems, what does the diameter represent?",
+      "options": [
+        "The height of the tree",
+        "The number of nodes in the tree",
+        "The longest path between any two nodes",
+        "The width of the tree at its widest point"
+      ],
+      "correctAnswer": 2,
+      "explanation": "The diameter is the length of the longest path between any two nodes in the tree, which may or may not pass through the root."
+    },
+    {
+      "id": 14,
+      "question": "What is the advantage of using generators in algorithm implementation?",
+      "options": [
+        "They are always faster",
+        "They provide lazy evaluation and memory efficiency",
+        "They can only be used with arrays",
+        "They automatically optimize time complexity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Generators provide lazy evaluation, computing values on-demand, which can be memory-efficient for large datasets or infinite sequences."
+    },
+    {
+      "id": 15,
+      "question": "Which technique is most appropriate for the 'Number of Islands' problem?",
+      "options": [
+        "Dynamic programming",
+        "Graph traversal (DFS/BFS)",
+        "Greedy algorithm",
+        "Divide and conquer"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Number of Islands is a connected components problem that can be solved efficiently using DFS or BFS to explore each island."
+    },
+    {
+      "id": 16,
+      "question": "What is the space complexity of the optimal coin change dynamic programming solution?",
+      "options": ["O(amount × coins)", "O(amount)", "O(coins)", "O(1)"],
+      "correctAnswer": 1,
+      "explanation": "The coin change problem can be solved with a 1D DP array of size 'amount', giving O(amount) space complexity."
+    },
+    {
+      "id": 17,
+      "question": "In the context of string algorithms, what is the sliding window technique primarily used for?",
+      "options": [
+        "String matching",
+        "Finding substrings with specific properties",
+        "String compression",
+        "String reversal"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Sliding window is used to find substrings with specific properties like 'longest substring without repeating characters' efficiently."
+    },
+    {
+      "id": 18,
+      "question": "Which ES2023 array method is most useful for immutable array operations in algorithms?",
+      "options": ["push()", "splice()", "toSpliced()", "slice()"],
+      "correctAnswer": 2,
+      "explanation": "toSpliced() is the immutable version of splice(), returning a new array without modifying the original, useful for functional programming approaches."
+    },
+    {
+      "id": 19,
+      "question": "What is the main advantage of using WeakMap for memoization?",
+      "options": [
+        "It's faster than Map",
+        "It allows garbage collection of unused keys",
+        "It can store more data",
+        "It has better time complexity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "WeakMap allows keys to be garbage collected when they're no longer referenced elsewhere, preventing memory leaks in memoization."
+    },
+    {
+      "id": 20,
+      "question": "In tree construction from traversals, why is the inorder traversal crucial for binary search trees?",
+      "options": [
+        "It's the fastest traversal method",
+        "It visits nodes in sorted order",
+        "It uses the least memory",
+        "It can be done iteratively"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Inorder traversal of a BST visits nodes in sorted order, which is essential for validating BST properties and reconstruction."
+    },
+    {
+      "id": 21,
+      "question": "What is the optimal time complexity for the Count Primes problem using Sieve of Eratosthenes?",
+      "options": ["O(n²)", "O(n log n)", "O(n log log n)", "O(n)"],
+      "correctAnswer": 2,
+      "explanation": "The Sieve of Eratosthenes has O(n log log n) time complexity, which is more efficient than checking each number individually."
+    },
+    {
+      "id": 22,
+      "question": "In the Diagonal Traverse problem, how many diagonals are there in an m×n matrix?",
+      "options": ["m + n", "m + n - 1", "m × n", "max(m, n)"],
+      "correctAnswer": 1,
+      "explanation": "An m×n matrix has exactly m + n - 1 diagonals, starting from the top-left corner."
+    },
+    {
+      "id": 23,
+      "question": "Which approach is most space-efficient for the Number of Islands problem?",
+      "options": ["DFS", "BFS", "Union-Find", "All have same space complexity"],
+      "correctAnswer": 1,
+      "explanation": "BFS has O(min(m,n)) space complexity (queue size), while DFS can have O(m×n) in worst case (recursion stack)."
+    },
+    {
+      "id": 24,
+      "question": "What is the key insight for the Backspace String Compare problem using two pointers?",
+      "options": [
+        "Start from the beginning of strings",
+        "Start from the end of strings",
+        "Use a stack for each string",
+        "Count backspaces first"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Starting from the end allows us to process backspaces correctly without needing extra space for reconstruction."
+    },
+    {
+      "id": 25,
+      "question": "In Floyd's Cycle Detection algorithm, what speeds do the two pointers move at?",
+      "options": [
+        "Both move 1 step",
+        "One moves 1 step, other moves 2 steps",
+        "One moves 1 step, other moves 3 steps",
+        "Speed doesn't matter"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The slow pointer moves 1 step and fast pointer moves 2 steps per iteration, guaranteeing they'll meet if a cycle exists."
+    },
+    {
+      "id": 26,
+      "question": "What is the space complexity of implementing a queue using two stacks?",
+      "options": [
+        "O(1) for all operations",
+        "O(n) worst case",
+        "O(log n)",
+        "O(n²)"
+      ],
+      "correctAnswer": 1,
+      "explanation": "While individual operations can be O(1) amortized, the space complexity is O(n) to store all elements across both stacks."
+    },
+    {
+      "id": 27,
+      "question": "In the Rotting Oranges problem, what technique is used to track time progression?",
+      "options": [
+        "DFS with timestamps",
+        "BFS with level-by-level processing",
+        "Dynamic programming",
+        "Greedy algorithm"
+      ],
+      "correctAnswer": 1,
+      "explanation": "BFS processes each time unit level by level, using queue size to track when to increment the minute counter."
+    },
+    {
+      "id": 28,
+      "question": "What is the advantage of multi-source BFS in the Walls and Gates problem?",
+      "options": [
+        "It's faster than single-source BFS",
+        "It processes all gates simultaneously",
+        "It uses less memory",
+        "It's easier to implement"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Multi-source BFS starts from all gates simultaneously, ensuring each room gets the minimum distance to any gate in one pass."
+    },
+    {
+      "id": 29,
+      "question": "In reversing a linked list between positions, how many pointers do you need to track?",
+      "options": ["2 pointers", "3 pointers", "4 pointers", "5 pointers"],
+      "correctAnswer": 2,
+      "explanation": "You need 4 pointers: start (before reversal), tail (first node of reversal), prev (for reversal), and cur (current node)."
+    },
+    {
+      "id": 30,
+      "question": "What is the time complexity of finding the starting node of a cycle in a linked list?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 2,
+      "explanation": "After detecting the cycle with Floyd's algorithm, finding the start requires another O(n) traversal, making it O(n) overall."
+    }
+  ]
+}
