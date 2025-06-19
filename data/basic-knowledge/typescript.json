@@ -1,0 +1,834 @@
+{
+  "title": "TypeScript Fundamentals",
+  "description": "Master TypeScript from basics to advanced concepts including modern features, type system, generics, decorators, and cutting-edge TypeScript 5.x features for 2024",
+  "sections": [
+    {
+      "id": "typescript-overview",
+      "title": "TypeScript Overview & Setup",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is TypeScript?"
+        },
+        {
+          "type": "paragraph",
+          "text": "TypeScript is a superset of JavaScript that adds static typing and modern language features. It compiles to clean, readable JavaScript that runs anywhere JavaScript runs."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Superset of JavaScript - all valid JS is valid TS",
+            "Static typing prevents runtime errors during development",
+            "Excellent tooling with IntelliSense and refactoring",
+            "Compiles to JavaScript for any environment",
+            "Object-oriented programming features",
+            "Modern ES6+ features even for older environments"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Installation & Setup"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Install TypeScript globally\nnpm install -g typescript\n\n# Install for a project\nnpm install --save-dev typescript @types/node\n\n# Create tsconfig.json\ntsc --init\n\n# Compile TypeScript\ntsc filename.ts\n\n# Watch mode\ntsc filename.ts --watch"
+        },
+        {
+          "type": "heading",
+          "text": "TypeScript Compiler (TSC)"
+        },
+        {
+          "type": "paragraph",
+          "text": "The TypeScript compiler converts .ts files to .js files. Environments cannot run TypeScript directly - it must be compiled to JavaScript first."
+        }
+      ]
+    },
+    {
+      "id": "basic-types",
+      "title": "Basic Types & Type System",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Core Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Primitive types\nlet age: number = 25;\nlet name: string = \"John\";\nlet isActive: boolean = true;\nlet value: null = null;\nlet notDefined: undefined = undefined;\n\n// Symbol (ES6)\nlet uniqueKey: symbol = Symbol('key');\n\n// BigInt (ES2020)\nlet bigNumber: bigint = 100n;"
+        },
+        {
+          "type": "heading",
+          "text": "Arrays and Tuples"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Arrays\nlet numbers: number[] = [1, 2, 3];\nlet names: Array<string> = ['Alice', 'Bob'];\n\n// Tuples - fixed length and type\nlet person: [string, number] = ['John', 30];\nlet rgb: [number, number, number] = [255, 0, 0];\n\n// Named tuples (TS 4.0+)\nlet point: [x: number, y: number] = [10, 20];"
+        },
+        {
+          "type": "heading",
+          "text": "Object Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Object type annotation\nlet user: { name: string; age: number } = {\n  name: 'Alice',\n  age: 25\n};\n\n// Optional properties\nlet config: { host: string; port?: number } = {\n  host: 'localhost'\n};\n\n// Readonly properties\nlet point: { readonly x: number; readonly y: number } = {\n  x: 10,\n  y: 20\n};\n// point.x = 5; // Error: Cannot assign to 'x'"
+        },
+        {
+          "type": "heading",
+          "text": "Enums"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Numeric enum\nenum Direction {\n  Up,    // 0\n  Down,  // 1\n  Left,  // 2\n  Right  // 3\n}\n\n// String enum\nenum Theme {\n  Light = 'light',\n  Dark = 'dark',\n  Auto = 'auto'\n}\n\n// Const enum (more efficient)\nconst enum HttpStatus {\n  OK = 200,\n  NotFound = 404,\n  InternalServerError = 500\n}"
+        }
+      ]
+    },
+    {
+      "id": "advanced-types",
+      "title": "Advanced Types & Type Operations",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Type Inference"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// TypeScript infers types automatically\nlet message = 'Hello'; // inferred as string\nlet count = 42; // inferred as number\nlet items = [1, 2, 3]; // inferred as number[]\n\n// Function return type inference\nfunction add(a: number, b: number) {\n  return a + b; // inferred return type: number\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Union and Intersection Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Union types\ntype StringOrNumber = string | number;\nlet value: StringOrNumber = 'hello';\nvalue = 42; // OK\n\n// Intersection types\ntype Person = { name: string };\ntype Employee = { id: number };\ntype Staff = Person & Employee;\n\nlet worker: Staff = {\n  name: 'John',\n  id: 123\n};\n\n// Discriminated unions\ntype Shape = \n  | { kind: 'circle'; radius: number }\n  | { kind: 'rectangle'; width: number; height: number };\n\nfunction getArea(shape: Shape): number {\n  switch (shape.kind) {\n    case 'circle':\n      return Math.PI * shape.radius ** 2;\n    case 'rectangle':\n      return shape.width * shape.height;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Literal Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// String literal types\ntype ButtonType = 'primary' | 'secondary' | 'danger';\nlet btnType: ButtonType = 'primary';\n\n// Numeric literal types\ntype DiceRoll = 1 | 2 | 3 | 4 | 5 | 6;\n\n// Template literal types (TS 4.1+)\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ButtonEvent = EventName<'click'>; // 'onClick'"
+        },
+        {
+          "type": "heading",
+          "text": "Type Assertions"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Type assertion (two syntaxes)\nlet someValue: unknown = 'Hello TypeScript';\nlet strLength1 = (someValue as string).length;\nlet strLength2 = (<string>someValue).length;\n\n// Non-null assertion operator\nlet element = document.getElementById('myElement')!;\n// Tells TS this will not be null\n\n// Const assertions (TS 3.4+)\nlet colors = ['red', 'green', 'blue'] as const;\n// colors is now readonly ['red', 'green', 'blue']"
+        }
+      ]
+    },
+    {
+      "id": "functions",
+      "title": "Functions & Function Types",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Function Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Function type annotations\nfunction greet(name: string): string {\n  return `Hello, ${name}!`;\n}\n\n// Optional parameters\nfunction buildName(firstName: string, lastName?: string): string {\n  return lastName ? `${firstName} ${lastName}` : firstName;\n}\n\n// Default parameters\nfunction multiply(a: number, b: number = 1): number {\n  return a * b;\n}\n\n// Rest parameters\nfunction sum(...numbers: number[]): number {\n  return numbers.reduce((a, b) => a + b, 0);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Function Overloads"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Function overloads\nfunction combine(a: string, b: string): string;\nfunction combine(a: number, b: number): number;\nfunction combine(a: any, b: any): any {\n  if (typeof a === 'string' && typeof b === 'string') {\n    return a + b;\n  }\n  if (typeof a === 'number' && typeof b === 'number') {\n    return a + b;\n  }\n  throw new Error('Invalid arguments');\n}\n\nlet result1 = combine('Hello', ' World'); // string\nlet result2 = combine(1, 2); // number"
+        },
+        {
+          "type": "heading",
+          "text": "Function Types & Callbacks"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Function type expressions\ntype MathOperation = (a: number, b: number) => number;\n\nconst add: MathOperation = (a, b) => a + b;\nconst subtract: MathOperation = (a, b) => a - b;\n\n// Callback functions\nfunction processArray<T>(\n  arr: T[],\n  callback: (item: T, index: number) => T\n): T[] {\n  return arr.map(callback);\n}\n\nconst doubled = processArray([1, 2, 3], (x) => x * 2);"
+        },
+        {
+          "type": "heading",
+          "text": "Return Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Void - function doesn't return anything\nfunction logMessage(message: string): void {\n  console.log(message);\n}\n\n// Never - function never returns\nfunction throwError(message: string): never {\n  throw new Error(message);\n}\n\nfunction infiniteLoop(): never {\n  while (true) {\n    // infinite loop\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "classes-interfaces",
+      "title": "Classes & Interfaces",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Classes"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "class Person {\n  // Property declarations\n  readonly id: string;\n  private _name: string;\n  protected age: number;\n  public email: string;\n\n  // Constructor with parameter properties\n  constructor(\n    id: string,\n    private _department: string,\n    public isActive: boolean = true\n  ) {\n    this.id = id;\n    this._name = '';\n    this.age = 0;\n    this.email = '';\n  }\n\n  // Getter and setter\n  get name(): string {\n    return this._name;\n  }\n\n  set name(value: string) {\n    if (value.length > 0) {\n      this._name = value;\n    }\n  }\n\n  // Methods\n  introduce(this: Person): string {\n    return `Hi, I'm ${this._name} from ${this._department}`;\n  }\n\n  // Static members\n  static compareAge(p1: Person, p2: Person): number {\n    return p1.age - p2.age;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Inheritance"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Base class\nabstract class Animal {\n  constructor(protected name: string) {}\n\n  abstract makeSound(): string;\n\n  move(): string {\n    return `${this.name} is moving`;\n  }\n}\n\n// Derived class\nclass Dog extends Animal {\n  constructor(name: string, private breed: string) {\n    super(name);\n  }\n\n  makeSound(): string {\n    return `${this.name} barks: Woof!`;\n  }\n\n  // Override parent method\n  move(): string {\n    return `${this.name} runs around`;\n  }\n}\n\nconst dog = new Dog('Buddy', 'Golden Retriever');"
+        },
+        {
+          "type": "heading",
+          "text": "Interfaces"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Interface definition\ninterface Flyable {\n  readonly wingspan: number;\n  altitude?: number;\n  fly(): void;\n}\n\ninterface Swimmable {\n  swimSpeed: number;\n  swim(): void;\n}\n\n// Multiple interface implementation\nclass Duck implements Flyable, Swimmable {\n  readonly wingspan = 24;\n  altitude = 0;\n  swimSpeed = 5;\n\n  fly(): void {\n    this.altitude = 100;\n    console.log('Duck is flying');\n  }\n\n  swim(): void {\n    console.log('Duck is swimming');\n  }\n}\n\n// Interface extending other interfaces\ninterface Bird extends Flyable {\n  species: string;\n  layEggs(): void;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Singleton Pattern"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "class DatabaseConnection {\n  private static instance: DatabaseConnection;\n  private connected: boolean = false;\n\n  private constructor() {\n    // Private constructor prevents direct instantiation\n  }\n\n  public static getInstance(): DatabaseConnection {\n    if (!DatabaseConnection.instance) {\n      DatabaseConnection.instance = new DatabaseConnection();\n    }\n    return DatabaseConnection.instance;\n  }\n\n  connect(): void {\n    if (!this.connected) {\n      this.connected = true;\n      console.log('Connected to database');\n    }\n  }\n\n  disconnect(): void {\n    this.connected = false;\n    console.log('Disconnected from database');\n  }\n}\n\nconst db1 = DatabaseConnection.getInstance();\nconst db2 = DatabaseConnection.getInstance();\nconsole.log(db1 === db2); // true"
+        }
+      ]
+    },
+    {
+      "id": "generics",
+      "title": "Generics & Generic Constraints",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Generic Functions"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Basic generic function\nfunction identity<T>(arg: T): T {\n  return arg;\n}\n\nlet result1 = identity<string>('hello');\nlet result2 = identity(42); // type inferred as number\n\n// Multiple generic parameters\nfunction merge<T, U>(obj1: T, obj2: U): T & U {\n  return { ...obj1, ...obj2 };\n}\n\nconst merged = merge({ name: 'John' }, { age: 30 });\n// merged has type { name: string } & { age: number }"
+        },
+        {
+          "type": "heading",
+          "text": "Generic Constraints"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Constraint with extends\ninterface Lengthwise {\n  length: number;\n}\n\nfunction logLength<T extends Lengthwise>(arg: T): T {\n  console.log(arg.length);\n  return arg;\n}\n\nlogLength('hello'); // OK\nlogLength([1, 2, 3]); // OK\n// logLength(123); // Error: number doesn't have length\n\n// Keyof constraint\nfunction getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {\n  return obj[key];\n}\n\nlet person = { name: 'John', age: 30, city: 'NYC' };\nlet name = getProperty(person, 'name'); // string\nlet age = getProperty(person, 'age'); // number"
+        },
+        {
+          "type": "heading",
+          "text": "Generic Classes"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "class DataStorage<T> {\n  private data: T[] = [];\n\n  addItem(item: T): void {\n    this.data.push(item);\n  }\n\n  removeItem(item: T): void {\n    const index = this.data.indexOf(item);\n    if (index > -1) {\n      this.data.splice(index, 1);\n    }\n  }\n\n  getItems(): T[] {\n    return [...this.data];\n  }\n\n  findItem(predicate: (item: T) => boolean): T | undefined {\n    return this.data.find(predicate);\n  }\n}\n\nconst textStorage = new DataStorage<string>();\ntextStorage.addItem('Hello');\ntextStorage.addItem('World');\n\nconst numberStorage = new DataStorage<number>();\nnumberStorage.addItem(1);\nnumberStorage.addItem(2);"
+        },
+        {
+          "type": "heading",
+          "text": "Utility Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "interface User {\n  id: number;\n  name: string;\n  email: string;\n  password: string;\n}\n\n// Partial - makes all properties optional\ntype PartialUser = Partial<User>;\nfunction updateUser(user: User, updates: PartialUser): User {\n  return { ...user, ...updates };\n}\n\n// Required - makes all properties required\ntype RequiredUser = Required<PartialUser>;\n\n// Pick - select specific properties\ntype PublicUser = Pick<User, 'id' | 'name' | 'email'>;\n\n// Omit - exclude specific properties\ntype CreateUser = Omit<User, 'id'>;\n\n// Record - create object type with specific keys and values\ntype UserRoles = Record<'admin' | 'user' | 'guest', string[]>;\nconst roles: UserRoles = {\n  admin: ['read', 'write', 'delete'],\n  user: ['read', 'write'],\n  guest: ['read']\n};\n\n// Readonly - makes all properties readonly\ntype ReadonlyUser = Readonly<User>;"
+        }
+      ]
+    },
+    {
+      "id": "type-guards",
+      "title": "Type Guards & Advanced Type Checking",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Built-in Type Guards"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// typeof type guard\nfunction processValue(value: string | number): string {\n  if (typeof value === 'string') {\n    return value.toUpperCase(); // TS knows value is string\n  } else {\n    return value.toString(); // TS knows value is number\n  }\n}\n\n// instanceof type guard\nclass Dog {\n  bark() { console.log('Woof!'); }\n}\n\nclass Cat {\n  meow() { console.log('Meow!'); }\n}\n\nfunction makeSound(animal: Dog | Cat): void {\n  if (animal instanceof Dog) {\n    animal.bark(); // TS knows animal is Dog\n  } else {\n    animal.meow(); // TS knows animal is Cat\n  }\n}\n\n// in operator type guard\ninterface Bird {\n  fly(): void;\n  layEggs(): void;\n}\n\ninterface Fish {\n  swim(): void;\n  layEggs(): void;\n}\n\nfunction move(animal: Bird | Fish): void {\n  if ('fly' in animal) {\n    animal.fly(); // TS knows animal is Bird\n  } else {\n    animal.swim(); // TS knows animal is Fish\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Custom Type Guards"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Custom type guard function\nfunction isString(value: unknown): value is string {\n  return typeof value === 'string';\n}\n\nfunction processUnknown(value: unknown): void {\n  if (isString(value)) {\n    console.log(value.toUpperCase()); // TS knows value is string\n  }\n}\n\n// Complex type guard\ninterface ApiResponse {\n  data: any;\n  error?: string;\n}\n\ninterface SuccessResponse extends ApiResponse {\n  data: any;\n  error?: never;\n}\n\ninterface ErrorResponse extends ApiResponse {\n  data?: never;\n  error: string;\n}\n\nfunction isSuccessResponse(response: ApiResponse): response is SuccessResponse {\n  return response.error === undefined;\n}\n\nfunction handleResponse(response: ApiResponse): void {\n  if (isSuccessResponse(response)) {\n    console.log('Success:', response.data);\n  } else {\n    console.log('Error:', response.error);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Assertion Functions"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Assertion function\nfunction assertIsNumber(value: unknown): asserts value is number {\n  if (typeof value !== 'number') {\n    throw new Error('Expected number');\n  }\n}\n\nfunction processValue(value: unknown): number {\n  assertIsNumber(value);\n  return value * 2; // TS knows value is number after assertion\n}\n\n// Non-null assertion function\nfunction assertNotNull<T>(value: T | null | undefined): asserts value is T {\n  if (value == null) {\n    throw new Error('Value cannot be null or undefined');\n  }\n}\n\nfunction getElement(id: string): HTMLElement {\n  const element = document.getElementById(id);\n  assertNotNull(element);\n  return element; // TS knows element is not null\n}"
+        }
+      ]
+    },
+    {
+      "id": "decorators",
+      "title": "Decorators & Metadata",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Class Decorators"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Simple class decorator\nfunction Component(template: string) {\n  return function <T extends { new (...args: any[]): {} }>(\n    constructor: T\n  ) {\n    return class extends constructor {\n      template = template;\n      \n      render() {\n        console.log(`Rendering: ${this.template}`);\n      }\n    };\n  };\n}\n\n@Component('<div>Hello World</div>')\nclass MyComponent {\n  name = 'MyComponent';\n}\n\nconst component = new MyComponent();\n// component.render(); // Rendering: <div>Hello World</div>\n\n// Logging decorator\nfunction Log(target: any) {\n  console.log('Class decorator called');\n  console.log(target);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Method & Property Decorators"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Method decorator\nfunction LogMethod(\n  target: any,\n  propertyKey: string,\n  descriptor: PropertyDescriptor\n) {\n  const originalMethod = descriptor.value;\n  \n  descriptor.value = function (...args: any[]) {\n    console.log(`Calling ${propertyKey} with args:`, args);\n    const result = originalMethod.apply(this, args);\n    console.log(`${propertyKey} returned:`, result);\n    return result;\n  };\n}\n\n// Property decorator\nfunction Validate(target: any, propertyKey: string) {\n  let value: any;\n  \n  const getter = () => value;\n  const setter = (newValue: any) => {\n    if (typeof newValue !== 'string' || newValue.length < 3) {\n      throw new Error(`${propertyKey} must be a string with at least 3 characters`);\n    }\n    value = newValue;\n  };\n  \n  Object.defineProperty(target, propertyKey, {\n    get: getter,\n    set: setter,\n    enumerable: true,\n    configurable: true\n  });\n}\n\nclass User {\n  @Validate\n  name: string = '';\n  \n  @LogMethod\n  greet(message: string): string {\n    return `${message}, ${this.name}!`;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Parameter Decorators"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Parameter decorator\nfunction LogParameter(\n  target: any,\n  propertyKey: string | symbol,\n  parameterIndex: number\n) {\n  console.log(`Parameter decorator called on parameter ${parameterIndex} of ${String(propertyKey)}`);\n}\n\n// Validation parameter decorator\nfunction Required(target: any, propertyKey: string | symbol, parameterIndex: number) {\n  const existingRequiredParameters: number[] = Reflect.getOwnMetadata('required', target, propertyKey) || [];\n  existingRequiredParameters.push(parameterIndex);\n  Reflect.defineMetadata('required', existingRequiredParameters, target, propertyKey);\n}\n\nclass Calculator {\n  add(@LogParameter @Required a: number, @Required b: number): number {\n    return a + b;\n  }\n}\n\n// Accessor decorator\nfunction Configurable(value: boolean) {\n  return function (\n    target: any,\n    propertyKey: string,\n    descriptor: PropertyDescriptor\n  ) {\n    descriptor.configurable = value;\n  };\n}\n\nclass Point {\n  private _x: number = 0;\n  \n  @Configurable(false)\n  get x() {\n    return this._x;\n  }\n  \n  set x(value: number) {\n    this._x = value;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "modules-namespaces",
+      "title": "Modules & Namespaces",
+      "content": [
+        {
+          "type": "heading",
+          "text": "ES6 Modules"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// math.ts - Named exports\nexport function add(a: number, b: number): number {\n  return a + b;\n}\n\nexport function multiply(a: number, b: number): number {\n  return a * b;\n}\n\nexport const PI = 3.14159;\n\n// Default export\nexport default class Calculator {\n  add(a: number, b: number): number {\n    return a + b;\n  }\n}\n\n// main.ts - Imports\nimport Calculator, { add, multiply, PI } from './math';\nimport * as MathUtils from './math';\n\nconst calc = new Calculator();\nconst result1 = add(5, 3);\nconst result2 = MathUtils.multiply(4, 6);\nconsole.log(PI);"
+        },
+        {
+          "type": "heading",
+          "text": "Module Resolution"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// tsconfig.json module resolution\n{\n  \"compilerOptions\": {\n    \"moduleResolution\": \"node\",\n    \"baseUrl\": \".\",\n    \"paths\": {\n      \"@/*\": [\"src/*\"],\n      \"@components/*\": [\"src/components/*\"],\n      \"@utils/*\": [\"src/utils/*\"]\n    }\n  }\n}\n\n// Usage with path mapping\nimport { Button } from '@components/Button';\nimport { formatDate } from '@utils/date';"
+        },
+        {
+          "type": "heading",
+          "text": "Declaration Files"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// types.d.ts - Ambient declarations\ndeclare module 'my-library' {\n  export function doSomething(value: string): number;\n  export interface Config {\n    apiUrl: string;\n    timeout: number;\n  }\n}\n\n// Global type declarations\ndeclare global {\n  interface Window {\n    customProperty: string;\n  }\n  \n  var MY_GLOBAL_VAR: string;\n}\n\n// Module augmentation\nimport 'express';\n\ndeclare module 'express' {\n  interface Request {\n    user?: User;\n  }\n}\n\n// Usage\nwindow.customProperty = 'Hello';\nconsole.log(MY_GLOBAL_VAR);"
+        },
+        {
+          "type": "heading",
+          "text": "Namespaces (Legacy)"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Namespace declaration\nnamespace Geometry {\n  export interface Point {\n    x: number;\n    y: number;\n  }\n  \n  export class Circle {\n    constructor(public center: Point, public radius: number) {}\n    \n    area(): number {\n      return Math.PI * this.radius ** 2;\n    }\n  }\n  \n  export namespace Utils {\n    export function distance(p1: Point, p2: Point): number {\n      return Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);\n    }\n  }\n}\n\n// Usage\nconst point: Geometry.Point = { x: 0, y: 0 };\nconst circle = new Geometry.Circle(point, 5);\nconst dist = Geometry.Utils.distance(point, { x: 3, y: 4 });"
+        }
+      ]
+    },
+    {
+      "id": "typescript-5x-features",
+      "title": "TypeScript 5.x Features (2024)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Decorators (Stage 3) - TypeScript 5.0"
+        },
+        {
+          "type": "paragraph",
+          "text": "TypeScript 5.0 implements the official ECMAScript decorators proposal, which differs from the experimental decorators."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Class decorator\nfunction logged<T extends { new (...args: any[]): {} }>(constructor: T) {\n  return class extends constructor {\n    constructor(...args: any[]) {\n      super(...args);\n      console.log(`Created instance of ${constructor.name}`);\n    }\n  };\n}\n\n// Method decorator\nfunction measure(target: any, propertyKey: string, descriptor: PropertyDescriptor) {\n  const originalMethod = descriptor.value;\n  \n  descriptor.value = function (...args: any[]) {\n    const start = performance.now();\n    const result = originalMethod.apply(this, args);\n    const end = performance.now();\n    console.log(`${propertyKey} took ${end - start} milliseconds`);\n    return result;\n  };\n}\n\n@logged\nclass Calculator {\n  @measure\n  add(a: number, b: number): number {\n    return a + b;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "const Type Parameters - TypeScript 5.0"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// const type parameters allow more precise type inference\nfunction createArray<const T>(items: readonly T[]): T[] {\n  return [...items];\n}\n\n// Without const\nconst regularArray = createArray(['a', 'b', 'c']); // string[]\n\n// With const - preserves literal types\nconst constArray = createArray(['a', 'b', 'c'] as const); // readonly ['a', 'b', 'c']\n\n// Generic functions with const\nfunction makeObject<const T extends Record<string, unknown>>(obj: T): T {\n  return obj;\n}\n\nconst result = makeObject({ name: 'John', age: 30 } as const);\n// Type: { readonly name: 'John'; readonly age: 30 }"
+        },
+        {
+          "type": "heading",
+          "text": "Multiple Config Files Support - TypeScript 5.0"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// tsconfig.json can now extend multiple configs\n{\n  \"extends\": [\n    \"@tsconfig/node18/tsconfig.json\",\n    \"@tsconfig/strictest/tsconfig.json\"\n  ],\n  \"compilerOptions\": {\n    \"outDir\": \"./dist\"\n  }\n}\n\n// Or using an array of strings for different environments\n{\n  \"extends\": [\n    \"./tsconfig.base.json\",\n    \"./tsconfig.paths.json\"\n  ]\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Enum Performance Improvements - TypeScript 5.0"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Union enums are now more performant\nconst enum Direction {\n  Up = 'up',\n  Down = 'down',\n  Left = 'left',\n  Right = 'right'\n}\n\n// TypeScript 5.0 generates more efficient code\nfunction move(direction: Direction) {\n  // More optimized switch statement generation\n  switch (direction) {\n    case Direction.Up:\n      return 'Moving up';\n    case Direction.Down:\n      return 'Moving down';\n    case Direction.Left:\n      return 'Moving left';\n    case Direction.Right:\n      return 'Moving right';\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Improved Type Inference - TypeScript 5.x"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Better inference for conditional types\ntype NonNullable<T> = T extends null | undefined ? never : T;\n\n// Improved array method inference\nconst numbers = [1, 2, 3, 4, 5];\nconst evenNumbers = numbers.filter(n => n % 2 === 0); // number[]\n\n// Better contextual typing\nconst handlers = {\n  onClick: (event) => { // event is inferred as MouseEvent\n    console.log(event.clientX, event.clientY);\n  },\n  onKeyPress: (event) => { // event is inferred as KeyboardEvent\n    console.log(event.key);\n  }\n} satisfies Record<string, (event: any) => void>;\n\n// Improved generic inference\nclass EventEmitter<T extends Record<string, any[]>> {\n  on<K extends keyof T>(event: K, listener: (...args: T[K]) => void) {\n    // Implementation\n  }\n}\n\nconst emitter = new EventEmitter<{\n  data: [string];\n  error: [Error];\n}>();\n\n// Type-safe event handling\nemitter.on('data', (data) => { // data is string\n  console.log(data.toUpperCase());\n});\n\nemitter.on('error', (error) => { // error is Error\n  console.error(error.message);\n});"
+        }
+      ]
+    },
+    {
+      "id": "modern-features",
+      "title": "Advanced TypeScript Patterns (2024)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "satisfies Operator (TypeScript 4.9)"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// satisfies allows type checking while preserving literal types\nconst config = {\n  development: {\n    apiUrl: 'http://localhost:3000',\n    debug: true\n  },\n  production: {\n    apiUrl: 'https://api.example.com',\n    debug: false\n  }\n} satisfies Record<string, { apiUrl: string; debug: boolean }>;\n\n// config.development.apiUrl is still string literal\n// But type-checked against the constraint\n\n// Color palette example\ntype Colors = 'red' | 'green' | 'blue';\ntype ColorPalette = Record<Colors, string>;\n\nconst palette = {\n  red: '#ff0000',\n  green: '#00ff00',\n  blue: '#0000ff'\n} satisfies ColorPalette;\n\n// palette.red is still '#ff0000', not just string"
+        },
+        {
+          "type": "heading",
+          "text": "Template Literal Types & String Manipulation"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Advanced template literal types\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ButtonEvents = EventName<'click' | 'hover' | 'focus'>;\n// 'onClick' | 'onHover' | 'onFocus'\n\n// String manipulation utilities\ntype CamelCase<S extends string> = S extends `${infer P1}_${infer P2}${infer P3}`\n  ? `${P1}${Uppercase<P2>}${CamelCase<P3>}`\n  : S;\n\ntype Snake = 'hello_world_example';\ntype Camel = CamelCase<Snake>; // 'helloWorldExample'\n\n// URL parameter extraction\ntype ExtractParams<T extends string> = \n  T extends `${infer _Start}:${infer Param}/${infer Rest}`\n    ? Param | ExtractParams<Rest>\n    : T extends `${infer _Start}:${infer Param}`\n    ? Param\n    : never;\n\ntype UserRoute = '/users/:id/posts/:postId';\ntype Params = ExtractParams<UserRoute>; // 'id' | 'postId'\n\n// Type-safe route handler\nfunction createRoute<T extends string>(\n  path: T,\n  handler: (params: Record<ExtractParams<T>, string>) => void\n) {\n  return { path, handler };\n}\n\nconst userRoute = createRoute('/users/:id', (params) => {\n  // params.id is string, fully type-safe!\n  console.log(params.id);\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Conditional Types"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Basic conditional type\ntype IsString<T> = T extends string ? true : false;\ntype Test1 = IsString<string>; // true\ntype Test2 = IsString<number>; // false\n\n// Distributive conditional types\ntype ToArray<T> = T extends any ? T[] : never;\ntype StringOrNumberArray = ToArray<string | number>;\n// string[] | number[]\n\n// Infer keyword\ntype ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;\ntype FunctionReturn = ReturnType<() => string>; // string\n\n// Extract array item type\ntype ArrayItem<T> = T extends (infer U)[] ? U : never;\ntype StringFromArray = ArrayItem<string[]>; // string\n\n// Advanced conditional type\ntype DeepReadonly<T> = {\n  readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];\n};\n\ninterface User {\n  name: string;\n  profile: {\n    age: number;\n    settings: {\n      theme: string;\n    };\n  };\n}\n\ntype ReadonlyUser = DeepReadonly<User>;\n// All properties and nested properties become readonly"
+        },
+        {
+          "type": "heading",
+          "text": "Mapped Types & Key Remapping"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Basic mapped type\ntype Optional<T> = {\n  [P in keyof T]?: T[P];\n};\n\n// Key remapping (TS 4.1+)\ntype Getters<T> = {\n  [P in keyof T as `get${Capitalize<string & P>}`]: () => T[P];\n};\n\ninterface Person {\n  name: string;\n  age: number;\n}\n\ntype PersonGetters = Getters<Person>;\n// {\n//   getName: () => string;\n//   getAge: () => number;\n// }\n\n// Conditional key remapping\ntype PickByType<T, U> = {\n  [P in keyof T as T[P] extends U ? P : never]: T[P];\n};\n\ninterface Mixed {\n  name: string;\n  age: number;\n  isActive: boolean;\n  count: number;\n}\n\ntype StringProps = PickByType<Mixed, string>; // { name: string }\ntype NumberProps = PickByType<Mixed, number>; // { age: number; count: number }\n\n// Transform keys\ntype CamelToSnake<S extends string> = S extends `${infer T}${infer U}`\n  ? `${T extends Capitalize<T> ? '_' : ''}${Lowercase<T>}${CamelToSnake<U>}`\n  : S;\n\ntype SnakeCaseKeys<T> = {\n  [K in keyof T as CamelToSnake<string & K>]: T[K];\n};\n\ninterface CamelCaseObj {\n  firstName: string;\n  lastName: string;\n  emailAddress: string;\n}\n\ntype SnakeCaseObj = SnakeCaseKeys<CamelCaseObj>;\n// {\n//   first_name: string;\n//   last_name: string;\n//   email_address: string;\n// }"
+        },
+        {
+          "type": "heading",
+          "text": "Recursive Types & Advanced Patterns"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// JSON type\ntype JsonPrimitive = string | number | boolean | null;\ntype JsonObject = { [key: string]: JsonValue };\ntype JsonArray = JsonValue[];\ntype JsonValue = JsonPrimitive | JsonObject | JsonArray;\n\n// Deep partial\ntype DeepPartial<T> = {\n  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];\n};\n\n// Path type for nested objects\ntype PathsToStringProps<T> = T extends string\n  ? []\n  : {\n      [K in Extract<keyof T, string>]: [K, ...PathsToStringProps<T[K]>];\n    }[Extract<keyof T, string>];\n\ntype Join<T extends string[], D extends string> = T extends readonly [infer F, ...infer R]\n  ? F extends string\n    ? R extends readonly string[]\n      ? R['length'] extends 0\n        ? F\n        : `${F}${D}${Join<R, D>}`\n      : never\n    : never\n  : '';\n\ntype DotNotation<T> = Join<PathsToStringProps<T>, '.'>;\n\ninterface NestedObj {\n  user: {\n    profile: {\n      name: string;\n      email: string;\n    };\n    settings: {\n      theme: string;\n    };\n  };\n}\n\ntype Paths = DotNotation<NestedObj>;\n// 'user.profile.name' | 'user.profile.email' | 'user.settings.theme'\n\n// Function to get nested value\nfunction get<T, P extends DotNotation<T>>(obj: T, path: P): any {\n  return path.split('.').reduce((current, key) => current?.[key], obj as any);\n}\n\nconst nested: NestedObj = {\n  user: {\n    profile: { name: 'John', email: 'john@example.com' },\n    settings: { theme: 'dark' }\n  }\n};\n\nconst name = get(nested, 'user.profile.name'); // Type-safe!"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main difference between JavaScript and TypeScript?",
+      "options": [
+        "TypeScript is a completely different language",
+        "TypeScript adds static typing to JavaScript",
+        "TypeScript is faster than JavaScript",
+        "TypeScript cannot run in browsers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "TypeScript is a superset of JavaScript that adds static typing. It compiles to JavaScript and helps catch errors during development rather than runtime."
+    },
+    {
+      "id": 2,
+      "question": "Which of the following is the correct way to define an array of numbers in TypeScript?",
+      "options": [
+        "let numbers: array = [1, 2, 3];",
+        "let numbers: number[] = [1, 2, 3];",
+        "let numbers: Array = [1, 2, 3];",
+        "let numbers = Array<number>[1, 2, 3];"
+      ],
+      "correctAnswer": 1,
+      "explanation": "In TypeScript, arrays can be defined using type[] syntax or Array<type> syntax. The correct syntax is 'number[]' or 'Array<number>'."
+    },
+    {
+      "id": 3,
+      "question": "What does the 'readonly' modifier do in TypeScript?",
+      "options": [
+        "Makes a property private",
+        "Prevents a property from being changed after initialization",
+        "Makes a property optional",
+        "Makes a property static"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'readonly' modifier prevents a property from being reassigned after initialization. It can be set in the constructor but not modified afterward."
+    },
+    {
+      "id": 4,
+      "question": "What is a tuple in TypeScript?",
+      "options": [
+        "An array with unlimited elements",
+        "An array with fixed length and types",
+        "A type of object",
+        "A function parameter"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A tuple is an array with a fixed number of elements where each element can have a different, specific type. For example: [string, number]."
+    },
+    {
+      "id": 5,
+      "question": "What does the '?' operator do in TypeScript interfaces?",
+      "options": [
+        "Makes a property required",
+        "Makes a property optional",
+        "Makes a property readonly",
+        "Makes a property private"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The '?' operator makes a property optional in interfaces and object types, meaning it doesn't have to be present in implementations."
+    },
+    {
+      "id": 6,
+      "question": "What is a generic constraint in TypeScript?",
+      "options": [
+        "A way to limit the types that can be used with generics",
+        "A way to make generics required",
+        "A way to make generics optional",
+        "A way to remove generics"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Generic constraints use the 'extends' keyword to limit which types can be passed to a generic parameter, ensuring type safety."
+    },
+    {
+      "id": 7,
+      "question": "What does the 'keyof' operator do?",
+      "options": [
+        "Returns the values of an object type",
+        "Returns the keys of an object type as a union",
+        "Creates a new object type",
+        "Deletes keys from an object type"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'keyof' operator takes an object type and returns a union of its keys, useful for creating type-safe property access."
+    },
+    {
+      "id": 8,
+      "question": "What is the difference between 'interface' and 'type' in TypeScript?",
+      "options": [
+        "They are exactly the same",
+        "Interfaces can be extended and merged, types are more flexible for unions",
+        "Types are faster than interfaces",
+        "Interfaces only work with objects"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Interfaces can be extended and declaration merged, while types are more flexible for unions, intersections, and computed types."
+    },
+    {
+      "id": 9,
+      "question": "What does 'never' type represent?",
+      "options": [
+        "A value that can be anything",
+        "A value that will never occur",
+        "A value that is undefined",
+        "A value that is null"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'never' type represents values that never occur, such as functions that always throw errors or have infinite loops."
+    },
+    {
+      "id": 10,
+      "question": "What is type assertion in TypeScript?",
+      "options": [
+        "A way to check types at runtime",
+        "A way to tell TypeScript what type a value should be",
+        "A way to convert types automatically",
+        "A way to create new types"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Type assertion tells TypeScript to treat a value as a specific type, using 'as' syntax or angle brackets (not runtime type checking)."
+    },
+    {
+      "id": 11,
+      "question": "What is the purpose of the 'unknown' type?",
+      "options": [
+        "Same as 'any' but type-safe",
+        "Represents undefined values",
+        "Represents null values",
+        "Creates union types"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The 'unknown' type is a type-safe alternative to 'any' - you must check the type before using it, providing better type safety."
+    },
+    {
+      "id": 12,
+      "question": "What are template literal types?",
+      "options": [
+        "A way to create string templates",
+        "A way to create types from string patterns",
+        "A way to concatenate strings",
+        "A way to validate strings"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Template literal types allow creating types from string patterns using template literal syntax, enabling powerful string manipulation at the type level."
+    },
+    {
+      "id": 13,
+      "question": "What is a mapped type?",
+      "options": [
+        "A type that creates new objects",
+        "A type that transforms properties of another type",
+        "A type that maps functions",
+        "A type that creates arrays"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Mapped types create new types by transforming properties of existing types, using syntax like { [K in keyof T]: T[K] }."
+    },
+    {
+      "id": 14,
+      "question": "What is the purpose of conditional types?",
+      "options": [
+        "To create if-else logic in types",
+        "To validate conditions at runtime",
+        "To create loops in types",
+        "To handle errors in types"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Conditional types use the ternary operator (T extends U ? X : Y) to create type-level if-else logic for advanced type transformations."
+    },
+    {
+      "id": 15,
+      "question": "What does the 'infer' keyword do in conditional types?",
+      "options": [
+        "Automatically detects types",
+        "Extracts and captures types within conditional types",
+        "Creates new types",
+        "Validates type compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'infer' keyword in conditional types captures and extracts types from the condition, allowing complex type manipulations."
+    },
+    {
+      "id": 16,
+      "question": "What is a type guard?",
+      "options": [
+        "A function that protects types from errors",
+        "A function that narrows types at runtime",
+        "A function that creates new types",
+        "A function that validates type syntax"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Type guards are functions or expressions that narrow the type within a conditional block, helping TypeScript understand the specific type."
+    },
+    {
+      "id": 17,
+      "question": "What is the difference between 'Pick' and 'Omit' utility types?",
+      "options": [
+        "Pick selects properties, Omit excludes properties",
+        "Pick excludes properties, Omit selects properties",
+        "They do the same thing",
+        "Pick works with functions, Omit works with objects"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Pick<T, K> selects only the specified properties K from type T, while Omit<T, K> excludes the specified properties K from type T."
+    },
+    {
+      "id": 18,
+      "question": "What are decorators in TypeScript?",
+      "options": [
+        "Functions that add metadata and modify behavior",
+        "Functions that create new classes",
+        "Functions that handle errors",
+        "Functions that optimize performance"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Decorators are functions that can modify classes, methods, properties, or parameters by adding metadata or changing behavior at design time."
+    },
+    {
+      "id": 19,
+      "question": "What is the purpose of declaration files (.d.ts)?",
+      "options": [
+        "To contain actual implementation code",
+        "To provide type information for JavaScript libraries",
+        "To configure TypeScript compiler",
+        "To store test cases"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Declaration files (.d.ts) provide type information for JavaScript libraries, allowing TypeScript to understand their APIs without containing implementation."
+    },
+    {
+      "id": 20,
+      "question": "What is module augmentation?",
+      "options": [
+        "Creating new modules",
+        "Extending existing module types",
+        "Importing modules dynamically",
+        "Optimizing module loading"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Module augmentation allows extending the type definitions of existing modules, useful for adding types to third-party libraries."
+    },
+    {
+      "id": 21,
+      "question": "What is the 'satisfies' operator (TypeScript 4.9+)?",
+      "options": [
+        "Checks if a value satisfies a type without changing its inferred type",
+        "Converts one type to another",
+        "Creates union types",
+        "Validates runtime values"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The 'satisfies' operator validates that a value matches a type constraint while preserving the value's more specific inferred type."
+    },
+    {
+      "id": 22,
+      "question": "What are const assertions?",
+      "options": [
+        "Making variables constant",
+        "Asserting values as immutable and literal types",
+        "Creating constant functions",
+        "Declaring constant classes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Const assertions (as const) tell TypeScript to infer the most specific type possible and make objects/arrays readonly at the type level."
+    },
+    {
+      "id": 23,
+      "question": "What is a discriminated union?",
+      "options": [
+        "A union type with a common discriminant property",
+        "A union of different primitive types",
+        "A union that excludes certain types",
+        "A union with special operators"
+      ],
+      "correctAnswer": 0,
+      "explanation": "A discriminated union is a union type where each member has a common property (discriminant) with different literal values, enabling exhaustive type checking."
+    },
+    {
+      "id": 24,
+      "question": "What is the purpose of 'strict' mode in TypeScript?",
+      "options": [
+        "Makes TypeScript run faster",
+        "Enables all strict type checking options",
+        "Allows more flexible typing",
+        "Disables type checking"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Strict mode enables a set of strict type checking options like noImplicitAny, strictNullChecks, etc., providing maximum type safety."
+    },
+    {
+      "id": 25,
+      "question": "What are index signatures?",
+      "options": [
+        "Signatures for array indices",
+        "A way to define types for object properties with unknown names",
+        "Signatures for function parameters",
+        "Signatures for class methods"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Index signatures define types for object properties when you don't know all property names in advance, using syntax like [key: string]: Type."
+    },
+    {
+      "id": 26,
+      "question": "What does the 'satisfies' operator do in TypeScript?",
+      "options": [
+        "Converts one type to another",
+        "Validates that a value matches a type while preserving its specific type",
+        "Creates union types",
+        "Performs runtime type checking"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'satisfies' operator validates that a value matches a type constraint while preserving the value's more specific inferred type, giving you both type safety and precise types."
+    },
+    {
+      "id": 27,
+      "question": "What are const type parameters in TypeScript 5.0?",
+      "options": [
+        "Parameters that cannot be changed",
+        "Generic parameters that preserve literal types",
+        "Static parameters only",
+        "Required parameters"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Const type parameters (using 'const' modifier) allow generic functions to preserve literal types instead of widening them to their base types, enabling more precise type inference."
+    },
+    {
+      "id": 28,
+      "question": "What is the difference between TypeScript's experimental decorators and Stage 3 decorators?",
+      "options": [
+        "They are exactly the same",
+        "Stage 3 decorators follow the official ECMAScript proposal, experimental decorators are TypeScript-specific",
+        "Experimental decorators are newer",
+        "Stage 3 decorators are faster"
+      ],
+      "correctAnswer": 1,
+      "explanation": "TypeScript 5.0 implemented Stage 3 decorators which follow the official ECMAScript proposal, while experimental decorators were TypeScript's early implementation with different syntax and behavior."
+    },
+    {
+      "id": 29,
+      "question": "What is a branded type in TypeScript?",
+      "options": [
+        "A type with a company logo",
+        "A nominal type created using intersection with a unique symbol",
+        "A type from a specific library",
+        "A deprecated type"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Branded types create nominal typing in TypeScript's structural type system by intersecting with a unique symbol, allowing you to distinguish between structurally identical types."
+    },
+    {
+      "id": 30,
+      "question": "What is the purpose of TypeScript's 'using' declaration (upcoming feature)?",
+      "options": [
+        "Importing modules",
+        "Automatic resource disposal",
+        "Type aliasing",
+        "Variable declaration"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'using' declaration (ECMAScript proposal) provides automatic resource disposal, ensuring cleanup code runs when the resource goes out of scope, similar to try-with-resources in other languages."
+    }
+  ]
+}

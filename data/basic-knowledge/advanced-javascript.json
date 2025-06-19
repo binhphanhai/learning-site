@@ -1,6 +1,6 @@
 {
   "title": "Advanced JavaScript",
-  "description": "Master advanced JavaScript concepts including closures, prototypal inheritance, asynchronous programming, and modern ES6+ features",
+  "description": "Master advanced JavaScript concepts including closures, prototypal inheritance, asynchronous programming, modern ES6+ features, and cutting-edge JavaScript developments for 2024",
   "sections": [
     {
       "id": "how-javascript-works",
@@ -33,23 +33,77 @@
         },
         {
           "type": "paragraph",
-          "text": "Just In Time compiler merges the 2 pros of Interpreter and Compiler. The interpreter runs code right away (just one statement at a time & not build), while the compiler watches and optimizes code."
+          "text": "Just In Time (JIT) compiler combines the advantages of both interpreters and compilers. Modern JavaScript engines like V8 use a multi-tier compilation approach:"
         },
         {
-          "type": "paragraph",
-          "text": "Something may make JavaScript Engine slow: eval(), arguments, for...in loops, with statements, and delete operations."
+          "type": "list",
+          "items": [
+            "Ignition (Interpreter): Quickly parses and executes JavaScript code",
+            "TurboFan (Optimizing Compiler): Optimizes frequently executed 'hot' code",
+            "Sparkplug (Baseline Compiler): Fast non-optimizing compiler for warm code",
+            "Maglev (Mid-tier Compiler): Newer optimizing compiler in V8"
+          ]
         },
         {
           "type": "heading",
-          "text": "Optimization Techniques"
+          "text": "Performance Anti-patterns (2024 Update)"
         },
         {
           "type": "paragraph",
-          "text": "Hidden classes: Compiler sees that obj1 & obj2 have the same properties (same hidden classes). But when we introduce new things in different order, compiler sees that they don't have a shared hidden class, they are 2 separate things. That's going to slow things down internally. To optimize: assign all properties of an object in its constructor or make sure to add things in the same order."
+          "text": "Modern JavaScript engines are highly optimized, but some patterns can still impact performance:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "eval() and Function constructor - prevent optimizations",
+            "arguments object - use rest parameters (...args) instead",
+            "for...in loops on arrays - use for...of or forEach",
+            "with statements - deprecated and prevent optimizations",
+            "delete operations on object properties - use Map for dynamic keys",
+            "Try-catch in hot paths - can prevent optimizations",
+            "Megamorphic property access - inconsistent object shapes"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Modern V8 Optimization Techniques"
+        },
+        {
+          "type": "heading",
+          "text": "Hidden Classes (Shapes/Maps)"
         },
         {
           "type": "paragraph",
-          "text": "Inline caching: Code that executes the same method repeatedly will cache and just return the result, do NOT execute multiple times."
+          "text": "V8 creates hidden classes (also called shapes or maps) to optimize property access. Objects with the same properties in the same order share the same hidden class."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Good: Same hidden class\nfunction Point(x, y) {\n  this.x = x;\n  this.y = y;\n}\n\nconst p1 = new Point(1, 2);\nconst p2 = new Point(3, 4);\n\n// Bad: Different hidden classes\nconst obj1 = {};\nobj1.a = 1;\nobj1.b = 2;\n\nconst obj2 = {};\nobj2.b = 2; // Different order!\nobj2.a = 1;"
+        },
+        {
+          "type": "heading",
+          "text": "Inline Caching (IC)"
+        },
+        {
+          "type": "paragraph",
+          "text": "V8 uses inline caching to optimize property access and method calls by caching the location of properties and methods."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Monomorphic: One type/shape - fastest",
+            "Polymorphic: Few types/shapes - slower",
+            "Megamorphic: Many types/shapes - slowest"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Speculative Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "TurboFan makes assumptions about code behavior and optimizes accordingly. If assumptions are violated, it deoptimizes back to unoptimized code."
         },
         {
           "type": "heading",
@@ -70,29 +124,70 @@
           "text": "Memory Management"
         },
         {
+          "type": "heading",
+          "text": "Memory Heap"
+        },
+        {
+          "type": "paragraph",
+          "text": "The heap is where objects are stored. It's a large, mostly unstructured region of memory where dynamic allocation happens."
+        },
+        {
           "type": "list",
           "items": [
-            "Memory Heap: a place to store & write information (allocate, use & release memory)",
-            "Call stack: keep track of where we are in the code",
-            "Stack overflow: occurs when the call stack exceeds its limit",
-            "Garbage collection: JS is a garbage collected language - JS auto frees up memory that we no longer use (mark and sweep algorithm - no ref from root)"
+            "Young Generation: New objects, frequently garbage collected",
+            "Old Generation: Long-lived objects, less frequently collected",
+            "Large Object Space: Objects larger than 1MB"
           ]
         },
         {
           "type": "heading",
-          "text": "Memory Leaks"
+          "text": "Call Stack"
         },
         {
           "type": "paragraph",
-          "text": "Some common ways that lead to memory leaks:"
+          "text": "The call stack keeps track of function calls and execution contexts. Each function call creates a new frame on the stack."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function first() {\n  console.log('First');\n  second();\n}\n\nfunction second() {\n  console.log('Second');\n  third();\n}\n\nfunction third() {\n  console.log('Third');\n}\n\nfirst();\n// Stack: [global] -> [first] -> [second] -> [third]"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Garbage Collection"
+        },
+        {
+          "type": "paragraph",
+          "text": "V8 uses multiple garbage collection strategies:"
         },
         {
           "type": "list",
           "items": [
-            "Global variables",
-            "Event listeners (forget to remove)",
-            "setInterval"
+            "Scavenger (Minor GC): Cleans young generation using copying collection",
+            "Mark-Sweep (Major GC): Marks reachable objects, sweeps unreachable ones",
+            "Mark-Compact: Compacts memory to reduce fragmentation",
+            "Incremental marking: Spreads GC work across multiple frames",
+            "Concurrent marking: GC runs parallel to JavaScript execution"
           ]
+        },
+        {
+          "type": "heading",
+          "text": "Common Memory Leaks & Prevention"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Global variables - use const/let with proper scope",
+            "Forgotten event listeners - always removeEventListener",
+            "Detached DOM nodes - remove references after DOM removal",
+            "Closures retaining large objects - be mindful of closure scope",
+            "Timers (setInterval/setTimeout) - clear with clearInterval/clearTimeout"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Memory leak prevention\nconst controller = new AbortController();\nconst signal = controller.signal;\n\n// Modern event handling\nelement.addEventListener('click', handler, { signal });\n\n// Cleanup\ncontroller.abort(); // Removes all listeners with this signal\n\n// WeakMap for private data\nconst privateData = new WeakMap();\nclass MyClass {\n  constructor() {\n    privateData.set(this, { secret: 'data' });\n  }\n}"
         },
         {
           "type": "heading",
@@ -644,35 +739,122 @@
       "content": [
         {
           "type": "heading",
-          "text": "Promise Execution Patterns"
-        },
-        {
-          "type": "list",
-          "items": [
-            "Parallel: use Promise.all (waits for all to complete)",
-            "Race: use Promise.race (returns first completed)",
-            "Sequence: multiple .then or await for each"
-          ]
-        },
-        {
-          "type": "heading",
-          "text": "Concurrency vs Parallelism"
+          "text": "Event Loop Deep Dive"
         },
         {
           "type": "paragraph",
-          "text": "Concurrency is about dealing with lots of things at once. Parallelism is about doing lots of things at once."
-        },
-        {
-          "type": "heading",
-          "text": "Error Handling"
+          "text": "The event loop is the core of JavaScript's concurrency model. Understanding its phases is crucial for writing efficient async code."
         },
         {
           "type": "list",
           "items": [
-            "Synchronous/async await: use try-catch-finally",
-            "Promises: use .catch()",
-            "JS has built-in Error constructor with name, message, and stack trace"
+            "Call Stack: Where synchronous code executes",
+            "Web APIs/Node APIs: Browser/Node.js APIs (setTimeout, fetch, etc.)",
+            "Callback Queue: Where callbacks wait to be executed",
+            "Microtask Queue: Higher priority queue for Promises, queueMicrotask",
+            "Event Loop: Moves tasks from queues to call stack when it's empty"
           ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "console.log('1');\n\nsetTimeout(() => console.log('2'), 0);\n\nPromise.resolve().then(() => console.log('3'));\n\nqueueMicrotask(() => console.log('4'));\n\nconsole.log('5');\n\n// Output: 1, 5, 3, 4, 2\n// Microtasks (Promise, queueMicrotask) have higher priority than macrotasks (setTimeout)"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Promise Methods (2024)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Promise.all - all must succeed\nconst results = await Promise.all([fetch('/api/1'), fetch('/api/2')]);\n\n// Promise.allSettled - wait for all, regardless of outcome\nconst outcomes = await Promise.allSettled([fetch('/api/1'), fetch('/api/2')]);\n// [{ status: 'fulfilled', value: ... }, { status: 'rejected', reason: ... }]\n\n// Promise.race - first to complete\nconst first = await Promise.race([fetch('/api/1'), fetch('/api/2')]);\n\n// Promise.any - first to succeed (ES2021)\ntry {\n  const firstSuccess = await Promise.any([fetch('/api/1'), fetch('/api/2')]);\n} catch (aggregateError) {\n  // All promises rejected\n  console.log(aggregateError.errors);\n}\n\n// Promise.withResolvers() - ES2024 (Stage 3)\nconst { promise, resolve, reject } = Promise.withResolvers();\n// Useful for creating promises that resolve/reject from outside"
+        },
+        {
+          "type": "heading",
+          "text": "Async/Await Best Practices"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Sequential vs Parallel execution\n// Sequential (slower)\nconst data1 = await fetch('/api/1');\nconst data2 = await fetch('/api/2');\n\n// Parallel (faster)\nconst [data1, data2] = await Promise.all([\n  fetch('/api/1'),\n  fetch('/api/2')\n]);\n\n// Error handling patterns\ntry {\n  const result = await riskyOperation();\n  return result;\n} catch (error) {\n  if (error instanceof TypeError) {\n    // Handle specific error type\n  }\n  throw error; // Re-throw if can't handle\n} finally {\n  // Cleanup code\n}\n\n// AbortController for cancellation\nconst controller = new AbortController();\nconst signal = controller.signal;\n\ntry {\n  const response = await fetch('/api/data', { signal });\n} catch (error) {\n  if (error.name === 'AbortError') {\n    console.log('Request was aborted');\n  }\n}\n\n// Cancel after 5 seconds\nsetTimeout(() => controller.abort(), 5000);"
+        },
+        {
+          "type": "heading",
+          "text": "Generators and Async Generators"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Generator function\nfunction* fibonacci() {\n  let [a, b] = [0, 1];\n  while (true) {\n    yield a;\n    [a, b] = [b, a + b];\n  }\n}\n\nconst fib = fibonacci();\nconsole.log(fib.next().value); // 0\nconsole.log(fib.next().value); // 1\n\n// Async generator\nasync function* fetchPages(urls) {\n  for (const url of urls) {\n    const response = await fetch(url);\n    yield await response.json();\n  }\n}\n\n// Using async generator\nfor await (const page of fetchPages(['/api/1', '/api/2'])) {\n  console.log(page);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Web Streams API"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Reading streams\nconst response = await fetch('/large-file');\nconst reader = response.body.getReader();\n\nwhile (true) {\n  const { done, value } = await reader.read();\n  if (done) break;\n  \n  // Process chunk\n  console.log('Received chunk:', value);\n}\n\n// Transform streams\nconst transformStream = new TransformStream({\n  transform(chunk, controller) {\n    // Process each chunk\n    const processed = chunk.toUpperCase();\n    controller.enqueue(processed);\n  }\n});\n\nconst readable = new ReadableStream({\n  start(controller) {\n    controller.enqueue('hello');\n    controller.enqueue('world');\n    controller.close();\n  }\n});\n\nconst transformed = readable.pipeThrough(transformStream);"
+        }
+      ]
+    },
+    {
+      "id": "modern-javascript-2024",
+      "title": "Modern JavaScript Features (2024)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Optional Chaining & Nullish Coalescing"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Optional chaining (?.) - ES2020\nconst user = { profile: { name: 'John' } };\nconsole.log(user?.profile?.name); // 'John'\nconsole.log(user?.address?.street); // undefined (no error)\n\n// Method chaining\nuser.getName?.(); // Calls if method exists\n\n// Dynamic property access\nuser?.['dynamic-key'];\n\n// Nullish coalescing (??) - ES2020\nconst defaultValue = null ?? undefined ?? 'default'; // 'default'\nconst keepFalsy = false ?? 'default'; // false (unlike ||)"
+        },
+        {
+          "type": "heading",
+          "text": "Private Class Fields & Methods"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class BankAccount {\n  // Private fields\n  #balance = 0;\n  #accountNumber;\n  \n  // Private static field\n  static #bankCode = 'BANK001';\n  \n  constructor(accountNumber) {\n    this.#accountNumber = accountNumber;\n  }\n  \n  // Private method\n  #validateAmount(amount) {\n    return amount > 0 && amount <= this.#balance;\n  }\n  \n  // Public method accessing private members\n  withdraw(amount) {\n    if (this.#validateAmount(amount)) {\n      this.#balance -= amount;\n      return true;\n    }\n    return false;\n  }\n  \n  get balance() {\n    return this.#balance;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Top-level await (ES2022)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Can use await at module top level\nconst data = await fetch('/api/data').then(r => r.json());\n\n// Conditional imports\nconst theme = await import(isDark ? './dark-theme.js' : './light-theme.js');\n\n// Dynamic imports with error handling\ntry {\n  const { utilities } = await import('./utilities.js');\n  utilities.init();\n} catch (error) {\n  console.error('Failed to load utilities:', error);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Array and Object Methods (Recent)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Array.at() - ES2022\nconst arr = [1, 2, 3, 4, 5];\nconsole.log(arr.at(-1)); // 5 (last element)\nconsole.log(arr.at(-2)); // 4 (second to last)\n\n// Object.hasOwn() - ES2022 (safer than hasOwnProperty)\nconst obj = { name: 'John' };\nconsole.log(Object.hasOwn(obj, 'name')); // true\n\n// Array.findLast() and findLastIndex() - ES2023\nconst numbers = [1, 2, 3, 4, 5, 4, 3];\nconst lastEven = numbers.findLast(n => n % 2 === 0); // 4\nconst lastEvenIndex = numbers.findLastIndex(n => n % 2 === 0); // 5\n\n// Array.toReversed(), toSorted(), toSpliced() - ES2023 (immutable)\nconst original = [3, 1, 4, 1, 5];\nconst reversed = original.toReversed(); // [5, 1, 4, 1, 3]\nconst sorted = original.toSorted(); // [1, 1, 3, 4, 5]\n// original array unchanged!"
+        },
+        {
+          "type": "heading",
+          "text": "Temporal Dead Zone & let/const Behavior"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Temporal Dead Zone demonstration\nconsole.log(typeof myVar); // 'undefined'\nconsole.log(typeof myLet); // ReferenceError: Cannot access before initialization\n\nvar myVar = 'var value';\nlet myLet = 'let value';\n\n// Block scoping differences\nif (true) {\n  var functionScoped = 'I am function scoped';\n  let blockScoped = 'I am block scoped';\n  const alsoBlockScoped = 'Me too';\n}\n\nconsole.log(functionScoped); // 'I am function scoped'\n// console.log(blockScoped); // ReferenceError\n// console.log(alsoBlockScoped); // ReferenceError"
+        },
+        {
+          "type": "heading",
+          "text": "WeakMap, WeakSet, and WeakRef"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// WeakMap - keys must be objects, garbage collectible\nconst privateData = new WeakMap();\n\nclass User {\n  constructor(name) {\n    privateData.set(this, { name, secrets: [] });\n  }\n  \n  getName() {\n    return privateData.get(this).name;\n  }\n}\n\n// WeakRef - weak reference to an object (ES2021)\nclass Cache {\n  constructor() {\n    this.cache = new Map();\n  }\n  \n  set(key, obj) {\n    this.cache.set(key, new WeakRef(obj));\n  }\n  \n  get(key) {\n    const ref = this.cache.get(key);\n    const obj = ref?.deref();\n    \n    if (!obj) {\n      // Object was garbage collected\n      this.cache.delete(key);\n      return undefined;\n    }\n    \n    return obj;\n  }\n}"
         }
       ]
     },
@@ -1059,6 +1241,66 @@
       ],
       "correctAnswer": 1,
       "explanation": "Garbage collection is JavaScript's automatic memory management system. It identifies and frees memory that's no longer referenced by the program, preventing memory leaks. JavaScript uses algorithms like 'mark and sweep'."
+    },
+    {
+      "id": 31,
+      "question": "What is the difference between microtasks and macrotasks in the event loop?",
+      "options": [
+        "Microtasks are smaller than macrotasks",
+        "Microtasks have higher priority and execute before macrotasks",
+        "Macrotasks execute first",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Microtasks (Promises, queueMicrotask) have higher priority than macrotasks (setTimeout, setInterval). The event loop processes all microtasks before moving to the next macrotask."
+    },
+    {
+      "id": 32,
+      "question": "What does the optional chaining operator (?.) do?",
+      "options": [
+        "Creates optional function parameters",
+        "Safely accesses nested object properties without throwing errors",
+        "Makes variables optional",
+        "Chains function calls"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Optional chaining (?.) allows safe access to nested object properties. If any part of the chain is null or undefined, it returns undefined instead of throwing an error."
+    },
+    {
+      "id": 33,
+      "question": "What is the difference between nullish coalescing (??) and logical OR (||)?",
+      "options": [
+        "They work exactly the same",
+        "?? only considers null/undefined as falsy, || considers all falsy values",
+        "|| is newer than ??",
+        "?? is faster than ||"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Nullish coalescing (??) only treats null and undefined as falsy values, while logical OR (||) treats all falsy values (0, '', false, etc.) as falsy. This makes ?? better for default values."
+    },
+    {
+      "id": 34,
+      "question": "What are private class fields in JavaScript?",
+      "options": [
+        "Fields declared with 'private' keyword",
+        "Fields prefixed with # that are truly private",
+        "Fields with underscore prefix",
+        "Static fields only"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Private class fields are declared with # prefix and are truly private - they cannot be accessed from outside the class, unlike underscore-prefixed 'private' conventions."
+    },
+    {
+      "id": 35,
+      "question": "What is top-level await?",
+      "options": [
+        "Using await in any function",
+        "Using await at the module top level without async function",
+        "Awaiting at the global scope",
+        "The fastest type of await"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Top-level await (ES2022) allows using await at the module top level without wrapping it in an async function, making module initialization cleaner for async operations."
     }
   ]
 }

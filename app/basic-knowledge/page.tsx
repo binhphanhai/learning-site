@@ -3,10 +3,12 @@ import ContentListPage from "../../components/ContentListPage";
 
 // Import content for basic knowledge section
 import advancedJavascriptContent from "../../data/basic-knowledge/advanced-javascript.json";
+import typescriptContent from "../../data/basic-knowledge/typescript.json";
 
 // Define content for basic knowledge
 const contentMap = {
   "advanced-javascript": advancedJavascriptContent,
+  typescript: typescriptContent,
 };
 
 export default function BasicKnowledgePage() {
