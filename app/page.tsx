@@ -14,6 +14,7 @@ import {
   ApartmentOutlined,
   BookOutlined,
   TrophyOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -48,7 +49,10 @@ export default function HomePage() {
   }, []);
 
   return (
-    <Layout className="min-h-screen">
+    <Layout
+      className="min-h-screen"
+      style={{ overflowY: "auto", height: "100vh" }}
+    >
       <Header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center">
           <Title level={3} className="m-0 text-blue-600">
@@ -75,28 +79,28 @@ export default function HomePage() {
                 hoverable
                 className="h-full"
                 cover={
-                  <div className="p-8 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-                    <ApartmentOutlined className="text-5xl text-blue-500" />
+                  <div className="p-8 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+                    <ReadOutlined className="text-5xl text-purple-500" />
                   </div>
                 }
                 actions={[
-                  <Link key="view" href="/frontend-learning-roadmap">
+                  <Link key="view" href="/basic-knowledge">
                     <Button type="primary" size="large">
-                      Start Learning
+                      View Knowledge
                     </Button>
                   </Link>,
                 ]}
               >
                 <Card.Meta
-                  title="Frontend Learning Roadmap"
-                  description="Complete roadmap from junior to senior frontend engineer, covering all essential skills and technologies."
+                  title="Basic Knowledge"
+                  description="Foundational concepts and personal learning notes covering various programming topics and technologies."
                 />
                 <div className="mt-4">
                   <Space direction="vertical" size="small">
-                    <span>• Core Frontend Skills</span>
-                    <span>• Backend & API Integration</span>
-                    <span>• Testing & Debugging</span>
-                    <span>• Performance Optimization</span>
+                    <span>• Advanced JavaScript & TypeScript</span>
+                    <span>• React & React Native</span>
+                    <span>• Algorithms & Data Structures</span>
+                    <span>• HTML/CSS & Next.js</span>
                   </Space>
                 </div>
               </Card>
@@ -133,45 +137,38 @@ export default function HomePage() {
                 </div>
               </Card>
             </Col>
+            <Col xs={24} md={12} lg={8}>
+              <Card
+                hoverable
+                className="h-full"
+                cover={
+                  <div className="p-8 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+                    <ApartmentOutlined className="text-5xl text-blue-500" />
+                  </div>
+                }
+                actions={[
+                  <Link key="view" href="/frontend-learning-roadmap">
+                    <Button type="primary" size="large">
+                      Start Learning
+                    </Button>
+                  </Link>,
+                ]}
+              >
+                <Card.Meta
+                  title="Frontend Learning Roadmap"
+                  description="Complete roadmap from junior to senior frontend engineer, covering all essential skills and technologies."
+                />
+                <div className="mt-4">
+                  <Space direction="vertical" size="small">
+                    <span>• Core Frontend Skills</span>
+                    <span>• Backend & API Integration</span>
+                    <span>• Testing & Debugging</span>
+                    <span>• Performance Optimization</span>
+                  </Space>
+                </div>
+              </Card>
+            </Col>
           </Row>
-
-          {/* Available Learning Content */}
-          {!loading && availableContent.length > 0 && (
-            <>
-              <Divider className="my-12">
-                <Title level={2} className="text-gray-700">
-                  Available Learning Content
-                </Title>
-              </Divider>
-
-              <Row gutter={[24, 24]}>
-                {availableContent.map((content) => (
-                  <Col key={content.slug} xs={24} md={12} lg={8}>
-                    <Card
-                      hoverable
-                      className="h-full"
-                      title={content.title}
-                      actions={[
-                        <Link key="learn" href={`/learn/${content.slug}`}>
-                          <Button type="primary">Start Learning</Button>
-                        </Link>,
-                        <Link
-                          key="senior"
-                          href={`/to-be-senior/${content.slug}`}
-                        >
-                          <Button type="default">Senior Path</Button>
-                        </Link>,
-                      ]}
-                    >
-                      <Paragraph className="text-gray-600">
-                        {content.description}
-                      </Paragraph>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-            </>
-          )}
         </div>
       </Content>
 

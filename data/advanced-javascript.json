@@ -1,0 +1,1064 @@
+{
+  "title": "Advanced JavaScript",
+  "description": "Master advanced JavaScript concepts including closures, prototypal inheritance, asynchronous programming, and modern ES6+ features",
+  "sections": [
+    {
+      "id": "how-javascript-works",
+      "title": "How JavaScript Works",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Interpreter vs Compiler"
+        },
+        {
+          "type": "paragraph",
+          "text": "There are 2 ways of translating to machine language: Interpreter and Compiler."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Interpreter translates just one statement of the program at a time into machine code",
+            "Compiler scans the entire program and translates the whole of it into machine code at once",
+            "An interpreter takes very less time to analyze the source code. However, the overall time to execute the process is much slower",
+            "A compiler takes a lot of time to analyze the source code. However, the overall time taken to execute the process is much faster",
+            "An interpreter does not generate an intermediary code. Hence, an interpreter is highly efficient in terms of its memory",
+            "A compiler always generates an intermediary object code. It will need further linking. Hence more memory is needed",
+            "Keeps translating the program continuously till the first error is confronted. If any error is spotted, it stops working and hence debugging becomes easy",
+            "A compiler generates the error message only after it scans the complete program and hence debugging is relatively harder while working with a compiler"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "JIT Compiler"
+        },
+        {
+          "type": "paragraph",
+          "text": "Just In Time compiler merges the 2 pros of Interpreter and Compiler. The interpreter runs code right away (just one statement at a time & not build), while the compiler watches and optimizes code."
+        },
+        {
+          "type": "paragraph",
+          "text": "Something may make JavaScript Engine slow: eval(), arguments, for...in loops, with statements, and delete operations."
+        },
+        {
+          "type": "heading",
+          "text": "Optimization Techniques"
+        },
+        {
+          "type": "paragraph",
+          "text": "Hidden classes: Compiler sees that obj1 & obj2 have the same properties (same hidden classes). But when we introduce new things in different order, compiler sees that they don't have a shared hidden class, they are 2 separate things. That's going to slow things down internally. To optimize: assign all properties of an object in its constructor or make sure to add things in the same order."
+        },
+        {
+          "type": "paragraph",
+          "text": "Inline caching: Code that executes the same method repeatedly will cache and just return the result, do NOT execute multiple times."
+        },
+        {
+          "type": "heading",
+          "text": "JavaScript Engine vs Runtime"
+        },
+        {
+          "type": "paragraph",
+          "text": "JavaScript engine is different from JavaScript runtime. The runtime includes the JavaScript engine, Web APIs, callback queue, and event loop."
+        }
+      ]
+    },
+    {
+      "id": "call-stack-memory",
+      "title": "Call Stack and Memory Heap",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Memory Management"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Memory Heap: a place to store & write information (allocate, use & release memory)",
+            "Call stack: keep track of where we are in the code",
+            "Stack overflow: occurs when the call stack exceeds its limit",
+            "Garbage collection: JS is a garbage collected language - JS auto frees up memory that we no longer use (mark and sweep algorithm - no ref from root)"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Memory Leaks"
+        },
+        {
+          "type": "paragraph",
+          "text": "Some common ways that lead to memory leaks:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Global variables",
+            "Event listeners (forget to remove)",
+            "setInterval"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Single Threaded Nature"
+        },
+        {
+          "type": "paragraph",
+          "text": "JavaScript is a single threaded language - only 1 set of instructions is executed at a time (1 call stack)."
+        }
+      ]
+    },
+    {
+      "id": "execution-context",
+      "title": "Execution Context & Hoisting",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Execution Context"
+        },
+        {
+          "type": "paragraph",
+          "text": "When JS sees these brackets () – execute function, it creates execution context. Each context has a link to parent context."
+        },
+        {
+          "type": "heading",
+          "text": "Lexical Environment"
+        },
+        {
+          "type": "paragraph",
+          "text": "Is simply where you write your code (in global or another function). In JS our lexical scope – static scope (available data + variables where the function was defined) determines our available variables, not where the function is called (dynamic scope)."
+        },
+        {
+          "type": "heading",
+          "text": "Hoisting"
+        },
+        {
+          "type": "paragraph",
+          "text": "Is the behavior of moving the variables or function declarations to the top of their respective environments during compilation phase. Hoisting happens on every execution context (meaning when function is executed)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Underneath the hood: JS engine looks through the code, it sees 'var' & 'function' keyword and allocates memory for that."
+        },
+        {
+          "type": "list",
+          "items": [
+            "'var' is partially hoisted (Just declare new variable and assign it to undefined)",
+            "'function' declarations are fully hoisted",
+            "Only function declaration is fully hoisted",
+            "Function expression isn't fully hoisted",
+            "If we use 'var', it is partially hoisted",
+            "If we use 'let' or 'const', it isn't hoisted"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "functions",
+      "title": "Functions & Scope",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Function Types"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Function expression: can be called immediately",
+            "Function declaration: hoisted and can be called before definition",
+            "Arrow function: lexically bound, has lexical 'this' behavior ('this' = where we define arrow function), don't have arguments"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Arguments (array-like object): shouldn't use this, use '...rest' instead"
+        },
+        {
+          "type": "heading",
+          "text": "Scope Chain"
+        },
+        {
+          "type": "paragraph",
+          "text": "All functions have their own variable environment. They have access to each their own variables. They also have a scope chain. This scope chain links and gives us access to variables that are in our parent environment (where function is written)."
+        },
+        {
+          "type": "heading",
+          "text": "Weird Exercise"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const fn1 = function fn2() {\n  console.log('hello')\n}\n\nfn1() // Works\nfn2() // Error: fn2 is not defined\n// Cannot call fn2 because fn2 function is actually enclosed in its own scope"
+        },
+        {
+          "type": "heading",
+          "text": "Leakage of Global Variables"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function weird() {\n  something = 50\n  return something\n}\n// This function will return 50 without any errors"
+        },
+        {
+          "type": "paragraph",
+          "text": "Underneath the hood: It looks for 'something' in local scope but sees nothing. It goes up to the parent scope (here is global scope) and finds. But global scope says that 'I don't have it'. The global sees that it isn't existed and creates it for you (wtf). To avoid that, add 'use strict' at the beginning of page."
+        },
+        {
+          "type": "heading",
+          "text": "Scope"
+        },
+        {
+          "type": "paragraph",
+          "text": "Scope means what variable we have access to."
+        },
+        {
+          "type": "heading",
+          "text": "Function Scope vs Block Scope"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dynamic scope vs lexical scope: In JS our lexical scope – static scope (available data + variables where the function was defined) determines our available variables, not where the function is called (dynamic scope). JS just has lexical scope. Except 'this' keyword, it has dynamic scope."
+        },
+        {
+          "type": "heading",
+          "text": "IIFE"
+        },
+        {
+          "type": "paragraph",
+          "text": "Immediately invoked function expression. It helps us: Attach private data to a function, Create a fresh environment."
+        }
+      ]
+    },
+    {
+      "id": "this-keyword",
+      "title": "The 'this' Keyword",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Understanding 'this'"
+        },
+        {
+          "type": "paragraph",
+          "text": "'this' is the object that the function is a property of (which calls the function) - the left side of the dot."
+        },
+        {
+          "type": "heading",
+          "text": "Benefits of 'this'"
+        },
+        {
+          "type": "list",
+          "items": [
+            "It gives methods access to their object",
+            "It executes same code for multiple objects"
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "'use strict' prevent 'this' refers to the window object. ES Modules have 'use strict' by default."
+        },
+        {
+          "type": "heading",
+          "text": "Exercise"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const obj = {\n  name: 'Binh',\n  sing: function () {\n    console.log('sing', this)\n    const anotherFunc = function () {\n      console.log('another func', this)\n    }\n    anotherFunc()\n  },\n}\n\nobj.sing()\n// The first log is \"obj\"\n// The second log is \"global\""
+        },
+        {
+          "type": "paragraph",
+          "text": "To fix that, using: Arrow function (lexical bound), Bind/Apply/call, or const self = this (old way)"
+        },
+        {
+          "type": "heading",
+          "text": "Manipulating 'this' keyword"
+        },
+        {
+          "type": "heading",
+          "text": "Bind"
+        },
+        {
+          "type": "paragraph",
+          "text": "Return a new function with a certain context & parameters"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function multiply(a, b) {\n  return a * b\n}\n\nconst multiplyByTwo = multiply.bind(this, 2)\nconst multiplyByTen = multiply.bind(this, 10)"
+        },
+        {
+          "type": "heading",
+          "text": "Call"
+        },
+        {
+          "type": "paragraph",
+          "text": "Underneath the hood, all functions use 'call' when invoked. fn() is the shorthand of fn.call(). The first parameter of 'call' is what 'this' should be bound to. Use to share a function to another object: obj1.fn1.call(obj2, param1, param2, param3)"
+        },
+        {
+          "type": "heading",
+          "text": "Apply"
+        },
+        {
+          "type": "paragraph",
+          "text": "Same as 'call' but it takes an array of parameters: obj1.fn1.apply(obj2, [param1, param2, param3])"
+        },
+        {
+          "type": "heading",
+          "text": "When are they useful"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Call & apply: for borrowing methods from an object",
+            "Bind: For us to call functions later on with a certain context | certain 'this' keyword, For currying – reuse piece of code"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "context-vs-scope",
+      "title": "Context vs Scope",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Scope"
+        },
+        {
+          "type": "paragraph",
+          "text": "Is a function based thing. Means what is the variable access of a function when it is invoked."
+        },
+        {
+          "type": "heading",
+          "text": "Context"
+        },
+        {
+          "type": "paragraph",
+          "text": "Is about object based. Is what the value of 'this' keyword."
+        }
+      ]
+    },
+    {
+      "id": "types-in-javascript",
+      "title": "Types in JavaScript",
+      "content": [
+        {
+          "type": "heading",
+          "text": "JavaScript Types"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Number",
+            "Boolean",
+            "String",
+            "Object",
+            "Array: use Array.isArray to check type",
+            "Function",
+            "Undefined: absence of a definition – there's a variable there but there's nothing there",
+            "Null: absence of value – there's no value there",
+            "Symbol (ES6): unique as keys in an object"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Primitive vs Non-Primitive Type"
+        },
+        {
+          "type": "paragraph",
+          "text": "Primitive: It's a data that only represents a single value. It directly contains the value of that type. It can't be broken down into any smaller parts. Passed by value. Underneath the hood, it has object wrappers: true = Boolean(true)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Non-Primitive: It doesn't contain the value directly, it has a reference. Passed by reference. Underneath the hood, it has object wrappers too: {} = Object({})"
+        },
+        {
+          "type": "heading",
+          "text": "Type Coercion"
+        },
+        {
+          "type": "paragraph",
+          "text": "It happens when we use double equal '=='. Example: 1 == '1'. To avoid that, using triple equal '===', it avoids coercing the values."
+        },
+        {
+          "type": "heading",
+          "text": "Overview Languages"
+        },
+        {
+          "type": "heading",
+          "text": "Static type vs Dynamic type"
+        },
+        {
+          "type": "paragraph",
+          "text": "Static type ('bool', 'int', 'float'... like C++). Pros: It is self-documenting (can see what type of variables is expected => avoid making errors), Helps with auto completion in editors, Get less bugs in productions. Cons: Make our code more complex, Slow down the development process."
+        },
+        {
+          "type": "paragraph",
+          "text": "Dynamic type (just 'var' like JS)"
+        },
+        {
+          "type": "heading",
+          "text": "Strong type vs Weak type"
+        },
+        {
+          "type": "paragraph",
+          "text": "Strong type: cannot do 'hello' + 13. Weak type: Can do 'hello' + 13"
+        }
+      ]
+    },
+    {
+      "id": "closures",
+      "title": "Closures & Prototypal Inheritance",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Functions are Objects"
+        },
+        {
+          "type": "paragraph",
+          "text": "It is a special type of object – callable object. It is First Class citizens in JS: Can be assigned to variables and properties objects, Can be pass as arguments, Return a function as value from other functions."
+        },
+        {
+          "type": "heading",
+          "text": "Higher Order Function"
+        },
+        {
+          "type": "paragraph",
+          "text": "Is simply a function that can take another function as an argument | function that return another function."
+        },
+        {
+          "type": "paragraph",
+          "text": "Funny example: Function(): we define the function exactly what to do and what data to use. Function(a,b): we define the function what it does but later on, we'll tell what data to use. HOF: we define the function but later on, we'll tell what data to use & what to do."
+        },
+        {
+          "type": "heading",
+          "text": "Closure"
+        },
+        {
+          "type": "paragraph",
+          "text": "We have a closure when: A function accesses variables defined outside of it (the child scope can access the parent scope). The function executed, it's never going to execute again. HOWEVER, it's going to remember that there are references to those variables -> child scope always has access to the parent scope."
+        },
+        {
+          "type": "paragraph",
+          "text": "It allows a function to access variables from an enclosing scope even after it leaves the scope in which it was declared. Garbage collector doesn't clear variables that is referenced by child function."
+        },
+        {
+          "type": "heading",
+          "text": "Currying"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const curriedMultiply = a => b => a * b\ncurriedMultiply(5)(6)\nconst multiplyBy5 = curriedMultiply(5)\nmultiplyBy5(6)"
+        },
+        {
+          "type": "heading",
+          "text": "Compose"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const compose = (f, g) => a => f(g(a))\nconst addOne = num => num + 1\nconst multiplyTwo = num => num * 2\nconst addOneThenMultiplyTwo = compose(multiplyTwo, addOne)\naddOneThenMultiplyTwo(5) // (5+1)*2 = 12"
+        },
+        {
+          "type": "heading",
+          "text": "Example: implement cache"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function a() {\n  const grandpa = 'grandpa'\n  return function b() {\n    const father = 'father'\n    return function c() {\n      const son = 'son'\n      return `${grandpa} > ${father} > ${son}`\n    }\n  }\n}\n\nconst one = a()\nconst two = one()\nconst three = two()"
+        },
+        {
+          "type": "heading",
+          "text": "2 most benefits"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Memory efficient (cached without polluting global variable)",
+            "Encapsulation"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Exercise"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const array = [1, 2, 3, 4]\nfor (var i = 0; i < array.length; i++) {\n  setTimeout(() => {\n    console.log('I am at index ' + i)\n  }, 3000)\n}\n// This will log \"I am at index 4\" 4 times\n// Due to scope: i will be hoisted"
+        },
+        {
+          "type": "paragraph",
+          "text": "To fix that: Use let: block scope => Block create scope for each i => Closure keep it for callback in setTimeout. Use IIFE & closure:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const array = [1, 2, 3, 4]\nfor (var i = 0; i < array.length; i++) {\n  (function (closureI) {\n    setTimeout(() => {\n      console.log('I am at index ' + closureI)\n    }, 3000)\n  })(i)\n}"
+        }
+      ]
+    },
+    {
+      "id": "prototypal-inheritance",
+      "title": "Prototypal Inheritance",
+      "content": [
+        {
+          "type": "paragraph",
+          "text": "Nearly similar to classical inheritance in C#. An object gets access to the properties and methods of another object through the prototype chain."
+        },
+        {
+          "type": "paragraph",
+          "text": "Use __proto__ to go up (parent object). __proto__ is a reference to upper chain prototype object (child.__proto__ = parent.prototype)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Also can use object2.__proto__ = object1 to inherit properties from object 1 and override anything that is declared in object2 (should not use this, use Object.create instead, it does the same thing)."
+        },
+        {
+          "type": "paragraph",
+          "text": "It doesn't actually copy these properties from object1. Just if JS engine doesn't find property on that object2, it goes up the prototype chain to find."
+        },
+        {
+          "type": "heading",
+          "text": "Benefits"
+        },
+        {
+          "type": "paragraph",
+          "text": "Objects can share prototypes (have properties that are pointing to the same place in memory => memory efficient). Only functions have prototype property. The only time we use prototype property is constructor functions."
+        },
+        {
+          "type": "heading",
+          "text": "Exercise"
+        },
+        {
+          "type": "paragraph",
+          "text": "Add new method to Date:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "Date.prototype.lastYear = function () {\n  return this.getFullYear() - 1\n}\n\nconst lastYear = new Date('1998-03-03').lastYear()"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modify .map() method of Array:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "Array.prototype.map = function () {\n  const rs = []\n  for (let i = 0; i < this.length; i++) {\n    rs.push(this[i] + '!')\n  }\n  return rs\n}\nconst newArr = [1, 2, 3].map()"
+        }
+      ]
+    },
+    {
+      "id": "oop-patterns",
+      "title": "Object-Oriented Programming",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Factory Functions"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function createElf(name, weapon) {\n  return {\n    name: name,\n    weapon: weapon,\n    attack() {\n      return 'attack with ' + this.weapon\n    },\n  }\n}\n\nconst peter = createElf('Peter', 'bow')"
+        },
+        {
+          "type": "heading",
+          "text": "Constructor Functions"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function Elf(name, weapon) {\n  this.name = name\n  this.weapon = weapon\n}\n\nElf.prototype.attack = function () {\n  return 'attack with ' + this.weapon\n}\n\nconst peter = new Elf('Peter', 'bow')"
+        },
+        {
+          "type": "heading",
+          "text": "ES6 Classes"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class Elf {\n  constructor(name, weapon) {\n    this.name = name\n    this.weapon = weapon\n  }\n  attack() {\n    return 'attack with ' + this.weapon\n  }\n}\n\nconst peter = new Elf('Peter', 'bow')"
+        },
+        {
+          "type": "heading",
+          "text": "4 Pillars of OOP"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Encapsulation: Organizing things into units",
+            "Abstraction: Hiding complexity from the user",
+            "Inheritance: Avoid writing the same code, save memory",
+            "Polymorphism: Call same method on different objects with different responses"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "functional-programming",
+      "title": "Functional Programming",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Pure Functions"
+        },
+        {
+          "type": "paragraph",
+          "text": "A perfect function should always return the same output with the same input (referential transparency) and cannot modify anything outside itself (no side-effects)."
+        },
+        {
+          "type": "heading",
+          "text": "Key Concepts"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Idempotence: Function always returns what we expect",
+            "Imperative vs Declarative: How to do vs What to do",
+            "Immutability: Not changing state, making copies instead",
+            "Higher Order Functions: Functions that take or return functions"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Currying"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const curriedMultiply = a => b => a * b\ncurriedMultiply(5)(6) // 30\n\nconst multiplyBy5 = curriedMultiply(5)\nmultiplyBy5(6) // 30"
+        },
+        {
+          "type": "heading",
+          "text": "Compose"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const compose = (f, g) => a => f(g(a))\nconst addOne = num => num + 1\nconst multiplyTwo = num => num * 2\nconst addOneThenMultiplyTwo = compose(multiplyTwo, addOne)\naddOneThenMultiplyTwo(5) // (5+1)*2 = 12"
+        }
+      ]
+    },
+    {
+      "id": "asynchronous-javascript",
+      "title": "Asynchronous JavaScript",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Promise Execution Patterns"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Parallel: use Promise.all (waits for all to complete)",
+            "Race: use Promise.race (returns first completed)",
+            "Sequence: multiple .then or await for each"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Concurrency vs Parallelism"
+        },
+        {
+          "type": "paragraph",
+          "text": "Concurrency is about dealing with lots of things at once. Parallelism is about doing lots of things at once."
+        },
+        {
+          "type": "heading",
+          "text": "Error Handling"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Synchronous/async await: use try-catch-finally",
+            "Promises: use .catch()",
+            "JS has built-in Error constructor with name, message, and stack trace"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "modules",
+      "title": "Modules & Module Systems",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Module Pattern (IIFE)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "var mathModule = (function () {\n  var justInModuleScope = 123\n  function sum(n1, n2) {\n    return n1 + n2\n  }\n  function multiply(n1, n2) {\n    return n1 * n2\n  }\n  return {\n    sum: sum,\n    multiply: multiply,\n  }\n})()"
+        },
+        {
+          "type": "heading",
+          "text": "CommonJS"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "var module1 = require('module1')\nvar module2 = require('module2')\n\nfunction sum() {}\n\nmodule.exports = {\n  sum: sum,\n}"
+        },
+        {
+          "type": "heading",
+          "text": "ES6 Modules"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern module system using import/export statements. Won't pollute global namespace. Use <script type=\"module\"> to load ES6 modules in browser."
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What does the following code log to the console?\n\nconst obj = {\n  name: 'Binh',\n  sing: function () {\n    console.log('sing', this)\n    const anotherFunc = function () {\n      console.log('another func', this)\n    }\n    anotherFunc()\n  },\n}\n\nobj.sing()",
+      "options": [
+        "Both logs show the 'obj' object",
+        "First log shows 'obj', second log shows global/window object",
+        "Both logs show the global/window object",
+        "First log shows global/window, second log shows 'obj'"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The first console.log shows 'obj' because 'this' refers to the object that called the method. The second console.log shows the global object because regular functions inside methods lose their 'this' context and default to global scope."
+    },
+    {
+      "id": 2,
+      "question": "What is the main difference between var and let/const in terms of hoisting?",
+      "options": [
+        "var is fully hoisted, let/const are not hoisted",
+        "var is partially hoisted (undefined), let/const are not hoisted",
+        "var is not hoisted, let/const are fully hoisted",
+        "All are hoisted the same way"
+      ],
+      "correctAnswer": 1,
+      "explanation": "var is partially hoisted - the declaration is moved to the top but initialized with undefined. let and const are not hoisted and accessing them before declaration results in a ReferenceError."
+    },
+    {
+      "id": 3,
+      "question": "What will this code output?\n\nconst array = [1, 2, 3, 4]\nfor (var i = 0; i < array.length; i++) {\n  setTimeout(() => {\n    console.log('I am at index ' + i)\n  }, 1000)\n}",
+      "options": [
+        "I am at index 0, 1, 2, 3",
+        "I am at index 4 (four times)",
+        "I am at index 1, 2, 3, 4",
+        "ReferenceError"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Due to var being function-scoped and the asynchronous nature of setTimeout, by the time the callbacks execute, the loop has finished and i equals 4. All callbacks reference the same i variable."
+    },
+    {
+      "id": 4,
+      "question": "Which method creates a new function with a specific 'this' context but doesn't immediately invoke it?",
+      "options": ["call()", "apply()", "bind()", "invoke()"],
+      "correctAnswer": 2,
+      "explanation": "bind() creates a new function with a specific 'this' context and can pre-set parameters, but doesn't invoke the function immediately. call() and apply() invoke the function immediately."
+    },
+    {
+      "id": 5,
+      "question": "What is a closure in JavaScript?",
+      "options": [
+        "A function that has no parameters",
+        "A function that accesses variables from its outer scope",
+        "A function that returns undefined",
+        "A function that uses the 'this' keyword"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A closure is created when a function accesses variables defined outside of it. The inner function 'closes over' variables from its outer scope and retains access to them even after the outer function has finished executing."
+    },
+    {
+      "id": 6,
+      "question": "What does the 'new' keyword do when creating an object?",
+      "options": [
+        "Only creates an empty object",
+        "Creates an object, sets 'this', and returns the object",
+        "Only sets the 'this' context",
+        "Only calls the constructor function"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'new' keyword: 1) Creates a new empty object, 2) Sets 'this' to point to that object, 3) Links the object to the constructor's prototype, 4) Returns the object (unless the constructor explicitly returns something else)."
+    },
+    {
+      "id": 7,
+      "question": "What is the difference between function declarations and function expressions in terms of hoisting?",
+      "options": [
+        "Both are fully hoisted",
+        "Function declarations are fully hoisted, function expressions are not",
+        "Function expressions are fully hoisted, function declarations are not",
+        "Neither are hoisted"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Function declarations are fully hoisted (can be called before they're defined). Function expressions are not hoisted - the variable is hoisted but assigned undefined until the expression is evaluated."
+    },
+    {
+      "id": 8,
+      "question": "What is prototypal inheritance?",
+      "options": [
+        "Objects inherit from classes",
+        "Objects inherit directly from other objects",
+        "Functions inherit from objects",
+        "Classes inherit from prototypes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Prototypal inheritance means objects inherit directly from other objects through the prototype chain. When a property isn't found on an object, JavaScript looks up the prototype chain to find it."
+    },
+    {
+      "id": 9,
+      "question": "What will this code return?\n\nfunction test() {\n  return {\n    a: 1\n  }\n}\n\nvs\n\nfunction test() {\n  return\n  {\n    a: 1\n  }\n}",
+      "options": [
+        "Both return {a: 1}",
+        "First returns {a: 1}, second returns undefined",
+        "Both return undefined",
+        "First returns undefined, second returns {a: 1}"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The second function returns undefined due to Automatic Semicolon Insertion (ASI). JavaScript inserts a semicolon after 'return', making the object literal unreachable code."
+    },
+    {
+      "id": 10,
+      "question": "What is the main benefit of pure functions?",
+      "options": [
+        "They can access global variables",
+        "They always return the same output for the same input and have no side effects",
+        "They can modify their parameters",
+        "They always return undefined"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Pure functions are predictable and easier to test because they always return the same output for the same input and don't cause side effects (don't modify external state)."
+    },
+    {
+      "id": 11,
+      "question": "What does 'lexical scoping' mean?",
+      "options": [
+        "Variables are scoped by when they are called",
+        "Variables are scoped by where they are written in the code",
+        "Variables are globally scoped",
+        "Variables have no scope"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Lexical scoping (static scoping) means that variable access is determined by where variables are declared in the source code. The scope is determined at compile time, not runtime."
+    },
+    {
+      "id": 12,
+      "question": "What is the difference between call() and apply()?",
+      "options": [
+        "call() takes individual arguments, apply() takes an array of arguments",
+        "apply() takes individual arguments, call() takes an array",
+        "They are exactly the same",
+        "call() doesn't change 'this', apply() does"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Both call() and apply() invoke a function with a specified 'this' context, but call() takes individual arguments while apply() takes an array of arguments."
+    },
+    {
+      "id": 13,
+      "question": "What is currying in functional programming?",
+      "options": [
+        "Adding spices to functions",
+        "Converting a function that takes multiple arguments into a sequence of functions that each take a single argument",
+        "Making functions run faster",
+        "Combining multiple functions into one"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Currying transforms a function that takes multiple arguments into a sequence of functions that each take a single argument, enabling partial application and function composition."
+    },
+    {
+      "id": 14,
+      "question": "What happens when you access a property that doesn't exist on an object?",
+      "options": [
+        "JavaScript throws an error",
+        "JavaScript looks up the prototype chain",
+        "JavaScript creates the property automatically",
+        "JavaScript returns null"
+      ],
+      "correctAnswer": 1,
+      "explanation": "When a property doesn't exist on an object, JavaScript looks up the prototype chain (__proto__) to find the property in parent objects until it reaches Object.prototype or finds the property."
+    },
+    {
+      "id": 15,
+      "question": "What is the temporal dead zone?",
+      "options": [
+        "When var variables are undefined",
+        "The time between let/const declaration and initialization where they can't be accessed",
+        "When functions are hoisted",
+        "The time when JavaScript engine is not running"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The temporal dead zone is the period between when let/const variables are hoisted and when they are initialized. Accessing them during this time throws a ReferenceError."
+    },
+    {
+      "id": 16,
+      "question": "What is the main difference between arrow functions and regular functions?",
+      "options": [
+        "Arrow functions are faster",
+        "Arrow functions have lexical 'this' binding and no 'arguments' object",
+        "Arrow functions can only return primitives",
+        "Regular functions are deprecated"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Arrow functions have lexical 'this' binding (inherit 'this' from enclosing scope), don't have their own 'arguments' object, and cannot be used as constructors with 'new'."
+    },
+    {
+      "id": 17,
+      "question": "What is the event loop in JavaScript?",
+      "options": [
+        "A loop that handles events only",
+        "The mechanism that handles asynchronous operations in single-threaded JavaScript",
+        "A loop that creates events",
+        "A debugging tool"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The event loop is the mechanism that allows JavaScript to perform non-blocking operations despite being single-threaded by delegating operations to the browser/Node.js and handling callbacks when they complete."
+    },
+    {
+      "id": 18,
+      "question": "What will this code output?\n\nconsole.log(typeof null)\nconsole.log(typeof undefined)",
+      "options": [
+        "\"null\", \"undefined\"",
+        "\"object\", \"undefined\"",
+        "\"undefined\", \"object\"",
+        "\"null\", \"null\""
+      ],
+      "correctAnswer": 1,
+      "explanation": "typeof null returns 'object' (this is a known bug in JavaScript that can't be fixed for backwards compatibility), while typeof undefined returns 'undefined'."
+    },
+    {
+      "id": 19,
+      "question": "What is the difference between == and === in JavaScript?",
+      "options": [
+        "They are exactly the same",
+        "== performs type coercion, === does strict comparison",
+        "=== performs type coercion, == does strict comparison",
+        "== is faster than ==="
+      ],
+      "correctAnswer": 1,
+      "explanation": "== performs type coercion (converts types to match before comparison) while === performs strict comparison (no type conversion). For example: '1' == 1 is true, but '1' === 1 is false."
+    },
+    {
+      "id": 20,
+      "question": "What is an IIFE (Immediately Invoked Function Expression)?",
+      "options": [
+        "A function that returns immediately",
+        "A function that is defined and executed immediately",
+        "A function that can only be called once",
+        "A function with no parameters"
+      ],
+      "correctAnswer": 1,
+      "explanation": "An IIFE is a function that is defined and executed immediately. It's often used to create a private scope and avoid polluting the global namespace: (function() { /* code */ })()."
+    },
+    {
+      "id": 21,
+      "question": "What is the difference between Object.create() and using the 'new' keyword?",
+      "options": [
+        "They are exactly the same",
+        "Object.create() creates an object with a specific prototype, 'new' calls a constructor function",
+        "'new' is newer than Object.create()",
+        "Object.create() is faster"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Object.create() creates a new object with a specified prototype object. The 'new' keyword calls a constructor function and creates an object based on the constructor's prototype property."
+    },
+    {
+      "id": 22,
+      "question": "What happens in this code?\n\nvar a = 1\nfunction test() {\n  console.log(a)\n  var a = 2\n}",
+      "options": ["Logs 1", "Logs undefined", "Logs 2", "Throws an error"],
+      "correctAnswer": 1,
+      "explanation": "Due to hoisting, the var a declaration is moved to the top of the function scope but not initialized. So 'a' exists but is undefined when console.log executes, shadowing the global variable."
+    },
+    {
+      "id": 23,
+      "question": "What is a higher-order function?",
+      "options": [
+        "A function that is defined at the top of the file",
+        "A function that takes another function as argument or returns a function",
+        "A function with many parameters",
+        "A function that calls itself"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A higher-order function is a function that either takes one or more functions as arguments, returns a function, or both. Examples include map(), filter(), reduce(), and function decorators."
+    },
+    {
+      "id": 24,
+      "question": "What is function composition?",
+      "options": [
+        "Writing functions inside other functions",
+        "Combining multiple functions to create a new function",
+        "Making functions longer",
+        "Copying functions"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Function composition is the technique of combining multiple functions to create a new function. The output of one function becomes the input of the next: compose(f, g)(x) = f(g(x))."
+    },
+    {
+      "id": 25,
+      "question": "What is the difference between Promise.all() and Promise.race()?",
+      "options": [
+        "Promise.all() waits for all promises, Promise.race() waits for the first to complete",
+        "Promise.race() waits for all promises, Promise.all() waits for the first",
+        "They are the same",
+        "Promise.all() is faster"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Promise.all() waits for all promises to resolve (or any to reject) and returns an array of results. Promise.race() returns as soon as the first promise resolves or rejects."
+    },
+    {
+      "id": 26,
+      "question": "What is the execution context?",
+      "options": [
+        "The environment where JavaScript code is executed",
+        "The speed of code execution",
+        "The error handling mechanism",
+        "The browser's JavaScript engine"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Execution context is the environment in which JavaScript code is executed. It contains information about variables, functions, and the scope chain. There's a global execution context and a new one is created for each function call."
+    },
+    {
+      "id": 27,
+      "question": "What does 'use strict' do?",
+      "options": [
+        "Makes JavaScript run faster",
+        "Enables strict mode which catches common errors and prevents certain actions",
+        "Makes all variables global",
+        "Disables hoisting"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'use strict' enables strict mode, which catches common coding errors, prevents the use of undeclared variables, disables some confusing features, and makes JavaScript more secure."
+    },
+    {
+      "id": 28,
+      "question": "What is memoization?",
+      "options": [
+        "A way to remember function names",
+        "Caching function results to improve performance",
+        "A debugging technique",
+        "A way to create global variables"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Memoization is an optimization technique where you cache function results. If the function is called again with the same arguments, the cached result is returned instead of recalculating."
+    },
+    {
+      "id": 29,
+      "question": "What is the difference between synchronous and asynchronous code?",
+      "options": [
+        "Synchronous code runs faster",
+        "Synchronous code executes line by line, asynchronous code doesn't block execution",
+        "Asynchronous code is older",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Synchronous code executes line by line and blocks further execution until current operation completes. Asynchronous code doesn't block - it allows other code to run while waiting for operations like API calls or timers."
+    },
+    {
+      "id": 30,
+      "question": "What is garbage collection in JavaScript?",
+      "options": [
+        "Manually deleting variables",
+        "Automatic memory management that frees unused memory",
+        "Removing syntax errors",
+        "Organizing code files"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Garbage collection is JavaScript's automatic memory management system. It identifies and frees memory that's no longer referenced by the program, preventing memory leaks. JavaScript uses algorithms like 'mark and sweep'."
+    }
+  ]
+}

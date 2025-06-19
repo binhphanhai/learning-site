@@ -6,12 +6,10 @@ import {
   Tabs,
   Typography,
   Button,
-  Breadcrumb,
   Menu,
   Card,
   Radio,
   Space,
-  Alert,
   Progress,
   Divider,
 } from "antd";
@@ -325,8 +323,8 @@ export default function LearningPage({
         </span>
       ),
       children: (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden h-full">
-          <Layout className="bg-white h-full">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <Layout className="bg-white">
             <Sider
               width={350}
               className="bg-gray-50 border-r border-gray-200"
@@ -348,7 +346,7 @@ export default function LearningPage({
                 className="border-0"
                 style={{
                   backgroundColor: "#f9fafb",
-                  height: "calc(100% - 100px)",
+                  height: "calc(80vh - 100px)",
                   borderRight: "none",
                   padding: "12px",
                 }}
@@ -446,7 +444,10 @@ export default function LearningPage({
         </span>
       ),
       children: (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div
+          className="bg-gray-50 py-8"
+          style={{ height: "80vh", overflow: "auto", paddingBottom: 40 }}
+        >
           <div className="max-w-4xl mx-auto px-6">
             {/* Progress Card */}
             {testAnswers.length > 0 && (
@@ -560,12 +561,100 @@ export default function LearningPage({
                     <div className="space-y-6">
                       {/* Question */}
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <Text
-                          strong
-                          className="text-lg text-gray-800 leading-relaxed"
-                        >
-                          {question.question}
-                        </Text>
+                        <div className="text-lg text-gray-800 leading-relaxed">
+                          {(() => {
+                            const questionText = question.question;
+
+                            // Check if question contains code patterns
+                            const hasCode =
+                              questionText.includes("const ") ||
+                              questionText.includes("function ") ||
+                              questionText.includes("console.log") ||
+                              (questionText.includes("{") &&
+                                questionText.includes("}"));
+
+                            if (hasCode && questionText.includes("\n")) {
+                              // Try to split at common patterns
+                              let splitPattern = null;
+                              let splitIndex = -1;
+
+                              // Look for "What does/will this code" pattern
+                              const codeIntroPatterns = [
+                                "What does the following code log to the console?",
+                                "What will this code output?",
+                                "What will this code return?",
+                                "What does this code log?",
+                                "What happens in this code?",
+                              ];
+
+                              for (const pattern of codeIntroPatterns) {
+                                if (questionText.includes(pattern)) {
+                                  splitIndex =
+                                    questionText.indexOf(pattern) +
+                                    pattern.length;
+                                  break;
+                                }
+                              }
+
+                              // If no intro pattern found, look for question mark followed by code
+                              if (splitIndex === -1) {
+                                let match;
+                                const regex = /\?/g;
+                                while (
+                                  (match = regex.exec(questionText)) !== null
+                                ) {
+                                  const afterQuestion = questionText.substring(
+                                    match.index + 1
+                                  );
+                                  if (
+                                    afterQuestion.includes("const") ||
+                                    afterQuestion.includes("function")
+                                  ) {
+                                    splitIndex = match.index + 1;
+                                    break;
+                                  }
+                                }
+                              }
+
+                              if (splitIndex > 0) {
+                                const beforeCode = questionText
+                                  .substring(0, splitIndex)
+                                  .trim();
+                                const afterCode = questionText
+                                  .substring(splitIndex)
+                                  .trim();
+
+                                // Clean up the code part
+                                const codeText = afterCode
+                                  .replace(/^\n+/, "")
+                                  .replace(/\n+$/, "");
+
+                                return (
+                                  <>
+                                    <Text strong>{beforeCode}</Text>
+                                    <div className="mt-3">
+                                      <CodeBlock language="javascript">
+                                        {codeText}
+                                      </CodeBlock>
+                                    </div>
+                                  </>
+                                );
+                              }
+                            }
+
+                            // For questions with code but no clear split pattern, use pre-wrap
+                            if (hasCode) {
+                              return (
+                                <Text strong style={{ whiteSpace: "pre-wrap" }}>
+                                  {questionText}
+                                </Text>
+                              );
+                            }
+
+                            // Regular question without code
+                            return <Text strong>{questionText}</Text>;
+                          })()}
+                        </div>
                       </div>
 
                       {/* Options */}
@@ -664,7 +753,7 @@ export default function LearningPage({
   }
 
   return (
-    <Layout style={{ height: "100vh" }}>
+    <Layout>
       <Header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
           <div className="flex items-center space-x-4">

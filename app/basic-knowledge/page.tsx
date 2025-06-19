@@ -17,6 +17,7 @@ import {
   SafetyOutlined,
   TeamOutlined,
   BookOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -37,46 +38,45 @@ const getIconForContent = (title: string, description: string) => {
   if (
     text.includes("javascript") ||
     text.includes("typescript") ||
-    text.includes("react")
+    text.includes("js")
   ) {
     return <CodeOutlined />;
   }
   if (
-    text.includes("next") ||
-    text.includes("ssr") ||
-    text.includes("database")
+    text.includes("algorithm") ||
+    text.includes("data structure") ||
+    text.includes("oop")
   ) {
     return <DatabaseOutlined />;
   }
-  if (text.includes("security") || text.includes("authentication")) {
-    return <SafetyOutlined />;
-  }
-  if (
-    text.includes("collaboration") ||
-    text.includes("leadership") ||
-    text.includes("team")
-  ) {
+  if (text.includes("react") || text.includes("next")) {
     return <TeamOutlined />;
   }
+  if (text.includes("html") || text.includes("css") || text.includes("web")) {
+    return <SafetyOutlined />;
+  }
 
-  return <BookOutlined />;
+  return <ReadOutlined />;
 };
 
 // Color mapping
 const getColorForContent = (index: number) => {
   const colors = [
-    "#1890ff",
-    "#52c41a",
-    "#722ed1",
-    "#f5222d",
-    "#fa8c16",
-    "#13c2c2",
-    "#eb2f96",
+    "#722ed1", // purple
+    "#52c41a", // green
+    "#1890ff", // blue
+    "#f5222d", // red
+    "#fa8c16", // orange
+    "#13c2c2", // cyan
+    "#eb2f96", // magenta
   ];
   return colors[index % colors.length];
 };
 
-export default function ToBeSeniorPage() {
+// For now, we'll filter content that belongs to basic knowledge
+const basicKnowledgeContent = ["advanced-javascript"];
+
+export default function BasicKnowledgePage() {
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,7 +85,11 @@ export default function ToBeSeniorPage() {
       try {
         const response = await fetch("/api/content-list");
         const data = await response.json();
-        setContentItems(data);
+        // Filter only basic knowledge content
+        const filteredData = data.filter((item: ContentItem) =>
+          basicKnowledgeContent.includes(item.slug)
+        );
+        setContentItems(filteredData);
       } catch (error) {
         console.error("Failed to fetch content list:", error);
       } finally {
@@ -104,8 +108,9 @@ export default function ToBeSeniorPage() {
       >
         <Header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <Title level={3} className="m-0 text-blue-600">
-              To Be Senior Engineer
+            <Title level={3} className="m-0 text-purple-600">
+              <ReadOutlined className="mr-2" />
+              Basic Knowledge
             </Title>
             <Link href="/">
               <Button type="text" icon={<HomeOutlined />}>
@@ -128,8 +133,9 @@ export default function ToBeSeniorPage() {
     >
       <Header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Title level={3} className="m-0 text-blue-600">
-            To Be Senior Engineer
+          <Title level={3} className="m-0 text-purple-600">
+            <ReadOutlined className="mr-2" />
+            Basic Knowledge
           </Title>
           <Link href="/">
             <Button type="text" icon={<HomeOutlined />}>
@@ -145,15 +151,16 @@ export default function ToBeSeniorPage() {
             <Breadcrumb.Item>
               <Link href="/">Home</Link>
             </Breadcrumb.Item>
-            <Breadcrumb.Item>To Be Senior</Breadcrumb.Item>
+            <Breadcrumb.Item>Basic Knowledge</Breadcrumb.Item>
           </Breadcrumb>
 
           <div className="mb-8">
-            <Title level={1}>Senior Frontend Engineer Path</Title>
+            <Title level={1}>Foundational Programming Knowledge</Title>
             <Paragraph className="text-lg text-gray-600">
-              Master advanced concepts and skills required to become a senior
-              frontend engineer. Each section includes comprehensive learning
-              materials and practice tests.
+              Explore fundamental programming concepts, languages, and
+              technologies. Each section includes comprehensive learning
+              materials, practical examples, and hands-on exercises to build
+              your foundation.
             </Paragraph>
           </div>
 
@@ -184,8 +191,13 @@ export default function ToBeSeniorPage() {
                       />
                     }
                     actions={[
-                      <Link key="learn" href={`/to-be-senior/${item.slug}`}>
-                        <Button type="primary">Start Learning</Button>
+                      <Link key="learn" href={`/basic-knowledge/${item.slug}`}>
+                        <Button
+                          type="primary"
+                          style={{ backgroundColor: color, borderColor: color }}
+                        >
+                          Start Learning
+                        </Button>
                       </Link>,
                     ]}
                   >
@@ -204,6 +216,46 @@ export default function ToBeSeniorPage() {
                 </Col>
               );
             })}
+
+            {/* Placeholder cards for upcoming content */}
+            {[
+              "Algorithms & Data Structures",
+              "React Fundamentals",
+              "HTML & CSS Basics",
+              "TypeScript Essentials",
+              "Next.js Basics",
+              "OOP & Design Patterns",
+            ].map((title, index) => (
+              <Col key={title} xs={24} lg={12}>
+                <Card
+                  className="h-full opacity-60"
+                  title={
+                    <div className="flex items-center">
+                      <span className="mr-3 text-2xl text-gray-400">
+                        <BookOutlined />
+                      </span>
+                      {title}
+                    </div>
+                  }
+                  extra={
+                    <div className="text-sm text-gray-400 bg-gray-100 px-2 py-1 rounded">
+                      Coming Soon
+                    </div>
+                  }
+                >
+                  <Paragraph className="text-gray-400 mb-4">
+                    This content is being prepared and will be available soon.
+                  </Paragraph>
+                  <div className="text-sm text-gray-400">
+                    <div className="flex justify-between mb-2">
+                      <span>Status:</span>
+                      <span>In Development</span>
+                    </div>
+                    <Progress percent={0} size="small" strokeColor="#d9d9d9" />
+                  </div>
+                </Card>
+              </Col>
+            ))}
           </Row>
         </div>
       </Content>
