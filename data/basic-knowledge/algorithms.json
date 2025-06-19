@@ -1,0 +1,811 @@
+{
+  "title": "Algorithms & Data Structures",
+  "description": "Master fundamental algorithms and data structures including Big O notation, sorting, searching, dynamic programming, graph algorithms, and modern algorithmic patterns for 2024",
+  "sections": [
+    {
+      "id": "big-o-notation",
+      "title": "Big O Notation & Complexity Analysis",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is Big O?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Big O notation describes the performance or complexity of an algorithm by measuring how runtime or space requirements grow as input size increases. It focuses on the worst-case scenario."
+        },
+        {
+          "type": "heading",
+          "text": "Common Time Complexities"
+        },
+        {
+          "type": "list",
+          "items": [
+            "O(1) - Constant: Same time regardless of input size (array access)",
+            "O(log n) - Logarithmic: Time increases logarithmically (binary search)",
+            "O(n) - Linear: Time increases linearly with input (simple loops)",
+            "O(n log n) - Linearithmic: Common in efficient sorting algorithms",
+            "O(n²) - Quadratic: Time increases quadratically (nested loops)",
+            "O(2^n) - Exponential: Time doubles with each input increase",
+            "O(n!) - Factorial: Time increases factorially (very inefficient)"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Rules for Calculating Big O"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Always consider worst-case scenario",
+            "Drop constants: O(2n) becomes O(n)",
+            "Different inputs use different variables: O(a + b) not O(2n)",
+            "Drop non-dominant terms: O(n² + n) becomes O(n²)"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// O(1) - Constant time\nfunction getFirst(array) {\n  return array[0]; // Always takes same time\n}\n\n// O(n) - Linear time\nfunction printAll(array) {\n  for (let i = 0; i < array.length; i++) {\n    console.log(array[i]); // Time grows with input size\n  }\n}\n\n// O(n²) - Quadratic time\nfunction printPairs(array) {\n  for (let i = 0; i < array.length; i++) {\n    for (let j = 0; j < array.length; j++) {\n      console.log(array[i], array[j]); // Nested loops\n    }\n  }\n}\n\n// O(log n) - Logarithmic time\nfunction binarySearch(array, target) {\n  let left = 0, right = array.length - 1;\n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    if (array[mid] === target) return mid;\n    if (array[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Space Complexity"
+        },
+        {
+          "type": "paragraph",
+          "text": "Space complexity measures how much extra memory an algorithm uses as input size grows."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Heap: Where variables are stored",
+            "Stack: Where function calls are tracked",
+            "When calculating space complexity, focus on auxiliary space (not input space)"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// O(1) space - only using fixed variables\nfunction sum(array) {\n  let total = 0; // Fixed space regardless of input\n  for (let i = 0; i < array.length; i++) {\n    total += array[i];\n  }\n  return total;\n}\n\n// O(n) space - creating new array\nfunction double(array) {\n  const doubled = []; // Space grows with input\n  for (let i = 0; i < array.length; i++) {\n    doubled.push(array[i] * 2);\n  }\n  return doubled;\n}\n\n// O(n) space - recursive call stack\nfunction factorial(n) {\n  if (n <= 1) return 1;\n  return n * factorial(n - 1); // Each call uses stack space\n}"
+        }
+      ]
+    },
+    {
+      "id": "problem-solving",
+      "title": "Problem Solving Framework",
+      "content": [
+        {
+          "type": "heading",
+          "text": "The 3 Pillars of Good Code"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Readable: Clean, well-organized, easy to understand",
+            "Time Complexity: Efficient algorithm performance",
+            "Space Complexity: Efficient memory usage"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Interview Skills Assessment"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Analytical Skills: Problem-solving and critical thinking",
+            "Coding Skills: Clean, organized, readable code",
+            "Technical Knowledge: Understanding of fundamentals",
+            "Communication: Clear explanation and cultural fit"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Step-by-Step Problem Solving"
+        },
+        {
+          "type": "list",
+          "items": [
+            "1. Clarify the problem: inputs, outputs, constraints, edge cases",
+            "2. Start with brute force approach (don't code yet, just explain)",
+            "3. Identify bottlenecks and inefficiencies",
+            "4. Optimize using appropriate data structures and algorithms",
+            "5. Code the solution with clear variable names and modular structure",
+            "6. Test with edge cases and error handling",
+            "7. Discuss improvements and trade-offs"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Common Optimization Strategies"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Hash maps for O(1) lookups",
+            "Two pointers for array problems",
+            "Binary search for sorted arrays",
+            "Divide and conquer for recursive problems",
+            "Dynamic programming for optimization problems",
+            "Sliding window for substring problems"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Good Code Checklist"
+        },
+        {
+          "type": "list",
+          "items": [
+            "✓ It works correctly",
+            "✓ Uses appropriate data structures",
+            "✓ Follows DRY principle (Don't Repeat Yourself)",
+            "✓ Modular and testable",
+            "✓ Better than O(n²) when possible",
+            "✓ Considers space-time tradeoffs",
+            "✓ Handles edge cases"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "arrays",
+      "title": "Arrays & Array Operations",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Array Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Arrays store elements in contiguous memory locations with index-based access. Best for storing data that needs sequential access."
+        },
+        {
+          "type": "heading",
+          "text": "Time Complexities"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Lookup (by index): O(1)",
+            "Push (append): O(1)",
+            "Pop (remove last): O(1)",
+            "Insert (at index): O(n)",
+            "Delete (at index): O(n)",
+            "Search (by value): O(n)"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Modern Array Methods (2024)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ES2023 Immutable array methods\nconst numbers = [1, 2, 3, 4, 5];\n\n// toSorted() - doesn't mutate original\nconst sorted = numbers.toSorted((a, b) => b - a); // [5, 4, 3, 2, 1]\nconsole.log(numbers); // [1, 2, 3, 4, 5] - unchanged\n\n// toReversed() - immutable reverse\nconst reversed = numbers.toReversed(); // [5, 4, 3, 2, 1]\n\n// toSpliced() - immutable splice\nconst spliced = numbers.toSpliced(1, 2, 'a', 'b'); // [1, 'a', 'b', 4, 5]\n\n// with() - immutable element replacement\nconst replaced = numbers.with(2, 'new'); // [1, 2, 'new', 4, 5]\n\n// findLast() and findLastIndex()\nconst lastEven = numbers.findLast(n => n % 2 === 0); // 4\nconst lastEvenIndex = numbers.findLastIndex(n => n % 2 === 0); // 3"
+        },
+        {
+          "type": "heading",
+          "text": "Array Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class MyArray {\n  constructor() {\n    this.length = 0;\n    this.data = {};\n  }\n\n  get(index) {\n    return this.data[index];\n  }\n\n  push(item) {\n    this.data[this.length] = item;\n    this.length++;\n    return this.length;\n  }\n\n  pop() {\n    const lastItem = this.data[this.length - 1];\n    delete this.data[this.length - 1];\n    this.length--;\n    return lastItem;\n  }\n\n  insert(index, item) {\n    // Shift elements to the right\n    for (let i = this.length; i > index; i--) {\n      this.data[i] = this.data[i - 1];\n    }\n    this.data[index] = item;\n    this.length++;\n    return this.length;\n  }\n\n  delete(index) {\n    const item = this.data[index];\n    // Shift elements to the left\n    for (let i = index; i < this.length - 1; i++) {\n      this.data[i] = this.data[i + 1];\n    }\n    delete this.data[this.length - 1];\n    this.length--;\n    return item;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Common Array Patterns"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Two Pointers Pattern\nfunction twoSum(nums, target) {\n  const sorted = nums.map((val, i) => [val, i]).sort((a, b) => a[0] - b[0]);\n  let left = 0, right = sorted.length - 1;\n  \n  while (left < right) {\n    const sum = sorted[left][0] + sorted[right][0];\n    if (sum === target) return [sorted[left][1], sorted[right][1]];\n    if (sum < target) left++;\n    else right--;\n  }\n  return [];\n}\n\n// Sliding Window Pattern\nfunction maxSubarraySum(arr, k) {\n  if (arr.length < k) return null;\n  \n  let maxSum = 0;\n  let windowSum = 0;\n  \n  // Calculate sum of first window\n  for (let i = 0; i < k; i++) {\n    windowSum += arr[i];\n  }\n  maxSum = windowSum;\n  \n  // Slide the window\n  for (let i = k; i < arr.length; i++) {\n    windowSum += arr[i] - arr[i - k];\n    maxSum = Math.max(maxSum, windowSum);\n  }\n  \n  return maxSum;\n}\n\n// Merge Two Sorted Arrays\nfunction mergeSortedArrays(arr1, arr2) {\n  const merged = [];\n  let i = 0, j = 0;\n  \n  while (i < arr1.length && j < arr2.length) {\n    if (arr1[i] < arr2[j]) {\n      merged.push(arr1[i]);\n      i++;\n    } else {\n      merged.push(arr2[j]);\n      j++;\n    }\n  }\n  \n  // Add remaining elements\n  while (i < arr1.length) merged.push(arr1[i++]);\n  while (j < arr2.length) merged.push(arr2[j++]);\n  \n  return merged;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Pros and Cons"
+        },
+        {
+          "type": "list",
+          "items": [
+            "✓ Fast lookups by index O(1)",
+            "✓ Fast push/pop operations O(1)",
+            "✓ Memory efficient (contiguous allocation)",
+            "✓ Cache-friendly due to spatial locality",
+            "✗ Slow insertions/deletions O(n)",
+            "✗ Fixed size in some languages",
+            "✗ Searching by value is O(n)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hash-tables",
+      "title": "Hash Tables & Hash Maps",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Hash Table Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Hash tables use a hash function to map keys to array indices, providing average O(1) access time. They're the foundation of objects, maps, and sets in JavaScript."
+        },
+        {
+          "type": "heading",
+          "text": "Time Complexities"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Insert: O(1) average, O(n) worst case",
+            "Lookup: O(1) average, O(n) worst case",
+            "Delete: O(1) average, O(n) worst case",
+            "Space: O(n)"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "JavaScript Hash Table Types"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Object - string/symbol keys only\nconst obj = {\n  name: 'John',\n  age: 30,\n  [Symbol('id')]: 123\n};\n\n// Map - any type as keys, maintains insertion order\nconst map = new Map();\nmap.set('string', 'value');\nmap.set(42, 'number key');\nmap.set(obj, 'object key');\nmap.set(true, 'boolean key');\n\n// Iteration maintains insertion order\nfor (const [key, value] of map) {\n  console.log(key, value);\n}\n\n// Set - unique values only\nconst set = new Set([1, 2, 3, 2, 1]); // Set {1, 2, 3}\nset.add(4);\nset.has(2); // true\nset.delete(1);\n\n// WeakMap - weak references, garbage collectible\nconst weakMap = new WeakMap();\nconst element = document.getElementById('myElement');\nweakMap.set(element, { clickCount: 0 });\n// When element is removed from DOM, entry is garbage collected\n\n// WeakSet - similar to WeakMap but for values\nconst weakSet = new WeakSet();\nweakSet.add(obj);\n// When obj is no longer referenced, it's garbage collected"
+        },
+        {
+          "type": "heading",
+          "text": "Hash Function Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class HashTable {\n  constructor(size = 53) {\n    this.keyMap = new Array(size);\n  }\n\n  _hash(key) {\n    let total = 0;\n    const WEIRD_PRIME = 31;\n    for (let i = 0; i < Math.min(key.length, 100); i++) {\n      const char = key[i];\n      const value = char.charCodeAt(0) - 96;\n      total = (total * WEIRD_PRIME + value) % this.keyMap.length;\n    }\n    return total;\n  }\n\n  set(key, value) {\n    const index = this._hash(key);\n    if (!this.keyMap[index]) {\n      this.keyMap[index] = [];\n    }\n    // Handle collisions with chaining\n    const existingPair = this.keyMap[index].find(pair => pair[0] === key);\n    if (existingPair) {\n      existingPair[1] = value; // Update existing\n    } else {\n      this.keyMap[index].push([key, value]); // Add new\n    }\n  }\n\n  get(key) {\n    const index = this._hash(key);\n    if (this.keyMap[index]) {\n      const pair = this.keyMap[index].find(pair => pair[0] === key);\n      return pair ? pair[1] : undefined;\n    }\n    return undefined;\n  }\n\n  keys() {\n    const keysArr = [];\n    for (let i = 0; i < this.keyMap.length; i++) {\n      if (this.keyMap[i]) {\n        for (let j = 0; j < this.keyMap[i].length; j++) {\n          keysArr.push(this.keyMap[i][j][0]);\n        }\n      }\n    }\n    return keysArr;\n  }\n\n  values() {\n    const valuesArr = [];\n    for (let i = 0; i < this.keyMap.length; i++) {\n      if (this.keyMap[i]) {\n        for (let j = 0; j < this.keyMap[i].length; j++) {\n          const value = this.keyMap[i][j][1];\n          if (!valuesArr.includes(value)) {\n            valuesArr.push(value);\n          }\n        }\n      }\n    }\n    return valuesArr;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Hash Collision Resolution"
+        },
+        {
+          "type": "paragraph",
+          "text": "When multiple keys hash to the same index, we need collision resolution strategies:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Separate Chaining: Store multiple items in same bucket using linked lists/arrays",
+            "Open Addressing: Find another open slot using probing (linear, quadratic, double hashing)",
+            "Robin Hood Hashing: Minimize variance in probe distances",
+            "Cuckoo Hashing: Guarantees O(1) worst-case lookup"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Common Hash Table Patterns"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Frequency Counter Pattern\nfunction charFrequency(str) {\n  const freq = {};\n  for (const char of str) {\n    freq[char] = (freq[char] || 0) + 1;\n  }\n  return freq;\n}\n\n// Two Sum using Hash Map\nfunction twoSum(nums, target) {\n  const numMap = new Map();\n  for (let i = 0; i < nums.length; i++) {\n    const complement = target - nums[i];\n    if (numMap.has(complement)) {\n      return [numMap.get(complement), i];\n    }\n    numMap.set(nums[i], i);\n  }\n  return [];\n}\n\n// Group Anagrams\nfunction groupAnagrams(strs) {\n  const map = new Map();\n  for (const str of strs) {\n    const sorted = str.split('').sort().join('');\n    if (!map.has(sorted)) {\n      map.set(sorted, []);\n    }\n    map.get(sorted).push(str);\n  }\n  return Array.from(map.values());\n}\n\n// LRU Cache using Map\nclass LRUCache {\n  constructor(capacity) {\n    this.capacity = capacity;\n    this.cache = new Map();\n  }\n\n  get(key) {\n    if (this.cache.has(key)) {\n      const value = this.cache.get(key);\n      this.cache.delete(key);\n      this.cache.set(key, value); // Move to end\n      return value;\n    }\n    return -1;\n  }\n\n  put(key, value) {\n    if (this.cache.has(key)) {\n      this.cache.delete(key);\n    } else if (this.cache.size >= this.capacity) {\n      const firstKey = this.cache.keys().next().value;\n      this.cache.delete(firstKey);\n    }\n    this.cache.set(key, value);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Pros and Cons"
+        },
+        {
+          "type": "list",
+          "items": [
+            "✓ Fast average-case operations O(1)",
+            "✓ Flexible keys (any immutable type)",
+            "✓ Great for lookups and counting",
+            "✓ Built-in to most programming languages",
+            "✗ No guaranteed order (except Map)",
+            "✗ Worst-case O(n) performance",
+            "✗ Space overhead for hash table structure",
+            "✗ Hash function quality affects performance"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sorting-algorithms",
+      "title": "Sorting Algorithms",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Sorting Overview"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sorting algorithms arrange elements in a specific order. Different algorithms have different time/space complexities and stability properties."
+        },
+        {
+          "type": "heading",
+          "text": "Sorting Algorithm Comparison"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Bubble Sort: O(n²) time, O(1) space, stable - educational only",
+            "Selection Sort: O(n²) time, O(1) space, unstable - educational only",
+            "Insertion Sort: O(n²) time, O(1) space, stable - good for small/nearly sorted arrays",
+            "Merge Sort: O(n log n) time, O(n) space, stable - consistent performance",
+            "Quick Sort: O(n log n) average, O(n²) worst, O(log n) space, unstable - fastest in practice",
+            "Heap Sort: O(n log n) time, O(1) space, unstable - guaranteed performance",
+            "Counting Sort: O(n + k) time, O(k) space - for integers in small range"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Quick Sort Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function quickSort(arr, left = 0, right = arr.length - 1) {\n  if (left < right) {\n    const pivotIndex = partition(arr, left, right);\n    quickSort(arr, left, pivotIndex - 1);\n    quickSort(arr, pivotIndex + 1, right);\n  }\n  return arr;\n}\n\nfunction partition(arr, left, right) {\n  // Use random pivot to avoid worst case\n  const randomIndex = Math.floor(Math.random() * (right - left + 1)) + left;\n  swap(arr, randomIndex, right);\n  \n  const pivot = arr[right];\n  let i = left;\n  \n  for (let j = left; j < right; j++) {\n    if (arr[j] < pivot) {\n      swap(arr, i, j);\n      i++;\n    }\n  }\n  \n  swap(arr, i, right);\n  return i;\n}\n\nfunction swap(arr, i, j) {\n  [arr[i], arr[j]] = [arr[j], arr[i]];\n}\n\n// Usage\nconst numbers = [64, 34, 25, 12, 22, 11, 90];\nquickSort(numbers);\nconsole.log(numbers); // [11, 12, 22, 25, 34, 64, 90]"
+        },
+        {
+          "type": "heading",
+          "text": "Merge Sort Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function mergeSort(arr) {\n  if (arr.length <= 1) return arr;\n  \n  const mid = Math.floor(arr.length / 2);\n  const left = mergeSort(arr.slice(0, mid));\n  const right = mergeSort(arr.slice(mid));\n  \n  return merge(left, right);\n}\n\nfunction merge(left, right) {\n  const result = [];\n  let i = 0, j = 0;\n  \n  while (i < left.length && j < right.length) {\n    if (left[i] <= right[j]) {\n      result.push(left[i]);\n      i++;\n    } else {\n      result.push(right[j]);\n      j++;\n    }\n  }\n  \n  // Add remaining elements\n  while (i < left.length) result.push(left[i++]);\n  while (j < right.length) result.push(right[j++]);\n  \n  return result;\n}\n\n// Usage\nconst numbers = [64, 34, 25, 12, 22, 11, 90];\nconst sorted = mergeSort(numbers);\nconsole.log(sorted); // [11, 12, 22, 25, 34, 64, 90]"
+        },
+        {
+          "type": "heading",
+          "text": "Heap Sort Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function heapSort(arr) {\n  const n = arr.length;\n  \n  // Build max heap\n  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {\n    heapify(arr, n, i);\n  }\n  \n  // Extract elements one by one\n  for (let i = n - 1; i > 0; i--) {\n    swap(arr, 0, i);\n    heapify(arr, i, 0);\n  }\n  \n  return arr;\n}\n\nfunction heapify(arr, n, i) {\n  let largest = i;\n  const left = 2 * i + 1;\n  const right = 2 * i + 2;\n  \n  if (left < n && arr[left] > arr[largest]) {\n    largest = left;\n  }\n  \n  if (right < n && arr[right] > arr[largest]) {\n    largest = right;\n  }\n  \n  if (largest !== i) {\n    swap(arr, i, largest);\n    heapify(arr, n, largest);\n  }\n}\n\n// Usage\nconst numbers = [64, 34, 25, 12, 22, 11, 90];\nheapSort(numbers);\nconsole.log(numbers); // [11, 12, 22, 25, 34, 64, 90]"
+        },
+        {
+          "type": "heading",
+          "text": "Modern JavaScript Sorting"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Built-in sort (Timsort - hybrid of merge sort and insertion sort)\nconst numbers = [64, 34, 25, 12, 22, 11, 90];\n\n// Basic sorting\nnumbers.sort((a, b) => a - b); // Ascending\nnumbers.sort((a, b) => b - a); // Descending\n\n// ES2023 - Immutable sorting (doesn't modify original)\nconst sorted = numbers.toSorted((a, b) => a - b);\n\n// Complex object sorting\nconst students = [\n  { name: 'John', grade: 85, age: 20 },\n  { name: 'Jane', grade: 92, age: 19 },\n  { name: 'Bob', grade: 78, age: 21 }\n];\n\n// Sort by multiple criteria\nstudents.sort((a, b) => {\n  // Primary: by grade (descending)\n  if (a.grade !== b.grade) return b.grade - a.grade;\n  // Secondary: by age (ascending)\n  return a.age - b.age;\n});\n\n// Custom sorting with locale-aware comparison\nconst names = ['Zebra', 'apple', 'Cherry', 'banana'];\nnames.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));\n// ['apple', 'banana', 'Cherry', 'Zebra']"
+        },
+        {
+          "type": "heading",
+          "text": "When to Use Each Algorithm"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Insertion Sort: Small arrays (< 10 elements) or nearly sorted data",
+            "Merge Sort: Need stable sort, external sorting, consistent O(n log n)",
+            "Quick Sort: General purpose, fastest average case, in-place sorting",
+            "Heap Sort: Need guaranteed O(n log n) with O(1) space",
+            "Counting Sort: Integers within small range, O(n + k) performance",
+            "Radix Sort: Large integers, O(d × (n + k)) where d is digits",
+            "Built-in Array.sort(): Most practical applications (uses Timsort)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "searching-algorithms",
+      "title": "Searching Algorithms",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Linear Search"
+        },
+        {
+          "type": "paragraph",
+          "text": "Simple search that checks each element sequentially. Works on unsorted data."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function linearSearch(arr, target) {\n  for (let i = 0; i < arr.length; i++) {\n    if (arr[i] === target) return i;\n  }\n  return -1;\n}\n\n// Time: O(n), Space: O(1)\nconst index = linearSearch([1, 3, 5, 7, 9], 5); // 2"
+        },
+        {
+          "type": "heading",
+          "text": "Binary Search"
+        },
+        {
+          "type": "paragraph",
+          "text": "Efficient search for sorted arrays. Repeatedly divides search space in half."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function binarySearch(arr, target) {\n  let left = 0;\n  let right = arr.length - 1;\n  \n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    \n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  \n  return -1;\n}\n\n// Recursive version\nfunction binarySearchRecursive(arr, target, left = 0, right = arr.length - 1) {\n  if (left > right) return -1;\n  \n  const mid = Math.floor((left + right) / 2);\n  \n  if (arr[mid] === target) return mid;\n  if (arr[mid] < target) {\n    return binarySearchRecursive(arr, target, mid + 1, right);\n  }\n  return binarySearchRecursive(arr, target, left, mid - 1);\n}\n\n// Time: O(log n), Space: O(1) iterative, O(log n) recursive\nconst sortedArr = [1, 3, 5, 7, 9, 11, 13];\nconst index = binarySearch(sortedArr, 7); // 3"
+        },
+        {
+          "type": "heading",
+          "text": "Binary Search Variations"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Find first occurrence\nfunction findFirst(arr, target) {\n  let left = 0, right = arr.length - 1;\n  let result = -1;\n  \n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    \n    if (arr[mid] === target) {\n      result = mid;\n      right = mid - 1; // Continue searching left\n    } else if (arr[mid] < target) {\n      left = mid + 1;\n    } else {\n      right = mid - 1;\n    }\n  }\n  \n  return result;\n}\n\n// Find last occurrence\nfunction findLast(arr, target) {\n  let left = 0, right = arr.length - 1;\n  let result = -1;\n  \n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    \n    if (arr[mid] === target) {\n      result = mid;\n      left = mid + 1; // Continue searching right\n    } else if (arr[mid] < target) {\n      left = mid + 1;\n    } else {\n      right = mid - 1;\n    }\n  }\n  \n  return result;\n}\n\n// Search in rotated sorted array\nfunction searchRotated(nums, target) {\n  let left = 0, right = nums.length - 1;\n  \n  while (left <= right) {\n    const mid = Math.floor((left + right) / 2);\n    \n    if (nums[mid] === target) return mid;\n    \n    // Left half is sorted\n    if (nums[left] <= nums[mid]) {\n      if (target >= nums[left] && target < nums[mid]) {\n        right = mid - 1;\n      } else {\n        left = mid + 1;\n      }\n    }\n    // Right half is sorted\n    else {\n      if (target > nums[mid] && target <= nums[right]) {\n        left = mid + 1;\n      } else {\n        right = mid - 1;\n      }\n    }\n  }\n  \n  return -1;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Graph Traversal Algorithms"
+        },
+        {
+          "type": "paragraph",
+          "text": "Depth-First Search (DFS) and Breadth-First Search (BFS) are fundamental graph traversal algorithms."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Graph representation\nclass Graph {\n  constructor() {\n    this.adjacencyList = {};\n  }\n  \n  addVertex(vertex) {\n    if (!this.adjacencyList[vertex]) {\n      this.adjacencyList[vertex] = [];\n    }\n  }\n  \n  addEdge(vertex1, vertex2) {\n    this.adjacencyList[vertex1].push(vertex2);\n    this.adjacencyList[vertex2].push(vertex1);\n  }\n  \n  // Depth-First Search (DFS)\n  dfs(start) {\n    const result = [];\n    const visited = {};\n    \n    const dfsHelper = (vertex) => {\n      if (!vertex) return;\n      \n      visited[vertex] = true;\n      result.push(vertex);\n      \n      this.adjacencyList[vertex].forEach(neighbor => {\n        if (!visited[neighbor]) {\n          dfsHelper(neighbor);\n        }\n      });\n    };\n    \n    dfsHelper(start);\n    return result;\n  }\n  \n  // Breadth-First Search (BFS)\n  bfs(start) {\n    const queue = [start];\n    const result = [];\n    const visited = {};\n    visited[start] = true;\n    \n    while (queue.length) {\n      const vertex = queue.shift();\n      result.push(vertex);\n      \n      this.adjacencyList[vertex].forEach(neighbor => {\n        if (!visited[neighbor]) {\n          visited[neighbor] = true;\n          queue.push(neighbor);\n        }\n      });\n    }\n    \n    return result;\n  }\n}\n\n// Usage\nconst g = new Graph();\n['A', 'B', 'C', 'D', 'E', 'F'].forEach(v => g.addVertex(v));\ng.addEdge('A', 'B');\ng.addEdge('A', 'C');\ng.addEdge('B', 'D');\ng.addEdge('C', 'E');\ng.addEdge('D', 'E');\ng.addEdge('D', 'F');\ng.addEdge('E', 'F');\n\nconsole.log(g.dfs('A')); // ['A', 'B', 'D', 'E', 'C', 'F']\nconsole.log(g.bfs('A')); // ['A', 'B', 'C', 'D', 'E', 'F']"
+        }
+      ]
+    },
+    {
+      "id": "dynamic-programming",
+      "title": "Dynamic Programming",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Dynamic Programming Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dynamic Programming (DP) is an optimization technique that solves complex problems by breaking them into simpler subproblems, solving each subproblem once, and storing the results to avoid redundant calculations."
+        },
+        {
+          "type": "heading",
+          "text": "When to Use Dynamic Programming"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Problem can be broken into subproblems",
+            "Subproblems overlap (same subproblems solved multiple times)",
+            "Optimal substructure (optimal solution contains optimal solutions to subproblems)",
+            "Usually involves optimization (min/max) or counting problems"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Memoization (Top-Down)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Fibonacci with memoization\nfunction fibMemo(n, memo = {}) {\n  if (n in memo) return memo[n];\n  if (n <= 2) return 1;\n  \n  memo[n] = fibMemo(n - 1, memo) + fibMemo(n - 2, memo);\n  return memo[n];\n}\n\n// Generic memoization helper\nfunction memoize(fn) {\n  const cache = {};\n  return function(...args) {\n    const key = JSON.stringify(args);\n    if (key in cache) return cache[key];\n    \n    const result = fn.apply(this, args);\n    cache[key] = result;\n    return result;\n  };\n}\n\n// Usage\nconst memoizedFib = memoize(function(n) {\n  if (n <= 2) return 1;\n  return memoizedFib(n - 1) + memoizedFib(n - 2);\n});\n\nconsole.log(fibMemo(50)); // Fast calculation"
+        },
+        {
+          "type": "heading",
+          "text": "Tabulation (Bottom-Up)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Fibonacci with tabulation\nfunction fibTab(n) {\n  if (n <= 2) return 1;\n  \n  const dp = [0, 1, 1];\n  for (let i = 3; i <= n; i++) {\n    dp[i] = dp[i - 1] + dp[i - 2];\n  }\n  return dp[n];\n}\n\n// Space-optimized version\nfunction fibOptimized(n) {\n  if (n <= 2) return 1;\n  \n  let prev2 = 1, prev1 = 1;\n  for (let i = 3; i <= n; i++) {\n    const current = prev1 + prev2;\n    prev2 = prev1;\n    prev1 = current;\n  }\n  return prev1;\n}\n\n// Climbing Stairs Problem\nfunction climbStairs(n) {\n  if (n <= 2) return n;\n  \n  const dp = [0, 1, 2];\n  for (let i = 3; i <= n; i++) {\n    dp[i] = dp[i - 1] + dp[i - 2];\n  }\n  return dp[n];\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Common DP Patterns"
+        },
+        {
+          "type": "heading",
+          "text": "1. Minimum/Maximum Path"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Coin Change Problem - Minimum coins needed\nfunction coinChange(coins, amount) {\n  const dp = new Array(amount + 1).fill(Infinity);\n  dp[0] = 0;\n  \n  for (let i = 1; i <= amount; i++) {\n    for (const coin of coins) {\n      if (coin <= i) {\n        dp[i] = Math.min(dp[i], dp[i - coin] + 1);\n      }\n    }\n  }\n  \n  return dp[amount] === Infinity ? -1 : dp[amount];\n}\n\n// Minimum Path Sum in Grid\nfunction minPathSum(grid) {\n  const m = grid.length, n = grid[0].length;\n  const dp = Array(m).fill().map(() => Array(n).fill(0));\n  \n  dp[0][0] = grid[0][0];\n  \n  // Fill first row\n  for (let j = 1; j < n; j++) {\n    dp[0][j] = dp[0][j - 1] + grid[0][j];\n  }\n  \n  // Fill first column\n  for (let i = 1; i < m; i++) {\n    dp[i][0] = dp[i - 1][0] + grid[i][0];\n  }\n  \n  // Fill rest of the grid\n  for (let i = 1; i < m; i++) {\n    for (let j = 1; j < n; j++) {\n      dp[i][j] = Math.min(dp[i - 1][j], dp[i][j - 1]) + grid[i][j];\n    }\n  }\n  \n  return dp[m - 1][n - 1];\n}"
+        },
+        {
+          "type": "heading",
+          "text": "2. Counting Ways"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Unique Paths in Grid\nfunction uniquePaths(m, n) {\n  const dp = Array(m).fill().map(() => Array(n).fill(1));\n  \n  for (let i = 1; i < m; i++) {\n    for (let j = 1; j < n; j++) {\n      dp[i][j] = dp[i - 1][j] + dp[i][j - 1];\n    }\n  }\n  \n  return dp[m - 1][n - 1];\n}\n\n// Decode Ways\nfunction numDecodings(s) {\n  if (s[0] === '0') return 0;\n  \n  const n = s.length;\n  const dp = new Array(n + 1).fill(0);\n  dp[0] = 1;\n  dp[1] = 1;\n  \n  for (let i = 2; i <= n; i++) {\n    const oneDigit = parseInt(s.substring(i - 1, i));\n    const twoDigits = parseInt(s.substring(i - 2, i));\n    \n    if (oneDigit >= 1 && oneDigit <= 9) {\n      dp[i] += dp[i - 1];\n    }\n    \n    if (twoDigits >= 10 && twoDigits <= 26) {\n      dp[i] += dp[i - 2];\n    }\n  }\n  \n  return dp[n];\n}"
+        },
+        {
+          "type": "heading",
+          "text": "3. Longest Common Subsequence (LCS)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function longestCommonSubsequence(text1, text2) {\n  const m = text1.length, n = text2.length;\n  const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));\n  \n  for (let i = 1; i <= m; i++) {\n    for (let j = 1; j <= n; j++) {\n      if (text1[i - 1] === text2[j - 1]) {\n        dp[i][j] = dp[i - 1][j - 1] + 1;\n      } else {\n        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);\n      }\n    }\n  }\n  \n  return dp[m][n];\n}\n\n// Edit Distance (Levenshtein Distance)\nfunction minDistance(word1, word2) {\n  const m = word1.length, n = word2.length;\n  const dp = Array(m + 1).fill().map(() => Array(n + 1).fill(0));\n  \n  // Initialize base cases\n  for (let i = 0; i <= m; i++) dp[i][0] = i;\n  for (let j = 0; j <= n; j++) dp[0][j] = j;\n  \n  for (let i = 1; i <= m; i++) {\n    for (let j = 1; j <= n; j++) {\n      if (word1[i - 1] === word2[j - 1]) {\n        dp[i][j] = dp[i - 1][j - 1];\n      } else {\n        dp[i][j] = Math.min(\n          dp[i - 1][j] + 1,     // deletion\n          dp[i][j - 1] + 1,     // insertion\n          dp[i - 1][j - 1] + 1  // substitution\n        );\n      }\n    }\n  }\n  \n  return dp[m][n];\n}"
+        },
+        {
+          "type": "heading",
+          "text": "4. Knapsack Problems"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// 0/1 Knapsack Problem\nfunction knapsack(weights, values, capacity) {\n  const n = weights.length;\n  const dp = Array(n + 1).fill().map(() => Array(capacity + 1).fill(0));\n  \n  for (let i = 1; i <= n; i++) {\n    for (let w = 1; w <= capacity; w++) {\n      const weight = weights[i - 1];\n      const value = values[i - 1];\n      \n      if (weight <= w) {\n        dp[i][w] = Math.max(\n          dp[i - 1][w],                    // don't take item\n          dp[i - 1][w - weight] + value   // take item\n        );\n      } else {\n        dp[i][w] = dp[i - 1][w];\n      }\n    }\n  }\n  \n  return dp[n][capacity];\n}\n\n// Space-optimized version\nfunction knapsackOptimized(weights, values, capacity) {\n  const dp = new Array(capacity + 1).fill(0);\n  \n  for (let i = 0; i < weights.length; i++) {\n    for (let w = capacity; w >= weights[i]; w--) {\n      dp[w] = Math.max(dp[w], dp[w - weights[i]] + values[i]);\n    }\n  }\n  \n  return dp[capacity];\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the time complexity of accessing an element by index in an array?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 0,
+      "explanation": "Arrays store elements in contiguous memory locations, allowing direct access to any element using its index in constant time O(1)."
+    },
+    {
+      "id": 2,
+      "question": "Which sorting algorithm has the best average-case time complexity?",
+      "options": [
+        "Bubble Sort",
+        "Selection Sort",
+        "Quick Sort",
+        "Insertion Sort"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Quick Sort has O(n log n) average-case time complexity, which is better than the O(n²) complexity of Bubble Sort, Selection Sort, and Insertion Sort."
+    },
+    {
+      "id": 3,
+      "question": "What is the worst-case time complexity of searching in a hash table?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 2,
+      "explanation": "In the worst case, all keys hash to the same bucket, creating a linked list of length n, resulting in O(n) search time."
+    },
+    {
+      "id": 4,
+      "question": "Which data structure is best for implementing a LIFO (Last In, First Out) structure?",
+      "options": ["Queue", "Stack", "Array", "Hash Table"],
+      "correctAnswer": 1,
+      "explanation": "A stack follows the LIFO principle where the last element added is the first one to be removed, using push and pop operations."
+    },
+    {
+      "id": 5,
+      "question": "What is the time complexity of binary search?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n log n)"],
+      "correctAnswer": 1,
+      "explanation": "Binary search repeatedly divides the search space in half, resulting in O(log n) time complexity. It requires the array to be sorted."
+    },
+    {
+      "id": 6,
+      "question": "Which of the following is NOT a requirement for dynamic programming?",
+      "options": [
+        "Overlapping subproblems",
+        "Optimal substructure",
+        "Greedy choice property",
+        "Memoization capability"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Greedy choice property belongs to greedy algorithms, not dynamic programming. DP requires overlapping subproblems and optimal substructure."
+    },
+    {
+      "id": 7,
+      "question": "What is the space complexity of merge sort?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 2,
+      "explanation": "Merge sort requires O(n) additional space to store the temporary arrays used during the merge process."
+    },
+    {
+      "id": 8,
+      "question": "Which traversal method is used in Breadth-First Search (BFS)?",
+      "options": ["Stack", "Queue", "Priority Queue", "Deque"],
+      "correctAnswer": 1,
+      "explanation": "BFS uses a queue to process nodes level by level, ensuring that all nodes at the current level are visited before moving to the next level."
+    },
+    {
+      "id": 9,
+      "question": "What is the main advantage of using a hash table over an array for frequent lookups?",
+      "options": [
+        "Less memory usage",
+        "Better cache performance",
+        "O(1) average lookup time",
+        "Maintains order"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Hash tables provide O(1) average-case lookup time by using a hash function to directly calculate the index, unlike arrays which require O(n) time to search by value."
+    },
+    {
+      "id": 10,
+      "question": "Which algorithm would you choose for finding the shortest path in an unweighted graph?",
+      "options": ["DFS", "BFS", "Dijkstra's algorithm", "A* algorithm"],
+      "correctAnswer": 1,
+      "explanation": "BFS finds the shortest path in unweighted graphs because it explores nodes level by level, guaranteeing the first path found to any node is the shortest."
+    },
+    {
+      "id": 11,
+      "question": "What is the time complexity of inserting an element at the beginning of an array?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 2,
+      "explanation": "Inserting at the beginning requires shifting all existing elements one position to the right, resulting in O(n) time complexity."
+    },
+    {
+      "id": 12,
+      "question": "Which sorting algorithm is stable and has consistent O(n log n) performance?",
+      "options": ["Quick Sort", "Heap Sort", "Merge Sort", "Selection Sort"],
+      "correctAnswer": 2,
+      "explanation": "Merge Sort is stable (preserves relative order of equal elements) and always performs in O(n log n) time, regardless of input distribution."
+    },
+    {
+      "id": 13,
+      "question": "What is the primary difference between memoization and tabulation in dynamic programming?",
+      "options": [
+        "Memoization is faster",
+        "Memoization uses top-down approach, tabulation uses bottom-up",
+        "Tabulation uses more memory",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Memoization is a top-down recursive approach that stores results as needed, while tabulation is a bottom-up iterative approach that builds solutions from smaller subproblems."
+    },
+    {
+      "id": 14,
+      "question": "Which data structure would be most efficient for implementing an autocomplete feature?",
+      "options": ["Array", "Hash Table", "Binary Search Tree", "Trie"],
+      "correctAnswer": 3,
+      "explanation": "A Trie (prefix tree) is designed for efficient prefix-based operations, making it ideal for autocomplete functionality with O(k) search time where k is the prefix length."
+    },
+    {
+      "id": 15,
+      "question": "What is the worst-case time complexity of Quick Sort?",
+      "options": ["O(n log n)", "O(n²)", "O(n)", "O(log n)"],
+      "correctAnswer": 1,
+      "explanation": "Quick Sort's worst case occurs when the pivot is always the smallest or largest element, leading to unbalanced partitions and O(n²) time complexity."
+    },
+    {
+      "id": 16,
+      "question": "Which algorithm is used to detect cycles in a directed graph?",
+      "options": [
+        "BFS",
+        "DFS with coloring",
+        "Dijkstra's algorithm",
+        "Kruskal's algorithm"
+      ],
+      "correctAnswer": 1,
+      "explanation": "DFS with three-coloring (white, gray, black) can detect cycles in directed graphs by identifying back edges during traversal."
+    },
+    {
+      "id": 17,
+      "question": "What is the time complexity of building a binary heap from an unsorted array?",
+      "options": ["O(n log n)", "O(n²)", "O(n)", "O(log n)"],
+      "correctAnswer": 2,
+      "explanation": "Building a heap from an unsorted array using the heapify operation takes O(n) time, which is more efficient than inserting elements one by one."
+    },
+    {
+      "id": 18,
+      "question": "Which approach is better for the coin change problem: greedy or dynamic programming?",
+      "options": [
+        "Greedy is always better",
+        "Dynamic programming is always better",
+        "Depends on the coin denominations",
+        "They give the same result"
+      ],
+      "correctAnswer": 2,
+      "explanation": "For standard denominations (like 1, 5, 10, 25), greedy works. For arbitrary denominations, dynamic programming is needed to guarantee the optimal solution."
+    },
+    {
+      "id": 19,
+      "question": "What is the space complexity of the recursive implementation of binary search?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 1,
+      "explanation": "Recursive binary search creates O(log n) stack frames, one for each recursive call, resulting in O(log n) space complexity."
+    },
+    {
+      "id": 20,
+      "question": "Which data structure is best for implementing a priority queue?",
+      "options": ["Array", "Linked List", "Binary Heap", "Hash Table"],
+      "correctAnswer": 2,
+      "explanation": "Binary heaps provide efficient O(log n) insertion and deletion operations while maintaining the priority property, making them ideal for priority queues."
+    },
+    {
+      "id": 21,
+      "question": "What is the main advantage of using a doubly linked list over a singly linked list?",
+      "options": [
+        "Less memory usage",
+        "Faster insertion at beginning",
+        "Can traverse in both directions",
+        "Better cache performance"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Doubly linked lists have pointers to both next and previous nodes, allowing efficient traversal in both directions and easier deletion of nodes."
+    },
+    {
+      "id": 22,
+      "question": "Which algorithm would you use to find the minimum spanning tree of a graph?",
+      "options": [
+        "DFS",
+        "BFS",
+        "Kruskal's or Prim's algorithm",
+        "Dijkstra's algorithm"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Kruskal's and Prim's algorithms are specifically designed to find minimum spanning trees. Kruskal's uses edge-based approach, Prim's uses vertex-based approach."
+    },
+    {
+      "id": 23,
+      "question": "What is the time complexity of searching for an element in a balanced binary search tree?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n log n)"],
+      "correctAnswer": 1,
+      "explanation": "In a balanced BST, the height is O(log n), and searching follows a path from root to leaf, resulting in O(log n) time complexity."
+    },
+    {
+      "id": 24,
+      "question": "Which pattern is most effective for solving the 'Two Sum' problem optimally?",
+      "options": [
+        "Two pointers",
+        "Hash map",
+        "Sliding window",
+        "Binary search"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Using a hash map allows solving Two Sum in O(n) time by storing complements and checking for their existence in constant time."
+    },
+    {
+      "id": 25,
+      "question": "What is the key difference between Dijkstra's algorithm and Bellman-Ford algorithm?",
+      "options": [
+        "Dijkstra is faster",
+        "Bellman-Ford handles negative weights",
+        "Dijkstra works on directed graphs only",
+        "They solve different problems"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Bellman-Ford can handle negative edge weights and detect negative cycles, while Dijkstra requires non-negative weights but is more efficient."
+    },
+    {
+      "id": 26,
+      "question": "Which sorting algorithm is most suitable for sorting large datasets that don't fit in memory?",
+      "options": ["Quick Sort", "Heap Sort", "Merge Sort", "Bubble Sort"],
+      "correctAnswer": 2,
+      "explanation": "Merge Sort is ideal for external sorting because it can efficiently merge sorted chunks from disk, making it suitable for datasets larger than available memory."
+    },
+    {
+      "id": 27,
+      "question": "What is the amortized time complexity of dynamic array (like JavaScript Array) push operation?",
+      "options": ["O(1)", "O(log n)", "O(n)", "O(n²)"],
+      "correctAnswer": 0,
+      "explanation": "Although occasional resizing takes O(n) time, the amortized cost of push operations is O(1) because resizing happens infrequently as the array grows."
+    },
+    {
+      "id": 28,
+      "question": "Which approach is most efficient for finding the kth largest element in an unsorted array?",
+      "options": [
+        "Sort the array",
+        "Use a min-heap of size k",
+        "Use Quick Select",
+        "Linear search k times"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Quick Select (a variant of Quick Sort) can find the kth largest element in average O(n) time, which is more efficient than sorting O(n log n)."
+    },
+    {
+      "id": 29,
+      "question": "What is the main benefit of using a segment tree over a regular array for range queries?",
+      "options": [
+        "Less memory usage",
+        "Faster individual element access",
+        "Efficient range sum/min/max queries",
+        "Better for sorting"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Segment trees enable efficient range queries (sum, min, max) and updates in O(log n) time, while arrays require O(n) time for range operations."
+    },
+    {
+      "id": 30,
+      "question": "Which technique is most appropriate for solving the 'Longest Increasing Subsequence' problem optimally?",
+      "options": [
+        "Greedy approach",
+        "Dynamic programming with binary search",
+        "Backtracking",
+        "Divide and conquer"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The optimal solution uses dynamic programming with binary search to achieve O(n log n) time complexity, maintaining an array of smallest tail elements."
+    }
+  ]
+}
