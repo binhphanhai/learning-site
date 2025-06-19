@@ -19,6 +19,11 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+// Import content directly
+import advancedJavascriptContent from "../data/advanced-javascript.json";
+import advancedJavascriptTypescriptContent from "../data/advanced-javascript-typescript.json";
+import reactEcosystemContent from "../data/react-ecosystem.json";
+
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph } = Typography;
 
@@ -28,24 +33,37 @@ interface ContentItem {
   description: string;
 }
 
+// Define all available content
+const contentMap = {
+  "advanced-javascript": advancedJavascriptContent,
+  "advanced-javascript-typescript": advancedJavascriptTypescriptContent,
+  "react-ecosystem": reactEcosystemContent,
+};
+
 export default function HomePage() {
   const [availableContent, setAvailableContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchContent = async () => {
+    // Load content directly from imported JSON files
+    const loadContent = () => {
       try {
-        const response = await fetch("/api/content-list");
-        const data = await response.json();
-        setAvailableContent(data);
+        const contentList = Object.entries(contentMap).map(
+          ([slug, content]) => ({
+            slug,
+            title: content.title,
+            description: content.description,
+          })
+        );
+        setAvailableContent(contentList);
       } catch (error) {
-        console.error("Failed to fetch content:", error);
+        console.error("Failed to load content:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchContent();
+    loadContent();
   }, []);
 
   return (
