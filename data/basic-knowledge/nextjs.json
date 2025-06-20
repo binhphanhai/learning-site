@@ -1,0 +1,613 @@
+{
+  "title": "Next.js Fundamentals",
+  "description": "Master Next.js 14+ App Router, Server Components, Server Actions, routing, data fetching, authentication, and full-stack development with React",
+  "sections": [
+    {
+      "id": "nextjs-fundamentals",
+      "title": "Next.js Fundamentals & Setup",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is Next.js?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Next.js is a React framework that provides building blocks to create full-stack web applications. Think of it as React with superpowers - it handles all the complex setup and gives you powerful features out of the box. While React is just a library for building user interfaces, Next.js is a complete framework that handles both frontend and backend, making it perfect for building modern web applications."
+        },
+        {
+          "type": "heading",
+          "text": "Why Choose Next.js Over Plain React?"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Built-in Routing: No need to install React Router - file-based routing works automatically",
+            "Performance: Automatic code splitting, image optimization, and caching",
+            "SEO-Friendly: Server-side rendering makes your pages visible to search engines",
+            "Full-Stack: Can build both frontend and backend in the same project",
+            "Developer Experience: Hot reloading, TypeScript support, and great error messages",
+            "Production Ready: Handles optimization, bundling, and deployment automatically"
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "Server-Side Rendering (SSR) and Static Site Generation (SSG)",
+            "App Router with file-system based routing",
+            "Server Components and Server Actions",
+            "Built-in CSS and Sass support",
+            "Image and font optimization",
+            "TypeScript support out of the box",
+            "API routes for backend functionality",
+            "Automatic code splitting and lazy loading"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Project Setup & Structure"
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Create new Next.js project\nnpx create-next-app@latest my-app\n# or with specific options\nnpx create-next-app@latest my-app --typescript --tailwind --eslint --app\n\n# Navigate and start development\ncd my-app\nnpm run dev"
+        },
+        {
+          "type": "paragraph",
+          "text": "Next.js 13+ uses the App Router by default, which provides a new file-system based routing with enhanced features:"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "app/\n├── layout.tsx          # Root layout\n├── page.tsx           # Home page\n├── loading.tsx        # Loading UI\n├── error.tsx          # Error UI\n├── not-found.tsx      # 404 page\n├── globals.css        # Global styles\n├── dashboard/\n│   ├── layout.tsx     # Dashboard layout\n│   ├── page.tsx       # Dashboard page\n│   └── settings/\n│       └── page.tsx   # Settings page\n└── api/\n    └── users/\n        └── route.ts   # API endpoint"
+        },
+        {
+          "type": "heading",
+          "text": "App Router vs Pages Router"
+        },
+        {
+          "type": "list",
+          "items": [
+            "App Router (new): Uses app/ directory, supports Server Components, layouts, loading states",
+            "Pages Router (legacy): Uses pages/ directory, traditional React patterns",
+            "App Router is recommended for new projects (Next.js 13+)",
+            "Can incrementally migrate from Pages Router to App Router"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "routing-navigation",
+      "title": "Routing & Navigation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "File-based Routing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Next.js uses file-system based routing, which means your folder structure automatically becomes your website's URL structure. It's like organizing files on your computer - the way you organize folders becomes the way users navigate your website. No complex configuration needed!"
+        },
+        {
+          "type": "heading",
+          "text": "How File-Based Routing Works"
+        },
+        {
+          "type": "list",
+          "items": [
+            "app/page.tsx → yoursite.com/ (home page)",
+            "app/about/page.tsx → yoursite.com/about",
+            "app/blog/page.tsx → yoursite.com/blog",
+            "app/blog/[slug]/page.tsx → yoursite.com/blog/any-post-name (dynamic)",
+            "app/shop/[...categories]/page.tsx → yoursite.com/shop/clothes/shirts/cotton (catch-all)"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/page.tsx - Home page (/)\nexport default function HomePage() {\n  return <h1>Welcome to Next.js</h1>\n}\n\n// app/about/page.tsx - About page (/about)\nexport default function AboutPage() {\n  return <h1>About Us</h1>\n}\n\n// app/blog/[slug]/page.tsx - Dynamic route (/blog/hello-world)\ninterface PageProps {\n  params: { slug: string }\n}\n\nexport default function BlogPost({ params }: PageProps) {\n  return <h1>Blog Post: {params.slug}</h1>\n}\n\n// app/shop/[...slug]/page.tsx - Catch-all routes (/shop/clothes/shirts)\ninterface PageProps {\n  params: { slug: string[] }\n}\n\nexport default function ShopPage({ params }: PageProps) {\n  return <h1>Shop: {params.slug.join('/')}</h1>\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Navigation with Link Component"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "import Link from 'next/link'\nimport { useRouter } from 'next/navigation'\n\nexport default function Navigation() {\n  const router = useRouter()\n  \n  return (\n    <nav>\n      {/* Basic navigation */}\n      <Link href=\"/\">Home</Link>\n      <Link href=\"/about\">About</Link>\n      \n      {/* Dynamic navigation */}\n      <Link href={`/blog/${postSlug}`}>Read Post</Link>\n      \n      {/* Programmatic navigation */}\n      <button onClick={() => router.push('/dashboard')}>\n        Go to Dashboard\n      </button>\n      \n      {/* Prefetch for performance */}\n      <Link href=\"/dashboard\" prefetch={true}>\n        Dashboard (Prefetched)\n      </Link>\n      \n      {/* Replace instead of push */}\n      <Link href=\"/login\" replace>\n        Login\n      </Link>\n    </nav>\n  )\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Route Groups & Parallel Routes"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "app/\n├── (marketing)/          # Route group (doesn't affect URL)\n│   ├── about/\n│   └── contact/\n├── (shop)/\n│   ├── products/\n│   └── cart/\n├── dashboard/\n│   ├── @analytics/       # Parallel route slot\n│   ├── @team/           # Parallel route slot\n│   ├── layout.tsx       # Can render multiple slots\n│   └── page.tsx\n└── layout.tsx"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/dashboard/layout.tsx - Parallel routes\ninterface LayoutProps {\n  children: React.ReactNode\n  analytics: React.ReactNode\n  team: React.ReactNode\n}\n\nexport default function DashboardLayout({\n  children,\n  analytics,\n  team\n}: LayoutProps) {\n  return (\n    <div>\n      <div>{children}</div>\n      <div className=\"grid grid-cols-2 gap-4\">\n        <div>{analytics}</div>\n        <div>{team}</div>\n      </div>\n    </div>\n  )\n}"
+        }
+      ]
+    },
+    {
+      "id": "server-client-components",
+      "title": "Server & Client Components",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Server Components (Default)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Server Components are a game-changer in React development. They run on the server (not in the user's browser), which means they can directly access databases, files, and APIs without exposing sensitive information to the client. Think of them as your backend and frontend combined - they fetch data and render HTML on the server, then send the final result to the browser."
+        },
+        {
+          "type": "heading",
+          "text": "Benefits of Server Components"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Faster Loading: Less JavaScript sent to browser = faster page loads",
+            "Better SEO: Content is rendered on server, so search engines can see it",
+            "Security: Database queries and API keys stay on the server",
+            "Automatic Caching: Next.js caches server component output",
+            "Direct Data Access: No need for separate API routes for simple data fetching"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Server Component (default in App Router)\nimport { db } from '@/lib/db'\n\nexport default async function PostsPage() {\n  // Direct database access\n  const posts = await db.post.findMany()\n  \n  return (\n    <div>\n      <h1>Blog Posts</h1>\n      {posts.map(post => (\n        <article key={post.id}>\n          <h2>{post.title}</h2>\n          <p>{post.excerpt}</p>\n        </article>\n      ))}\n    </div>\n  )\n}\n\n// Server Component with data fetching\nexport default async function UserProfile({ params }: { params: { id: string } }) {\n  const user = await fetch(`https://api.example.com/users/${params.id}`)\n    .then(res => res.json())\n  \n  return (\n    <div>\n      <h1>{user.name}</h1>\n      <p>{user.email}</p>\n    </div>\n  )\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Client Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "Client Components are traditional React components that run in the user's browser. They're perfect for interactive features like buttons, forms, animations, and anything that responds to user actions. Use them when you need interactivity, state management, or browser-specific features."
+        },
+        {
+          "type": "heading",
+          "text": "When to Use Client Components"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Interactive Elements: Buttons, forms, dropdowns, modals",
+            "State Management: useState, useEffect, custom hooks",
+            "Event Handlers: onClick, onSubmit, onScroll, etc.",
+            "Browser APIs: localStorage, geolocation, camera access",
+            "Real-time Features: Chat, live updates, animations",
+            "Third-party Libraries: Most React libraries expect client-side rendering"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "'use client' // Required directive for client components\n\nimport { useState, useEffect } from 'react'\n\nexport default function Counter() {\n  const [count, setCount] = useState(0)\n  \n  useEffect(() => {\n    document.title = `Count: ${count}`\n  }, [count])\n  \n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>\n        Increment\n      </button>\n    </div>\n  )\n}\n\n// Client Component with form handling\nexport default function ContactForm() {\n  const [formData, setFormData] = useState({ name: '', email: '' })\n  \n  const handleSubmit = async (e: React.FormEvent) => {\n    e.preventDefault()\n    // Handle form submission\n    const response = await fetch('/api/contact', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(formData)\n    })\n  }\n  \n  return (\n    <form onSubmit={handleSubmit}>\n      <input\n        type=\"text\"\n        value={formData.name}\n        onChange={(e) => setFormData({...formData, name: e.target.value})}\n      />\n      <button type=\"submit\">Submit</button>\n    </form>\n  )\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Composition Patterns"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Server Component can import Client Components\nimport ClientCounter from './ClientCounter'\nimport { db } from '@/lib/db'\n\nexport default async function Dashboard() {\n  const data = await db.analytics.findFirst()\n  \n  return (\n    <div>\n      <h1>Dashboard</h1>\n      <p>Server data: {data.value}</p>\n      {/* Client component for interactivity */}\n      <ClientCounter initialValue={data.value} />\n    </div>\n  )\n}\n\n// Pass server data to client components via props\n'use client'\n\ninterface Props {\n  initialValue: number\n}\n\nexport default function ClientCounter({ initialValue }: Props) {\n  const [count, setCount] = useState(initialValue)\n  \n  return (\n    <button onClick={() => setCount(count + 1)}>\n      Count: {count}\n    </button>\n  )\n}"
+        }
+      ]
+    },
+    {
+      "id": "data-fetching",
+      "title": "Data Fetching & Caching",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Server-Side Data Fetching"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Static data fetching (SSG)\nexport default async function BlogPage() {\n  const posts = await fetch('https://api.example.com/posts', {\n    next: { revalidate: 3600 } // Revalidate every hour\n  }).then(res => res.json())\n  \n  return (\n    <div>\n      {posts.map(post => (\n        <article key={post.id}>\n          <h2>{post.title}</h2>\n          <p>{post.content}</p>\n        </article>\n      ))}\n    </div>\n  )\n}\n\n// Dynamic data fetching (SSR)\nexport default async function UserPage({ params }: { params: { id: string } }) {\n  const user = await fetch(`https://api.example.com/users/${params.id}`, {\n    cache: 'no-store' // Always fetch fresh data\n  }).then(res => res.json())\n  \n  return (\n    <div>\n      <h1>{user.name}</h1>\n      <p>Last updated: {new Date().toISOString()}</p>\n    </div>\n  )\n}\n\n// Parallel data fetching\nexport default async function Dashboard() {\n  const [users, posts, analytics] = await Promise.all([\n    fetch('/api/users').then(res => res.json()),\n    fetch('/api/posts').then(res => res.json()),\n    fetch('/api/analytics').then(res => res.json())\n  ])\n  \n  return (\n    <div>\n      <UserStats users={users} />\n      <PostsList posts={posts} />\n      <Analytics data={analytics} />\n    </div>\n  )\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Caching Strategies"
+        },
+        {
+          "type": "list",
+          "items": [
+            "{ cache: 'force-cache' } - Cache indefinitely (default)",
+            "{ cache: 'no-store' } - Never cache, always fetch fresh",
+            "{ next: { revalidate: 60 } } - Revalidate every 60 seconds",
+            "{ next: { tags: ['posts'] } } - Tag-based revalidation"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Tagged caching for selective revalidation\nexport default async function PostsPage() {\n  const posts = await fetch('https://api.example.com/posts', {\n    next: { tags: ['posts'] }\n  }).then(res => res.json())\n  \n  return <PostsList posts={posts} />\n}\n\n// Revalidate specific tags\nimport { revalidateTag } from 'next/cache'\n\nexport async function POST() {\n  // After creating a new post\n  revalidateTag('posts')\n  return Response.json({ success: true })\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Loading States & Streaming"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/dashboard/loading.tsx - Loading UI\nexport default function Loading() {\n  return (\n    <div className=\"animate-pulse\">\n      <div className=\"h-8 bg-gray-200 rounded mb-4\"></div>\n      <div className=\"h-4 bg-gray-200 rounded mb-2\"></div>\n      <div className=\"h-4 bg-gray-200 rounded mb-2\"></div>\n    </div>\n  )\n}\n\n// Suspense for granular loading\nimport { Suspense } from 'react'\n\nexport default function Dashboard() {\n  return (\n    <div>\n      <h1>Dashboard</h1>\n      <Suspense fallback={<div>Loading analytics...</div>}>\n        <Analytics />\n      </Suspense>\n      <Suspense fallback={<div>Loading posts...</div>}>\n        <RecentPosts />\n      </Suspense>\n    </div>\n  )\n}\n\n// Streaming with async components\nasync function Analytics() {\n  const data = await fetch('/api/analytics')\n  return <div>Analytics: {data.value}</div>\n}\n\nasync function RecentPosts() {\n  const posts = await fetch('/api/posts')\n  return <PostsList posts={posts} />\n}"
+        }
+      ]
+    },
+    {
+      "id": "server-actions",
+      "title": "Server Actions & Forms",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Server Actions"
+        },
+        {
+          "type": "paragraph",
+          "text": "Server Actions allow you to run server-side code directly from client components without creating API routes."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/actions.ts - Server Actions\n'use server'\n\nimport { db } from '@/lib/db'\nimport { revalidatePath } from 'next/cache'\nimport { redirect } from 'next/navigation'\n\nexport async function createPost(formData: FormData) {\n  const title = formData.get('title') as string\n  const content = formData.get('content') as string\n  \n  // Validation\n  if (!title || !content) {\n    throw new Error('Title and content are required')\n  }\n  \n  // Database operation\n  const post = await db.post.create({\n    data: { title, content }\n  })\n  \n  // Revalidate and redirect\n  revalidatePath('/blog')\n  redirect(`/blog/${post.slug}`)\n}\n\nexport async function deletePost(id: string) {\n  await db.post.delete({ where: { id } })\n  revalidatePath('/blog')\n}\n\nexport async function updatePost(id: string, formData: FormData) {\n  const title = formData.get('title') as string\n  const content = formData.get('content') as string\n  \n  await db.post.update({\n    where: { id },\n    data: { title, content }\n  })\n  \n  revalidatePath(`/blog/${id}`)\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Forms with Server Actions"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Form with Server Action\nimport { createPost } from './actions'\n\nexport default function CreatePostForm() {\n  return (\n    <form action={createPost}>\n      <input\n        type=\"text\"\n        name=\"title\"\n        placeholder=\"Post title\"\n        required\n      />\n      <textarea\n        name=\"content\"\n        placeholder=\"Post content\"\n        required\n      />\n      <button type=\"submit\">Create Post</button>\n    </form>\n  )\n}\n\n// Progressive enhancement with useFormStatus\n'use client'\n\nimport { useFormStatus } from 'react-dom'\n\nfunction SubmitButton() {\n  const { pending } = useFormStatus()\n  \n  return (\n    <button type=\"submit\" disabled={pending}>\n      {pending ? 'Creating...' : 'Create Post'}\n    </button>\n  )\n}\n\nexport default function CreatePostForm() {\n  return (\n    <form action={createPost}>\n      <input type=\"text\" name=\"title\" required />\n      <textarea name=\"content\" required />\n      <SubmitButton />\n    </form>\n  )\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Error Handling & Validation"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Server Action with validation\n'use server'\n\nimport { z } from 'zod'\nimport { revalidatePath } from 'next/cache'\n\nconst PostSchema = z.object({\n  title: z.string().min(1, 'Title is required'),\n  content: z.string().min(10, 'Content must be at least 10 characters')\n})\n\nexport async function createPost(prevState: any, formData: FormData) {\n  const validatedFields = PostSchema.safeParse({\n    title: formData.get('title'),\n    content: formData.get('content')\n  })\n  \n  if (!validatedFields.success) {\n    return {\n      errors: validatedFields.error.flatten().fieldErrors,\n      message: 'Missing or invalid fields'\n    }\n  }\n  \n  try {\n    await db.post.create({\n      data: validatedFields.data\n    })\n    \n    revalidatePath('/blog')\n    return { message: 'Post created successfully' }\n  } catch (error) {\n    return { message: 'Failed to create post' }\n  }\n}\n\n// Client component with error handling\n'use client'\n\nimport { useFormState } from 'react-dom'\nimport { createPost } from './actions'\n\nconst initialState = {\n  message: '',\n  errors: {}\n}\n\nexport default function CreatePostForm() {\n  const [state, dispatch] = useFormState(createPost, initialState)\n  \n  return (\n    <form action={dispatch}>\n      <div>\n        <input type=\"text\" name=\"title\" />\n        {state.errors?.title && (\n          <p className=\"text-red-500\">{state.errors.title}</p>\n        )}\n      </div>\n      <div>\n        <textarea name=\"content\" />\n        {state.errors?.content && (\n          <p className=\"text-red-500\">{state.errors.content}</p>\n        )}\n      </div>\n      <button type=\"submit\">Create Post</button>\n      {state.message && (\n        <p className={state.errors ? 'text-red-500' : 'text-green-500'}>\n          {state.message}\n        </p>\n      )}\n    </form>\n  )\n}"
+        }
+      ]
+    },
+    {
+      "id": "api-routes",
+      "title": "API Routes & Middleware",
+      "content": [
+        {
+          "type": "heading",
+          "text": "API Routes"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/api/posts/route.ts - API Route\nimport { NextRequest, NextResponse } from 'next/server'\nimport { db } from '@/lib/db'\n\n// GET /api/posts\nexport async function GET(request: NextRequest) {\n  const searchParams = request.nextUrl.searchParams\n  const page = searchParams.get('page') || '1'\n  const limit = searchParams.get('limit') || '10'\n  \n  const posts = await db.post.findMany({\n    skip: (parseInt(page) - 1) * parseInt(limit),\n    take: parseInt(limit),\n    orderBy: { createdAt: 'desc' }\n  })\n  \n  return NextResponse.json({ posts })\n}\n\n// POST /api/posts\nexport async function POST(request: NextRequest) {\n  try {\n    const body = await request.json()\n    const { title, content } = body\n    \n    if (!title || !content) {\n      return NextResponse.json(\n        { error: 'Title and content are required' },\n        { status: 400 }\n      )\n    }\n    \n    const post = await db.post.create({\n      data: { title, content }\n    })\n    \n    return NextResponse.json({ post }, { status: 201 })\n  } catch (error) {\n    return NextResponse.json(\n      { error: 'Internal server error' },\n      { status: 500 }\n    )\n  }\n}\n\n// Dynamic API routes\n// app/api/posts/[id]/route.ts\nexport async function GET(\n  request: NextRequest,\n  { params }: { params: { id: string } }\n) {\n  const post = await db.post.findUnique({\n    where: { id: params.id }\n  })\n  \n  if (!post) {\n    return NextResponse.json(\n      { error: 'Post not found' },\n      { status: 404 }\n    )\n  }\n  \n  return NextResponse.json({ post })\n}\n\nexport async function DELETE(\n  request: NextRequest,\n  { params }: { params: { id: string } }\n) {\n  await db.post.delete({\n    where: { id: params.id }\n  })\n  \n  return NextResponse.json({ message: 'Post deleted' })\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Middleware"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// middleware.ts - Root level middleware\nimport { NextResponse } from 'next/server'\nimport type { NextRequest } from 'next/server'\n\nexport function middleware(request: NextRequest) {\n  // Authentication check\n  const token = request.cookies.get('auth-token')\n  \n  if (request.nextUrl.pathname.startsWith('/dashboard')) {\n    if (!token) {\n      return NextResponse.redirect(new URL('/login', request.url))\n    }\n  }\n  \n  // Add custom headers\n  const response = NextResponse.next()\n  response.headers.set('X-Custom-Header', 'custom-value')\n  \n  // Rate limiting\n  const ip = request.ip || 'unknown'\n  const rateLimitKey = `rate-limit:${ip}`\n  \n  // Geolocation-based redirects\n  const country = request.geo?.country\n  if (country === 'US' && request.nextUrl.pathname === '/') {\n    return NextResponse.redirect(new URL('/us', request.url))\n  }\n  \n  return response\n}\n\n// Configure which paths middleware runs on\nexport const config = {\n  matcher: [\n    '/((?!api|_next/static|_next/image|favicon.ico).*)',\n    '/dashboard/:path*'\n  ]\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Authentication with NextAuth.js"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/api/auth/[...nextauth]/route.ts\nimport NextAuth from 'next-auth'\nimport GoogleProvider from 'next-auth/providers/google'\nimport { PrismaAdapter } from '@auth/prisma-adapter'\nimport { db } from '@/lib/db'\n\nconst handler = NextAuth({\n  adapter: PrismaAdapter(db),\n  providers: [\n    GoogleProvider({\n      clientId: process.env.GOOGLE_CLIENT_ID!,\n      clientSecret: process.env.GOOGLE_CLIENT_SECRET!\n    })\n  ],\n  callbacks: {\n    session: async ({ session, token }) => {\n      if (session?.user) {\n        session.user.id = token.sub!\n      }\n      return session\n    },\n    jwt: async ({ user, token }) => {\n      if (user) {\n        token.sub = user.id\n      }\n      return token\n    }\n  },\n  session: {\n    strategy: 'jwt'\n  }\n})\n\nexport { handler as GET, handler as POST }\n\n// Using authentication in components\nimport { getServerSession } from 'next-auth'\nimport { authOptions } from '@/app/api/auth/[...nextauth]/route'\n\nexport default async function Dashboard() {\n  const session = await getServerSession(authOptions)\n  \n  if (!session) {\n    redirect('/api/auth/signin')\n  }\n  \n  return (\n    <div>\n      <h1>Welcome, {session.user?.name}!</h1>\n    </div>\n  )\n}"
+        }
+      ]
+    },
+    {
+      "id": "optimization-deployment",
+      "title": "Optimization & Deployment",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Image Optimization"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "import Image from 'next/image'\n\n// Optimized images with Next.js Image component\nexport default function Gallery() {\n  return (\n    <div>\n      {/* Static image */}\n      <Image\n        src=\"/hero.jpg\"\n        alt=\"Hero image\"\n        width={800}\n        height={600}\n        priority // Load immediately for above-the-fold\n      />\n      \n      {/* Dynamic image */}\n      <Image\n        src={user.avatar}\n        alt={user.name}\n        width={200}\n        height={200}\n        placeholder=\"blur\"\n        blurDataURL=\"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...\"\n      />\n      \n      {/* Responsive image */}\n      <Image\n        src=\"/banner.jpg\"\n        alt=\"Banner\"\n        fill\n        style={{ objectFit: 'cover' }}\n        sizes=\"(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw\"\n      />\n    </div>\n  )\n}\n\n// Custom image loader\nconst imageLoader = ({ src, width, quality }) => {\n  return `https://example.com/${src}?w=${width}&q=${quality || 75}`\n}\n\n<Image\n  loader={imageLoader}\n  src=\"image.jpg\"\n  alt=\"Custom loaded image\"\n  width={500}\n  height={300}\n/>"
+        },
+        {
+          "type": "heading",
+          "text": "Font Optimization"
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// app/layout.tsx - Font optimization\nimport { Inter, Roboto_Mono } from 'next/font/google'\n\nconst inter = Inter({\n  subsets: ['latin'],\n  display: 'swap',\n  variable: '--font-inter'\n})\n\nconst robotoMono = Roboto_Mono({\n  subsets: ['latin'],\n  display: 'swap',\n  variable: '--font-roboto-mono'\n})\n\nexport default function RootLayout({\n  children\n}: {\n  children: React.ReactNode\n}) {\n  return (\n    <html lang=\"en\" className={`${inter.variable} ${robotoMono.variable}`}>\n      <body className=\"font-sans\">{children}</body>\n    </html>\n  )\n}\n\n// Custom font\nimport localFont from 'next/font/local'\n\nconst customFont = localFont({\n  src: './fonts/CustomFont.woff2',\n  display: 'swap',\n  variable: '--font-custom'\n})"
+        },
+        {
+          "type": "heading",
+          "text": "Performance Optimization"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Automatic code splitting by route",
+            "Dynamic imports for client-side code splitting",
+            "Bundle analyzer to identify large dependencies",
+            "Image optimization with WebP/AVIF formats",
+            "Font optimization with preloading",
+            "Static generation for better performance",
+            "Edge runtime for faster cold starts"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Dynamic imports for code splitting\nimport dynamic from 'next/dynamic'\n\nconst DynamicChart = dynamic(() => import('../components/Chart'), {\n  loading: () => <p>Loading chart...</p>,\n  ssr: false // Disable server-side rendering\n})\n\nexport default function Dashboard() {\n  return (\n    <div>\n      <h1>Dashboard</h1>\n      <DynamicChart />\n    </div>\n  )\n}\n\n// Bundle analysis\n// npm install @next/bundle-analyzer\n// next.config.js\nconst withBundleAnalyzer = require('@next/bundle-analyzer')({\n  enabled: process.env.ANALYZE === 'true'\n})\n\nmodule.exports = withBundleAnalyzer({\n  // Next.js config\n})\n\n// Edge runtime for API routes\nexport const runtime = 'edge'\n\nexport async function GET() {\n  return Response.json({ message: 'Hello from Edge!' })\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Deployment & Environment Configuration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// next.config.js\n/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  experimental: {\n    appDir: true,\n    serverActions: true\n  },\n  images: {\n    domains: ['example.com', 'images.unsplash.com'],\n    formats: ['image/webp', 'image/avif']\n  },\n  env: {\n    CUSTOM_KEY: process.env.CUSTOM_KEY\n  },\n  async redirects() {\n    return [\n      {\n        source: '/old-path',\n        destination: '/new-path',\n        permanent: true\n      }\n    ]\n  },\n  async rewrites() {\n    return [\n      {\n        source: '/api/:path*',\n        destination: 'https://api.example.com/:path*'\n      }\n    ]\n  }\n}\n\nmodule.exports = nextConfig\n\n// Environment variables\n// .env.local\nDATABASE_URL=\"postgresql://...\"\nNEXTAUTH_SECRET=\"your-secret\"\nNEXTAUTH_URL=\"http://localhost:3000\"\n\n// .env.production\nDATABASE_URL=\"your-production-db\"\nNEXTAUTH_URL=\"https://yourdomain.com\""
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main difference between the App Router and Pages Router in Next.js?",
+      "options": [
+        "App Router is faster than Pages Router",
+        "App Router uses app/ directory with Server Components, Pages Router uses pages/ directory",
+        "Pages Router is newer than App Router",
+        "They are exactly the same"
+      ],
+      "correctAnswer": 1,
+      "explanation": "App Router (Next.js 13+) uses the app/ directory and supports Server Components, layouts, and loading states. Pages Router uses the pages/ directory with traditional React patterns."
+    },
+    {
+      "id": 2,
+      "question": "What is the purpose of the 'use client' directive?",
+      "options": [
+        "To make components load faster",
+        "To mark components that should render on the client-side",
+        "To enable TypeScript support",
+        "To add authentication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'use client' directive marks components that should render on the client-side and can use React hooks, event handlers, and browser APIs."
+    },
+    {
+      "id": 3,
+      "question": "What are Server Components in Next.js?",
+      "options": [
+        "Components that run on the server and can directly access backend resources",
+        "Components that are faster than regular components",
+        "Components that only work with databases",
+        "Components that require authentication"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Server Components render on the server, can directly access backend resources like databases, and reduce client-side JavaScript bundle size."
+    },
+    {
+      "id": 4,
+      "question": "How do you create a dynamic route in the App Router?",
+      "options": [
+        "Using query parameters",
+        "Using square brackets in folder names like [slug]",
+        "Using the router.push() method",
+        "Using the Link component"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Dynamic routes are created using square brackets in folder names. For example, app/blog/[slug]/page.tsx creates a dynamic route for /blog/any-slug."
+    },
+    {
+      "id": 5,
+      "question": "What are Server Actions in Next.js?",
+      "options": [
+        "API routes that run on the server",
+        "Functions that run server-side code directly from client components",
+        "Database operations only",
+        "Authentication functions"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Server Actions allow you to run server-side code directly from client components without creating separate API routes, marked with 'use server'."
+    },
+    {
+      "id": 6,
+      "question": "What does the 'revalidatePath' function do?",
+      "options": [
+        "Validates user input",
+        "Clears the cache for a specific path and triggers re-rendering",
+        "Redirects to a different path",
+        "Checks if a path exists"
+      ],
+      "correctAnswer": 1,
+      "explanation": "revalidatePath clears the cache for a specific path and triggers re-rendering, useful after data mutations to ensure fresh content."
+    },
+    {
+      "id": 7,
+      "question": "How do you handle loading states in the App Router?",
+      "options": [
+        "Using useState hook only",
+        "Creating a loading.tsx file in the route folder",
+        "Using CSS animations",
+        "Loading states are automatic"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Create a loading.tsx file in the route folder to show loading UI while the page is being rendered. You can also use Suspense for more granular loading states."
+    },
+    {
+      "id": 8,
+      "question": "What is the purpose of parallel routes in Next.js?",
+      "options": [
+        "To make routes load faster",
+        "To render multiple pages simultaneously in the same layout",
+        "To create backup routes",
+        "To handle authentication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parallel routes allow you to render multiple pages simultaneously in the same layout, using @folder naming convention for route slots."
+    },
+    {
+      "id": 9,
+      "question": "How do you optimize images in Next.js?",
+      "options": [
+        "Using regular HTML img tags",
+        "Using the Next.js Image component with automatic optimization",
+        "Manually compressing images",
+        "Using CSS only"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Next.js Image component provides automatic optimization including resizing, format conversion (WebP/AVIF), lazy loading, and responsive images."
+    },
+    {
+      "id": 10,
+      "question": "What caching option would you use for data that changes frequently?",
+      "options": [
+        "{ cache: 'force-cache' }",
+        "{ cache: 'no-store' }",
+        "{ next: { revalidate: 3600 } }",
+        "Default caching"
+      ],
+      "correctAnswer": 1,
+      "explanation": "{ cache: 'no-store' } ensures data is always fetched fresh and never cached, suitable for frequently changing data."
+    },
+    {
+      "id": 11,
+      "question": "How do you create an API route in the App Router?",
+      "options": [
+        "Create a file in pages/api/",
+        "Create a route.ts file in app/api/ directory",
+        "Use Server Actions only",
+        "API routes are not supported in App Router"
+      ],
+      "correctAnswer": 1,
+      "explanation": "API routes in App Router are created by placing a route.ts (or route.js) file in the app/api/ directory structure."
+    },
+    {
+      "id": 12,
+      "question": "What is middleware used for in Next.js?",
+      "options": [
+        "Database connections only",
+        "Running code before requests are completed (auth, redirects, headers)",
+        "Styling components",
+        "Client-side routing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Middleware runs before requests are completed and is commonly used for authentication, redirects, adding headers, and request/response manipulation."
+    },
+    {
+      "id": 13,
+      "question": "How do you handle form validation with Server Actions?",
+      "options": [
+        "Client-side validation only",
+        "Using libraries like Zod with useFormState hook",
+        "Validation is automatic",
+        "Forms don't need validation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Use validation libraries like Zod in Server Actions combined with useFormState hook to handle form validation and display errors."
+    },
+    {
+      "id": 14,
+      "question": "What does the 'priority' prop do on the Next.js Image component?",
+      "options": [
+        "Makes images load faster",
+        "Loads the image immediately for above-the-fold content",
+        "Increases image quality",
+        "Enables lazy loading"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The priority prop loads the image immediately without lazy loading, used for above-the-fold images that should appear quickly."
+    },
+    {
+      "id": 15,
+      "question": "How do you implement font optimization in Next.js?",
+      "options": [
+        "Using regular CSS font imports",
+        "Using next/font with Google Fonts or local fonts",
+        "Fonts are automatically optimized",
+        "Font optimization is not supported"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Use next/font to import Google Fonts or local fonts with automatic optimization, including preloading and font-display: swap."
+    },
+    {
+      "id": 16,
+      "question": "What is the purpose of route groups in Next.js?",
+      "options": [
+        "To make routes load faster",
+        "To organize routes without affecting the URL structure",
+        "To create private routes",
+        "To handle authentication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Route groups (folders with parentheses like (marketing)) organize routes without affecting the URL structure, useful for logical grouping."
+    },
+    {
+      "id": 17,
+      "question": "How do you enable streaming in Next.js?",
+      "options": [
+        "Using WebSockets",
+        "Using Suspense boundaries around async components",
+        "Streaming is automatic",
+        "Using special streaming APIs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Streaming is enabled by using Suspense boundaries around async components, allowing parts of the page to load progressively."
+    },
+    {
+      "id": 18,
+      "question": "What is the difference between static and dynamic rendering in Next.js?",
+      "options": [
+        "Static is faster, dynamic is slower",
+        "Static renders at build time, dynamic renders at request time",
+        "Static is for images, dynamic is for text",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Static rendering happens at build time and is cached, while dynamic rendering happens at request time for each user request."
+    },
+    {
+      "id": 19,
+      "question": "How do you handle errors in the App Router?",
+      "options": [
+        "Using try-catch blocks only",
+        "Creating error.tsx files and using error boundaries",
+        "Errors are handled automatically",
+        "Using console.log"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Create error.tsx files in route folders to handle errors with React error boundaries, providing custom error UI for that route segment."
+    },
+    {
+      "id": 20,
+      "question": "What is the purpose of the not-found.tsx file?",
+      "options": [
+        "To handle server errors",
+        "To show custom 404 pages for routes that don't exist",
+        "To redirect users",
+        "To handle authentication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The not-found.tsx file creates custom 404 pages that are shown when a route doesn't exist or when notFound() function is called."
+    }
+  ]
+}

@@ -6,6 +6,9 @@ import advancedJavascriptContent from "../../data/basic-knowledge/advanced-javas
 import typescriptContent from "../../data/basic-knowledge/typescript.json";
 import algorithmsContent from "../../data/basic-knowledge/algorithms.json";
 import algorithmExercisesContent from "../../data/basic-knowledge/algorithm-exercises.json";
+import webBasicsContent from "../../data/basic-knowledge/web-basics.json";
+import nextjsContent from "../../data/basic-knowledge/nextjs.json";
+import htmlCssContent from "../../data/basic-knowledge/html-css.json";
 
 // Define content for basic knowledge
 const contentMap = {
@@ -13,6 +16,9 @@ const contentMap = {
   typescript: typescriptContent,
   algorithms: algorithmsContent,
   "algorithm-exercises": algorithmExercisesContent,
+  "web-basics": webBasicsContent,
+  nextjs: nextjsContent,
+  "html-css": htmlCssContent,
 };
 
 export default function BasicKnowledgePage() {

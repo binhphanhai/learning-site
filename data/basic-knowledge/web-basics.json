@@ -1,0 +1,834 @@
+{
+  "title": "Web Basics & Modern Development",
+  "description": "Master fundamental web concepts including how the internet works, HTTP/HTTPS protocols, modern JavaScript features, APIs, security best practices, and essential development tools for 2024",
+  "sections": [
+    {
+      "id": "how-internet-works",
+      "title": "How the Internet Works",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What Happens When You Type a URL"
+        },
+        {
+          "type": "paragraph",
+          "text": "Have you ever wondered what happens in those few seconds between typing a website address and seeing the page? It's like a complex relay race involving multiple computers around the world, all working together to deliver that webpage to your browser. Understanding this process helps you build faster, more reliable websites."
+        },
+        {
+          "type": "heading",
+          "text": "The Journey: From URL to Webpage (Step by Step)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Browser checks cache for DNS record to find IP address",
+            "If not cached, browser asks ISP (Internet Service Provider)",
+            "ISP forwards request to DNS (Domain Name Server)",
+            "DNS performs recursive lookup through root servers, TLD servers, and authoritative servers",
+            "DNS returns IP address back through the chain to browser",
+            "Browser establishes TCP connection with server (3-way handshake)",
+            "If HTTPS, TLS/SSL handshake occurs for secure connection",
+            "Browser sends HTTP request to server",
+            "Server processes request and sends back response (HTML, CSS, JS)",
+            "Browser parses HTML and builds DOM tree",
+            "Browser requests additional resources (CSS, JS, images)",
+            "Browser renders the page"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "DNS Resolution Process"
+        },
+        {
+          "type": "paragraph",
+          "text": "DNS (Domain Name System) is like the phonebook of the internet, translating human-readable domain names into IP addresses."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// DNS Lookup Process\n// 1. Browser cache\n// 2. OS cache\n// 3. Router cache\n// 4. ISP DNS server\n// 5. Root name servers\n// 6. Top-level domain (TLD) servers\n// 7. Authoritative name servers\n\n// Modern DNS over HTTPS (DoH) for privacy\nfetch('https://cloudflare-dns.com/dns-query?name=example.com&type=A', {\n  headers: {\n    'Accept': 'application/dns-json'\n  }\n})\n.then(response => response.json())\n.then(data => console.log('DNS Response:', data));"
+        },
+        {
+          "type": "heading",
+          "text": "Factors Affecting Website Speed"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Geographic distance to server (CDN helps)",
+            "Number of HTTP requests (minimize with bundling)",
+            "File sizes (optimize images, minify code)",
+            "Server response time (optimize backend)",
+            "Network latency and bandwidth",
+            "Browser caching strategies",
+            "HTTP/2 vs HTTP/1.1 multiplexing",
+            "Render-blocking resources"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Browser Rendering Process (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern browsers use sophisticated rendering engines with optimizations:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Parse HTML → DOM Tree",
+            "Parse CSS → CSSOM Tree",
+            "Combine DOM + CSSOM → Render Tree",
+            "Layout (Reflow): Calculate positions and sizes",
+            "Paint: Fill in pixels",
+            "Composite: Layer combination for final display"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Performance monitoring in modern browsers\nconst observer = new PerformanceObserver((list) => {\n  for (const entry of list.getEntries()) {\n    console.log(`${entry.name}: ${entry.duration}ms`);\n  }\n});\n\n// Monitor different performance metrics\nobserver.observe({ entryTypes: ['navigation', 'resource', 'paint'] });\n\n// Core Web Vitals monitoring\nfunction measureCoreWebVitals() {\n  // Largest Contentful Paint\n  new PerformanceObserver((entryList) => {\n    const entries = entryList.getEntries();\n    const lastEntry = entries[entries.length - 1];\n    console.log('LCP:', lastEntry.startTime);\n  }).observe({ entryTypes: ['largest-contentful-paint'] });\n  \n  // First Input Delay\n  new PerformanceObserver((entryList) => {\n    const firstInput = entryList.getEntries()[0];\n    console.log('FID:', firstInput.processingStart - firstInput.startTime);\n  }).observe({ entryTypes: ['first-input'] });\n}"
+        }
+      ]
+    },
+    {
+      "id": "http-https-protocols",
+      "title": "HTTP/HTTPS & Web Protocols",
+      "content": [
+        {
+          "type": "heading",
+          "text": "HTTP Methods & RESTful APIs"
+        },
+        {
+          "type": "paragraph",
+          "text": "HTTP (HyperText Transfer Protocol) defines how messages are formatted and transmitted over the web. Modern APIs follow REST principles:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "GET: Retrieve data (idempotent, cacheable)",
+            "POST: Create new resources (not idempotent)",
+            "PUT: Update/replace entire resource (idempotent)",
+            "PATCH: Partial update of resource",
+            "DELETE: Remove resource (idempotent)",
+            "HEAD: Like GET but only returns headers",
+            "OPTIONS: Check allowed methods (CORS preflight)"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Modern fetch API with different HTTP methods\n\n// GET request with error handling\nasync function fetchData() {\n  try {\n    const response = await fetch('/api/users', {\n      method: 'GET',\n      headers: {\n        'Accept': 'application/json',\n        'Authorization': 'Bearer ' + token\n      }\n    });\n    \n    if (!response.ok) {\n      throw new Error(`HTTP error! status: ${response.status}`);\n    }\n    \n    return await response.json();\n  } catch (error) {\n    console.error('Fetch error:', error);\n  }\n}\n\n// POST request with JSON data\nasync function createUser(userData) {\n  const response = await fetch('/api/users', {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n      'Authorization': 'Bearer ' + token\n    },\n    body: JSON.stringify(userData)\n  });\n  \n  return response.json();\n}\n\n// PUT request for full update\nasync function updateUser(id, userData) {\n  const response = await fetch(`/api/users/${id}`, {\n    method: 'PUT',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify(userData)\n  });\n  \n  return response.json();\n}\n\n// PATCH request for partial update\nasync function updateUserEmail(id, email) {\n  const response = await fetch(`/api/users/${id}`, {\n    method: 'PATCH',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({ email })\n  });\n  \n  return response.json();\n}"
+        },
+        {
+          "type": "heading",
+          "text": "HTTPS & Security"
+        },
+        {
+          "type": "paragraph",
+          "text": "HTTPS encrypts communication between client and server using TLS/SSL. The handshake process establishes a secure connection:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Client Hello: Browser sends supported cipher suites",
+            "Server Hello: Server chooses cipher suite and sends certificate",
+            "Certificate Verification: Browser validates server identity",
+            "Key Exchange: Establish shared secret key",
+            "Finished: Both parties confirm secure connection",
+            "Encrypted Communication: All data encrypted with shared key"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "HTTP/2 and HTTP/3 (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern web protocols offer significant performance improvements:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "HTTP/2: Binary protocol, multiplexing, server push, header compression",
+            "HTTP/3: Built on QUIC (UDP), faster connection establishment",
+            "Multiplexing: Multiple requests over single connection",
+            "Server Push: Server proactively sends resources",
+            "Header Compression: HPACK algorithm reduces overhead"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// HTTP/2 Server Push (server-side example)\n// Server can push resources before client requests them\n\n// Service Worker for HTTP/2 optimization\nself.addEventListener('fetch', event => {\n  if (event.request.url.includes('/api/')) {\n    event.respondWith(\n      fetch(event.request, {\n        // HTTP/2 allows multiplexing\n        // Multiple requests can be sent simultaneously\n      })\n    );\n  }\n});\n\n// Modern connection management\nconst controller = new AbortController();\nconst signal = controller.signal;\n\n// Request with timeout and cancellation\nconst timeoutId = setTimeout(() => controller.abort(), 5000);\n\nfetch('/api/data', { signal })\n  .then(response => {\n    clearTimeout(timeoutId);\n    return response.json();\n  })\n  .catch(error => {\n    if (error.name === 'AbortError') {\n      console.log('Request was aborted');\n    }\n  });"
+        },
+        {
+          "type": "heading",
+          "text": "CORS (Cross-Origin Resource Sharing)"
+        },
+        {
+          "type": "paragraph",
+          "text": "CORS is a security mechanism that allows servers to specify which origins can access their resources:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Same-Origin Policy: Browsers block cross-origin requests by default",
+            "CORS Headers: Server specifies allowed origins, methods, headers",
+            "Preflight Requests: OPTIONS request for complex CORS requests",
+            "Credentials: Cookies/auth headers require explicit permission"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CORS configuration (server-side examples)\n\n// Express.js CORS setup\napp.use((req, res, next) => {\n  res.header('Access-Control-Allow-Origin', 'https://myapp.com');\n  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');\n  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');\n  res.header('Access-Control-Allow-Credentials', 'true');\n  \n  if (req.method === 'OPTIONS') {\n    res.sendStatus(200);\n  } else {\n    next();\n  }\n});\n\n// Client-side CORS request with credentials\nfetch('https://api.example.com/data', {\n  method: 'POST',\n  credentials: 'include', // Include cookies\n  headers: {\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({ data: 'example' })\n});\n\n// Handling CORS errors\nfetch('https://api.example.com/data')\n  .catch(error => {\n    if (error instanceof TypeError) {\n      console.error('CORS error or network issue:', error);\n    }\n  });"
+        }
+      ]
+    },
+    {
+      "id": "apis-json",
+      "title": "APIs, JSON & Data Exchange",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What are APIs?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of an API (Application Programming Interface) as a waiter in a restaurant. You (the client) tell the waiter (API) what you want from the menu. The waiter takes your order to the kitchen (server), and brings back your food (data). APIs are the messengers that allow different software applications to talk to each other and share information."
+        },
+        {
+          "type": "heading",
+          "text": "Real-World API Examples"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Weather App: Gets weather data from weather service APIs",
+            "Social Media: Posts, likes, and comments through platform APIs",
+            "Payment Processing: Stripe, PayPal APIs handle transactions",
+            "Maps: Google Maps API shows locations and directions",
+            "Authentication: Login with Google/Facebook through their APIs",
+            "E-commerce: Product catalogs, inventory, and orders via APIs"
+          ]
+        },
+        {
+          "type": "list",
+          "items": [
+            "REST APIs: Stateless, use HTTP methods, resource-based URLs",
+            "GraphQL APIs: Query language for APIs, single endpoint",
+            "WebSocket APIs: Real-time bidirectional communication",
+            "gRPC APIs: High-performance RPC framework",
+            "Webhook APIs: Server-to-server event notifications"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "JSON (JavaScript Object Notation)"
+        },
+        {
+          "type": "paragraph",
+          "text": "JSON is the standard format for data exchange over the web. It's lightweight, human-readable, and language-independent."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// JSON parsing and stringification\nconst jsonString = '{\"name\":\"John\",\"age\":30,\"city\":\"New York\"}';\nconst obj = JSON.parse(jsonString);\nconsole.log(obj.name); // \"John\"\n\nconst newObj = { name: \"Jane\", age: 25, skills: [\"JavaScript\", \"Python\"] };\nconst jsonOutput = JSON.stringify(newObj);\nconsole.log(jsonOutput); // '{\"name\":\"Jane\",\"age\":25,\"skills\":[\"JavaScript\",\"Python\"]}'\n\n// JSON with custom serialization\nconst data = {\n  name: \"John\",\n  birthDate: new Date('1990-01-01'),\n  secret: \"hidden\"\n};\n\n// Custom replacer function\nconst jsonWithReplacer = JSON.stringify(data, (key, value) => {\n  if (key === 'secret') return undefined; // Exclude secret\n  if (value instanceof Date) return value.toISOString(); // Convert dates\n  return value;\n});\n\n// Pretty printing JSON\nconst prettyJson = JSON.stringify(data, null, 2);\nconsole.log(prettyJson);\n\n// Handling JSON parsing errors\nfunction safeJsonParse(jsonString) {\n  try {\n    return JSON.parse(jsonString);\n  } catch (error) {\n    console.error('Invalid JSON:', error.message);\n    return null;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Modern API Patterns (2024)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// REST API with modern error handling\nclass APIClient {\n  constructor(baseURL) {\n    this.baseURL = baseURL;\n    this.defaultHeaders = {\n      'Content-Type': 'application/json',\n      'Accept': 'application/json'\n    };\n  }\n  \n  async request(endpoint, options = {}) {\n    const url = `${this.baseURL}${endpoint}`;\n    const config = {\n      headers: { ...this.defaultHeaders, ...options.headers },\n      ...options\n    };\n    \n    try {\n      const response = await fetch(url, config);\n      \n      if (!response.ok) {\n        throw new APIError(\n          `HTTP ${response.status}: ${response.statusText}`,\n          response.status,\n          await response.text()\n        );\n      }\n      \n      const contentType = response.headers.get('content-type');\n      if (contentType?.includes('application/json')) {\n        return await response.json();\n      }\n      \n      return await response.text();\n    } catch (error) {\n      if (error instanceof APIError) throw error;\n      throw new APIError('Network error', 0, error.message);\n    }\n  }\n  \n  get(endpoint) {\n    return this.request(endpoint, { method: 'GET' });\n  }\n  \n  post(endpoint, data) {\n    return this.request(endpoint, {\n      method: 'POST',\n      body: JSON.stringify(data)\n    });\n  }\n}\n\nclass APIError extends Error {\n  constructor(message, status, details) {\n    super(message);\n    this.name = 'APIError';\n    this.status = status;\n    this.details = details;\n  }\n}\n\n// Usage\nconst api = new APIClient('https://api.example.com');\n\ntry {\n  const users = await api.get('/users');\n  const newUser = await api.post('/users', { name: 'John', email: 'john@example.com' });\n} catch (error) {\n  if (error instanceof APIError) {\n    console.error(`API Error ${error.status}: ${error.message}`);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "GraphQL vs REST"
+        },
+        {
+          "type": "paragraph",
+          "text": "GraphQL provides a more flexible alternative to REST APIs:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// GraphQL query example\nconst graphqlQuery = {\n  query: `\n    query GetUserWithPosts($userId: ID!) {\n      user(id: $userId) {\n        id\n        name\n        email\n        posts {\n          id\n          title\n          content\n          createdAt\n        }\n      }\n    }\n  `,\n  variables: {\n    userId: \"123\"\n  }\n};\n\n// GraphQL fetch\nasync function fetchGraphQL(query) {\n  const response = await fetch('/graphql', {\n    method: 'POST',\n    headers: {\n      'Content-Type': 'application/json',\n    },\n    body: JSON.stringify(query)\n  });\n  \n  const result = await response.json();\n  \n  if (result.errors) {\n    throw new Error(`GraphQL errors: ${result.errors.map(e => e.message).join(', ')}`);\n  }\n  \n  return result.data;\n}\n\n// REST vs GraphQL comparison\n// REST: Multiple requests for related data\n// GET /users/123\n// GET /users/123/posts\n// GET /users/123/comments\n\n// GraphQL: Single request with exact data needed\nconst userData = await fetchGraphQL({\n  query: `\n    query {\n      user(id: \"123\") {\n        name\n        posts(limit: 5) { title }\n        comments(limit: 10) { content }\n      }\n    }\n  `\n});"
+        },
+        {
+          "type": "heading",
+          "text": "API Authentication & Security"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// JWT Token management\nclass TokenManager {\n  constructor() {\n    this.token = localStorage.getItem('authToken');\n    this.refreshToken = localStorage.getItem('refreshToken');\n  }\n  \n  setTokens(accessToken, refreshToken) {\n    this.token = accessToken;\n    this.refreshToken = refreshToken;\n    localStorage.setItem('authToken', accessToken);\n    localStorage.setItem('refreshToken', refreshToken);\n  }\n  \n  clearTokens() {\n    this.token = null;\n    this.refreshToken = null;\n    localStorage.removeItem('authToken');\n    localStorage.removeItem('refreshToken');\n  }\n  \n  isTokenExpired() {\n    if (!this.token) return true;\n    \n    try {\n      const payload = JSON.parse(atob(this.token.split('.')[1]));\n      return payload.exp * 1000 < Date.now();\n    } catch {\n      return true;\n    }\n  }\n  \n  async refreshAccessToken() {\n    if (!this.refreshToken) throw new Error('No refresh token');\n    \n    const response = await fetch('/auth/refresh', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ refreshToken: this.refreshToken })\n    });\n    \n    if (!response.ok) {\n      this.clearTokens();\n      throw new Error('Token refresh failed');\n    }\n    \n    const { accessToken, refreshToken } = await response.json();\n    this.setTokens(accessToken, refreshToken);\n    return accessToken;\n  }\n}\n\n// API client with automatic token refresh\nclass AuthenticatedAPIClient extends APIClient {\n  constructor(baseURL) {\n    super(baseURL);\n    this.tokenManager = new TokenManager();\n  }\n  \n  async request(endpoint, options = {}) {\n    // Check if token needs refresh\n    if (this.tokenManager.isTokenExpired()) {\n      try {\n        await this.tokenManager.refreshAccessToken();\n      } catch (error) {\n        // Redirect to login\n        window.location.href = '/login';\n        return;\n      }\n    }\n    \n    // Add auth header\n    const authOptions = {\n      ...options,\n      headers: {\n        ...options.headers,\n        'Authorization': `Bearer ${this.tokenManager.token}`\n      }\n    };\n    \n    return super.request(endpoint, authOptions);\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "modern-javascript-dom",
+      "title": "Modern JavaScript & DOM Manipulation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "JavaScript Data Types (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "JavaScript has evolved significantly. Understanding modern data types and their usage is crucial:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Primitive Types: number, string, boolean, undefined, null, symbol, bigint",
+            "Reference Types: object, array, function, date, regexp",
+            "New Types: Symbol (ES6), BigInt (ES2020)",
+            "Type Checking: typeof, instanceof, Array.isArray()"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Modern type checking and handling\n\n// BigInt for large numbers (ES2020)\nconst largeNumber = 123456789012345678901234567890n;\nconst anotherBig = BigInt('123456789012345678901234567890');\nconsole.log(typeof largeNumber); // 'bigint'\n\n// Symbol for unique identifiers\nconst id = Symbol('id');\nconst anotherId = Symbol('id');\nconsole.log(id === anotherId); // false - symbols are always unique\n\n// Advanced type checking\nfunction getType(value) {\n  if (value === null) return 'null';\n  if (Array.isArray(value)) return 'array';\n  if (value instanceof Date) return 'date';\n  if (value instanceof RegExp) return 'regexp';\n  return typeof value;\n}\n\n// Type coercion examples\nconsole.log(1 + '2'); // '12' (number to string)\nconsole.log(+'123'); // 123 (string to number)\nconsole.log(!!'hello'); // true (string to boolean)\nconsole.log(!!0); // false (number to boolean)\n\n// Nullish coalescing vs logical OR\nconst value1 = 0 ?? 'default'; // 0 (only null/undefined trigger default)\nconst value2 = 0 || 'default'; // 'default' (any falsy value triggers default)\n\n// Optional chaining with different scenarios\nconst user = { profile: { settings: { theme: 'dark' } } };\nconsole.log(user?.profile?.settings?.theme); // 'dark'\nconsole.log(user?.profile?.preferences?.language); // undefined\nconsole.log(user?.getName?.()); // undefined (method doesn't exist)\nconsole.log(user?.['dynamic-key']); // undefined"
+        },
+        {
+          "type": "heading",
+          "text": "Variables & Scope (Modern Best Practices)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Variable declarations - best practices\n\n// const for immutable bindings (preferred)\nconst API_URL = 'https://api.example.com';\nconst users = []; // Array contents can change, but reference cannot\n\n// let for mutable bindings\nlet currentUser = null;\nlet isLoading = false;\n\n// Avoid var (function-scoped, hoisted)\n// var should only be used in legacy code\n\n// Block scope demonstration\nif (true) {\n  const blockScoped = 'only available in this block';\n  let alsoBlockScoped = 'same here';\n  // var functionScoped = 'available in entire function';\n}\n// console.log(blockScoped); // ReferenceError\n\n// Temporal Dead Zone\nconsole.log(typeof undeclaredVar); // 'undefined'\n// console.log(typeof letVar); // ReferenceError: Cannot access before initialization\nlet letVar = 'value';\n\n// Destructuring (modern way to extract values)\nconst person = { name: 'John', age: 30, city: 'NYC' };\nconst { name, age, city = 'Unknown' } = person;\n\nconst numbers = [1, 2, 3, 4, 5];\nconst [first, second, ...rest] = numbers;\nconsole.log(first, second, rest); // 1, 2, [3, 4, 5]\n\n// Object shorthand (ES6)\nconst name2 = 'Jane';\nconst age2 = 25;\nconst user2 = { name2, age2 }; // Instead of { name: name, age: age }\n\n// Template literals (ES6)\nconst greeting = `Hello, ${name}! You are ${age} years old.`;\nconst multiLine = `\n  This is a\n  multi-line\n  string\n`;\n\n// Tagged template literals\nfunction highlight(strings, ...values) {\n  return strings.reduce((result, string, i) => {\n    const value = values[i] ? `<mark>${values[i]}</mark>` : '';\n    return result + string + value;\n  }, '');\n}\n\nconst highlighted = highlight`Hello ${name}, you are ${age} years old!`;"
+        },
+        {
+          "type": "heading",
+          "text": "Modern DOM Manipulation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern browsers provide powerful APIs for DOM manipulation beyond the basic methods:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Modern DOM selection\n\n// Query methods (preferred over getElementById, etc.)\nconst element = document.querySelector('#myId');\nconst elements = document.querySelectorAll('.myClass');\nconst firstButton = document.querySelector('button[type=\"submit\"]');\n\n// Modern element creation and manipulation\nfunction createUserCard(user) {\n  const card = document.createElement('div');\n  card.className = 'user-card';\n  \n  // Using template literals for HTML\n  card.innerHTML = `\n    <img src=\"${user.avatar}\" alt=\"${user.name}\" class=\"avatar\">\n    <h3>${user.name}</h3>\n    <p>${user.email}</p>\n    <button data-user-id=\"${user.id}\">Contact</button>\n  `;\n  \n  return card;\n}\n\n// Modern class manipulation\nconst button = document.querySelector('.toggle-btn');\nbutton.classList.add('active');\nbutton.classList.remove('disabled');\nbutton.classList.toggle('highlighted');\nbutton.classList.contains('active'); // true/false\n\n// Dataset API for data attributes\nbutton.dataset.userId = '123';\nbutton.dataset.action = 'toggle';\nconsole.log(button.dataset.userId); // '123'\n\n// Modern event handling\nbutton.addEventListener('click', handleClick);\nbutton.addEventListener('click', handleClick, { once: true }); // Run only once\nbutton.addEventListener('click', handleClick, { passive: true }); // Better performance\n\n// Event delegation (efficient for dynamic content)\ndocument.addEventListener('click', (event) => {\n  if (event.target.matches('.user-card button')) {\n    const userId = event.target.dataset.userId;\n    handleUserContact(userId);\n  }\n});\n\n// AbortController for event cleanup\nconst controller = new AbortController();\nconst signal = controller.signal;\n\nbutton.addEventListener('click', handleClick, { signal });\ndocument.addEventListener('scroll', handleScroll, { signal });\n\n// Later: remove all listeners at once\ncontroller.abort();\n\n// Modern DOM traversal\nconst parent = element.parentElement;\nconst children = [...element.children]; // Convert to array\nconst siblings = [...element.parentElement.children].filter(el => el !== element);\n\n// Intersection Observer (modern way to detect visibility)\nconst observer = new IntersectionObserver((entries) => {\n  entries.forEach(entry => {\n    if (entry.isIntersecting) {\n      entry.target.classList.add('visible');\n      // Lazy load images, animate elements, etc.\n    }\n  });\n});\n\ndocument.querySelectorAll('.lazy-load').forEach(el => {\n  observer.observe(el);\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Performance Optimization"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Avoiding layout thrashing\nfunction updateElements(elements, newData) {\n  // Bad: Multiple reflows\n  // elements.forEach((el, i) => {\n  //   el.style.left = newData[i].x + 'px';\n  //   el.style.top = newData[i].y + 'px';\n  // });\n  \n  // Good: Batch DOM updates\n  const fragment = document.createDocumentFragment();\n  elements.forEach((el, i) => {\n    const clone = el.cloneNode(true);\n    clone.style.left = newData[i].x + 'px';\n    clone.style.top = newData[i].y + 'px';\n    fragment.appendChild(clone);\n  });\n  \n  // Single DOM update\n  elements[0].parentNode.replaceChildren(fragment);\n}\n\n// Debouncing for performance\nfunction debounce(func, delay) {\n  let timeoutId;\n  return function (...args) {\n    clearTimeout(timeoutId);\n    timeoutId = setTimeout(() => func.apply(this, args), delay);\n  };\n}\n\n// Throttling for performance\nfunction throttle(func, limit) {\n  let inThrottle;\n  return function (...args) {\n    if (!inThrottle) {\n      func.apply(this, args);\n      inThrottle = true;\n      setTimeout(() => inThrottle = false, limit);\n    }\n  };\n}\n\n// Usage\nconst debouncedSearch = debounce((query) => {\n  // API call\n  searchAPI(query);\n}, 300);\n\nconst throttledScroll = throttle(() => {\n  // Update scroll position\n  updateScrollPosition();\n}, 16); // ~60fps\n\ndocument.addEventListener('scroll', throttledScroll);\n\n// Modern async DOM updates\nasync function loadAndRenderData() {\n  try {\n    const data = await fetch('/api/data').then(r => r.json());\n    \n    // Use requestAnimationFrame for smooth updates\n    requestAnimationFrame(() => {\n      renderData(data);\n    });\n  } catch (error) {\n    console.error('Failed to load data:', error);\n  }\n}\n\n// Web Components (modern way to create reusable components)\nclass UserCard extends HTMLElement {\n  constructor() {\n    super();\n    this.attachShadow({ mode: 'open' });\n  }\n  \n  connectedCallback() {\n    this.render();\n  }\n  \n  render() {\n    const name = this.getAttribute('name') || 'Unknown';\n    const email = this.getAttribute('email') || '';\n    \n    this.shadowRoot.innerHTML = `\n      <style>\n        :host {\n          display: block;\n          border: 1px solid #ccc;\n          border-radius: 8px;\n          padding: 16px;\n          margin: 8px;\n        }\n        .name { font-weight: bold; }\n        .email { color: #666; }\n      </style>\n      <div class=\"name\">${name}</div>\n      <div class=\"email\">${email}</div>\n    `;\n  }\n}\n\ncustomElements.define('user-card', UserCard);\n\n// Usage: <user-card name=\"John Doe\" email=\"john@example.com\"></user-card>"
+        }
+      ]
+    },
+    {
+      "id": "web-security",
+      "title": "Web Security & Best Practices",
+      "content": [
+        {
+          "type": "heading",
+          "text": "OWASP Top 10 Security Vulnerabilities (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Understanding and preventing common web security vulnerabilities is crucial for modern web development:"
+        },
+        {
+          "type": "heading",
+          "text": "1. Injection Attacks"
+        },
+        {
+          "type": "paragraph",
+          "text": "Attackers can inject malicious code into applications that don't properly validate input."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// SQL Injection Prevention\n// Bad: String concatenation\nconst query = `SELECT * FROM users WHERE id = ${userId}`;\n\n// Good: Parameterized queries\nconst query = 'SELECT * FROM users WHERE id = ?';\ndb.query(query, [userId]);\n\n// NoSQL Injection Prevention\n// Bad: Direct object insertion\nconst user = await User.findOne({ email: req.body.email });\n\n// Good: Input validation\nconst { email } = req.body;\nif (typeof email !== 'string' || !isValidEmail(email)) {\n  throw new Error('Invalid email');\n}\nconst user = await User.findOne({ email });\n\n// Input sanitization\nfunction sanitizeInput(input) {\n  if (typeof input !== 'string') return '';\n  return input\n    .replace(/[<>\"'&]/g, (match) => {\n      const entities = {\n        '<': '&lt;',\n        '>': '&gt;',\n        '\"': '&quot;',\n        \"'\": '&#x27;',\n        '&': '&amp;'\n      };\n      return entities[match];\n    })\n    .trim();\n}"
+        },
+        {
+          "type": "heading",
+          "text": "2. Cross-Site Scripting (XSS)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// XSS Prevention\n\n// Bad: Direct HTML insertion\ndocument.getElementById('content').innerHTML = userInput;\n\n// Good: Text content only\ndocument.getElementById('content').textContent = userInput;\n\n// Good: Sanitized HTML\nfunction sanitizeHTML(html) {\n  const div = document.createElement('div');\n  div.textContent = html;\n  return div.innerHTML;\n}\n\n// Content Security Policy (CSP) headers\n// Server-side: Set CSP headers\napp.use((req, res, next) => {\n  res.setHeader(\n    'Content-Security-Policy',\n    \"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'\"\n  );\n  next();\n});\n\n// DOMPurify for client-side sanitization\nconst cleanHTML = DOMPurify.sanitize(dirtyHTML);\ndocument.getElementById('content').innerHTML = cleanHTML;\n\n// Template literal tagging for XSS prevention\nfunction safeHTML(strings, ...values) {\n  return strings.reduce((result, string, i) => {\n    const value = values[i] ? sanitizeHTML(values[i]) : '';\n    return result + string + value;\n  }, '');\n}\n\nconst userContent = safeHTML`<div>Hello ${userName}</div>`;"
+        },
+        {
+          "type": "heading",
+          "text": "3. Cross-Site Request Forgery (CSRF)"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CSRF Prevention\n\n// Server-side: CSRF token generation\nconst crypto = require('crypto');\n\nfunction generateCSRFToken() {\n  return crypto.randomBytes(32).toString('hex');\n}\n\n// Store token in session\napp.use((req, res, next) => {\n  if (!req.session.csrfToken) {\n    req.session.csrfToken = generateCSRFToken();\n  }\n  res.locals.csrfToken = req.session.csrfToken;\n  next();\n});\n\n// Validate CSRF token\nfunction validateCSRF(req, res, next) {\n  const token = req.body.csrfToken || req.headers['x-csrf-token'];\n  if (token !== req.session.csrfToken) {\n    return res.status(403).json({ error: 'Invalid CSRF token' });\n  }\n  next();\n}\n\n// Client-side: Include CSRF token\nconst csrfToken = document.querySelector('meta[name=\"csrf-token\"]').content;\n\nfetch('/api/data', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'X-CSRF-Token': csrfToken\n  },\n  body: JSON.stringify(data)\n});\n\n// SameSite cookies for additional protection\napp.use(session({\n  cookie: {\n    sameSite: 'strict', // or 'lax'\n    secure: true, // HTTPS only\n    httpOnly: true // No JavaScript access\n  }\n}));"
+        },
+        {
+          "type": "heading",
+          "text": "4. Authentication & Authorization"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Secure password handling\nconst bcrypt = require('bcrypt');\n\n// Hash passwords\nasync function hashPassword(password) {\n  const saltRounds = 12; // Adjust based on security needs\n  return await bcrypt.hash(password, saltRounds);\n}\n\n// Verify passwords\nasync function verifyPassword(password, hash) {\n  return await bcrypt.compare(password, hash);\n}\n\n// JWT implementation with security best practices\nconst jwt = require('jsonwebtoken');\n\nfunction generateTokens(user) {\n  const accessToken = jwt.sign(\n    { userId: user.id, email: user.email },\n    process.env.JWT_ACCESS_SECRET,\n    { expiresIn: '15m' } // Short-lived access token\n  );\n  \n  const refreshToken = jwt.sign(\n    { userId: user.id },\n    process.env.JWT_REFRESH_SECRET,\n    { expiresIn: '7d' } // Longer-lived refresh token\n  );\n  \n  return { accessToken, refreshToken };\n}\n\n// Secure token storage (client-side)\nclass SecureTokenStorage {\n  static setTokens(accessToken, refreshToken) {\n    // Store refresh token in httpOnly cookie\n    document.cookie = `refreshToken=${refreshToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`;\n    \n    // Store access token in memory (not localStorage)\n    this.accessToken = accessToken;\n  }\n  \n  static getAccessToken() {\n    return this.accessToken;\n  }\n  \n  static clearTokens() {\n    this.accessToken = null;\n    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';\n  }\n}\n\n// Rate limiting\nconst rateLimit = require('express-rate-limit');\n\nconst loginLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000, // 15 minutes\n  max: 5, // 5 attempts per window\n  message: 'Too many login attempts, please try again later',\n  standardHeaders: true,\n  legacyHeaders: false\n});\n\napp.post('/login', loginLimiter, async (req, res) => {\n  // Login logic\n});"
+        },
+        {
+          "type": "heading",
+          "text": "5. Security Headers"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Security headers middleware\nfunction securityHeaders(req, res, next) {\n  // Prevent clickjacking\n  res.setHeader('X-Frame-Options', 'DENY');\n  \n  // Prevent MIME type sniffing\n  res.setHeader('X-Content-Type-Options', 'nosniff');\n  \n  // Enable XSS protection\n  res.setHeader('X-XSS-Protection', '1; mode=block');\n  \n  // Strict Transport Security\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');\n  \n  // Referrer Policy\n  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');\n  \n  // Content Security Policy\n  res.setHeader(\n    'Content-Security-Policy',\n    \"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https:; frame-ancestors 'none';\"\n  );\n  \n  // Permissions Policy (formerly Feature Policy)\n  res.setHeader(\n    'Permissions-Policy',\n    'camera=(), microphone=(), geolocation=(), payment=()'\n  );\n  \n  next();\n}\n\napp.use(securityHeaders);\n\n// Helmet.js for comprehensive security headers\nconst helmet = require('helmet');\napp.use(helmet({\n  contentSecurityPolicy: {\n    directives: {\n      defaultSrc: [\"'self'\"],\n      scriptSrc: [\"'self'\", \"'unsafe-inline'\"],\n      styleSrc: [\"'self'\", \"'unsafe-inline'\"],\n      imgSrc: [\"'self'\", \"data:\", \"https:\"],\n      connectSrc: [\"'self'\", \"https:\"],\n      fontSrc: [\"'self'\", \"https:\"],\n      objectSrc: [\"'none'\"],\n      mediaSrc: [\"'self'\"],\n      frameSrc: [\"'none'\"]\n    }\n  },\n  hsts: {\n    maxAge: 31536000,\n    includeSubDomains: true,\n    preload: true\n  }\n}));"
+        },
+        {
+          "type": "heading",
+          "text": "Client-Side Security Best Practices"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Secure data handling\nclass SecureDataHandler {\n  static sanitizeUserInput(input) {\n    if (typeof input !== 'string') return '';\n    \n    return input\n      .trim()\n      .replace(/[<>\"'&\\x00-\\x1f\\x7f-\\x9f]/g, '') // Remove control characters\n      .substring(0, 1000); // Limit length\n  }\n  \n  static validateEmail(email) {\n    const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n    return emailRegex.test(email) && email.length <= 254;\n  }\n  \n  static validateURL(url) {\n    try {\n      const parsedURL = new URL(url);\n      return ['http:', 'https:'].includes(parsedURL.protocol);\n    } catch {\n      return false;\n    }\n  }\n}\n\n// Secure form handling\nfunction handleFormSubmit(event) {\n  event.preventDefault();\n  \n  const formData = new FormData(event.target);\n  const data = {};\n  \n  for (const [key, value] of formData.entries()) {\n    // Sanitize all form inputs\n    data[key] = SecureDataHandler.sanitizeUserInput(value);\n  }\n  \n  // Validate specific fields\n  if (data.email && !SecureDataHandler.validateEmail(data.email)) {\n    showError('Invalid email address');\n    return;\n  }\n  \n  if (data.website && !SecureDataHandler.validateURL(data.website)) {\n    showError('Invalid website URL');\n    return;\n  }\n  \n  // Submit sanitized data\n  submitData(data);\n}\n\n// Secure localStorage usage\nclass SecureStorage {\n  static setItem(key, value) {\n    try {\n      // Encrypt sensitive data before storing\n      const encrypted = this.encrypt(JSON.stringify(value));\n      localStorage.setItem(key, encrypted);\n    } catch (error) {\n      console.error('Failed to store data:', error);\n    }\n  }\n  \n  static getItem(key) {\n    try {\n      const encrypted = localStorage.getItem(key);\n      if (!encrypted) return null;\n      \n      const decrypted = this.decrypt(encrypted);\n      return JSON.parse(decrypted);\n    } catch (error) {\n      console.error('Failed to retrieve data:', error);\n      return null;\n    }\n  }\n  \n  static encrypt(text) {\n    // Simple encryption (use a proper library in production)\n    return btoa(text);\n  }\n  \n  static decrypt(encrypted) {\n    // Simple decryption (use a proper library in production)\n    return atob(encrypted);\n  }\n}\n\n// Content Security Policy violation reporting\nwindow.addEventListener('securitypolicyviolation', (event) => {\n  console.error('CSP Violation:', {\n    blockedURI: event.blockedURI,\n    violatedDirective: event.violatedDirective,\n    originalPolicy: event.originalPolicy\n  });\n  \n  // Report to monitoring service\n  fetch('/api/csp-violation', {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      blockedURI: event.blockedURI,\n      violatedDirective: event.violatedDirective,\n      timestamp: new Date().toISOString()\n    })\n  });\n});"
+        }
+      ]
+    },
+    {
+      "id": "webpack-build-tools",
+      "title": "Webpack & Modern Build Tools",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is Webpack?"
+        },
+        {
+          "type": "paragraph",
+          "text": "Webpack is a static module bundler for modern JavaScript applications. It builds a dependency graph and bundles modules into optimized files for the browser."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Entry Points: Where webpack starts building the dependency graph",
+            "Output: Where webpack outputs the bundles",
+            "Loaders: Transform files during bundling process",
+            "Plugins: Perform wider range of tasks like optimization",
+            "Mode: Development, production, or none"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Basic Webpack Configuration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// webpack.config.js\nconst path = require('path');\nconst HtmlWebpackPlugin = require('html-webpack-plugin');\nconst MiniCssExtractPlugin = require('mini-css-extract-plugin');\n\nmodule.exports = {\n  // Entry point\n  entry: './src/index.js',\n  \n  // Output configuration\n  output: {\n    path: path.resolve(__dirname, 'dist'),\n    filename: '[name].[contenthash].js',\n    clean: true, // Clean dist folder before each build\n  },\n  \n  // Mode\n  mode: process.env.NODE_ENV || 'development',\n  \n  // Module rules (loaders)\n  module: {\n    rules: [\n      {\n        test: /\\.js$/,\n        exclude: /node_modules/,\n        use: {\n          loader: 'babel-loader',\n          options: {\n            presets: ['@babel/preset-env']\n          }\n        }\n      },\n      {\n        test: /\\.css$/,\n        use: [\n          process.env.NODE_ENV === 'production' \n            ? MiniCssExtractPlugin.loader \n            : 'style-loader',\n          'css-loader',\n          'postcss-loader'\n        ]\n      },\n      {\n        test: /\\.(png|svg|jpg|jpeg|gif)$/i,\n        type: 'asset/resource',\n        generator: {\n          filename: 'images/[name].[hash][ext]'\n        }\n      },\n      {\n        test: /\\.(woff|woff2|eot|ttf|otf)$/i,\n        type: 'asset/resource',\n        generator: {\n          filename: 'fonts/[name].[hash][ext]'\n        }\n      }\n    ]\n  },\n  \n  // Plugins\n  plugins: [\n    new HtmlWebpackPlugin({\n      template: './src/index.html',\n      minify: process.env.NODE_ENV === 'production'\n    }),\n    \n    ...(process.env.NODE_ENV === 'production' ? [\n      new MiniCssExtractPlugin({\n        filename: '[name].[contenthash].css'\n      })\n    ] : [])\n  ],\n  \n  // Development server\n  devServer: {\n    static: './dist',\n    hot: true,\n    open: true,\n    port: 3000\n  },\n  \n  // Optimization\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      cacheGroups: {\n        vendor: {\n          test: /[\\\\/]node_modules[\\\\/]/,\n          name: 'vendors',\n          chunks: 'all'\n        }\n      }\n    }\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Essential Loaders"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Babel Loader Configuration\n// .babelrc or babel.config.js\nmodule.exports = {\n  presets: [\n    ['@babel/preset-env', {\n      targets: {\n        browsers: ['> 1%', 'last 2 versions']\n      },\n      useBuiltIns: 'usage',\n      corejs: 3\n    }],\n    '@babel/preset-react' // For React projects\n  ],\n  plugins: [\n    '@babel/plugin-proposal-class-properties',\n    '@babel/plugin-proposal-optional-chaining',\n    '@babel/plugin-proposal-nullish-coalescing-operator'\n  ]\n};\n\n// CSS Loader with PostCSS\n// postcss.config.js\nmodule.exports = {\n  plugins: [\n    require('autoprefixer'),\n    require('cssnano')({\n      preset: 'default'\n    })\n  ]\n};\n\n// Advanced CSS processing\nconst cssRule = {\n  test: /\\.(css|scss|sass)$/,\n  use: [\n    process.env.NODE_ENV === 'production' \n      ? MiniCssExtractPlugin.loader \n      : 'style-loader',\n    {\n      loader: 'css-loader',\n      options: {\n        modules: {\n          auto: true, // Enable CSS modules for .module.css files\n          localIdentName: '[name]__[local]--[hash:base64:5]'\n        },\n        sourceMap: true\n      }\n    },\n    {\n      loader: 'postcss-loader',\n      options: {\n        sourceMap: true\n      }\n    },\n    {\n      loader: 'sass-loader',\n      options: {\n        sourceMap: true\n      }\n    }\n  ]\n};\n\n// File Loader for Assets\nconst assetRule = {\n  test: /\\.(png|jpe?g|gif|svg|webp)$/i,\n  type: 'asset',\n  parser: {\n    dataUrlCondition: {\n      maxSize: 8 * 1024 // 8kb - inline smaller files\n    }\n  },\n  generator: {\n    filename: 'assets/[name].[hash:8][ext]'\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Essential Plugins"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const webpack = require('webpack');\nconst HtmlWebpackPlugin = require('html-webpack-plugin');\nconst MiniCssExtractPlugin = require('mini-css-extract-plugin');\nconst { CleanWebpackPlugin } = require('clean-webpack-plugin');\nconst CopyWebpackPlugin = require('copy-webpack-plugin');\nconst TerserPlugin = require('terser-webpack-plugin');\nconst OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');\nconst { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');\n\nconst plugins = [\n  // Clean dist folder\n  new CleanWebpackPlugin(),\n  \n  // Generate HTML file\n  new HtmlWebpackPlugin({\n    template: './src/index.html',\n    filename: 'index.html',\n    inject: 'body',\n    minify: {\n      removeComments: true,\n      collapseWhitespace: true,\n      removeRedundantAttributes: true,\n      useShortDoctype: true,\n      removeEmptyAttributes: true,\n      removeStyleLinkTypeAttributes: true,\n      keepClosingSlash: true,\n      minifyJS: true,\n      minifyCSS: true,\n      minifyURLs: true\n    }\n  }),\n  \n  // Extract CSS\n  new MiniCssExtractPlugin({\n    filename: process.env.NODE_ENV === 'production' \n      ? '[name].[contenthash:8].css'\n      : '[name].css',\n    chunkFilename: process.env.NODE_ENV === 'production'\n      ? '[name].[contenthash:8].chunk.css'\n      : '[name].chunk.css'\n  }),\n  \n  // Copy static assets\n  new CopyWebpackPlugin({\n    patterns: [\n      {\n        from: 'public',\n        to: 'public',\n        globOptions: {\n          ignore: ['**/index.html']\n        }\n      }\n    ]\n  }),\n  \n  // Define environment variables\n  new webpack.DefinePlugin({\n    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),\n    'process.env.API_URL': JSON.stringify(process.env.API_URL || 'http://localhost:3001')\n  }),\n  \n  // Hot Module Replacement (development)\n  ...(process.env.NODE_ENV === 'development' ? [\n    new webpack.HotModuleReplacementPlugin()\n  ] : []),\n  \n  // Bundle analyzer (optional)\n  ...(process.env.ANALYZE ? [\n    new BundleAnalyzerPlugin({\n      analyzerMode: 'static',\n      openAnalyzer: false\n    })\n  ] : [])\n];\n\n// Production optimizations\nconst optimization = {\n  minimize: process.env.NODE_ENV === 'production',\n  minimizer: [\n    new TerserPlugin({\n      terserOptions: {\n        compress: {\n          drop_console: true\n        }\n      }\n    }),\n    new OptimizeCSSAssetsPlugin({\n      cssProcessorOptions: {\n        map: {\n          inline: false,\n          annotation: true\n        }\n      }\n    })\n  ],\n  splitChunks: {\n    chunks: 'all',\n    cacheGroups: {\n      default: {\n        minChunks: 2,\n        priority: -20,\n        reuseExistingChunk: true\n      },\n      vendor: {\n        test: /[\\\\/]node_modules[\\\\/]/,\n        name: 'vendors',\n        priority: -10,\n        chunks: 'all'\n      }\n    }\n  },\n  runtimeChunk: {\n    name: 'runtime'\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Alternatives to Webpack (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "While Webpack remains popular, newer build tools offer improved developer experience:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Vite Configuration (Fast alternative to Webpack)\n// vite.config.js\nimport { defineConfig } from 'vite';\nimport react from '@vitejs/plugin-react';\n\nexport default defineConfig({\n  plugins: [react()],\n  server: {\n    port: 3000,\n    hot: true\n  },\n  build: {\n    outDir: 'dist',\n    sourcemap: true,\n    rollupOptions: {\n      output: {\n        manualChunks: {\n          vendor: ['react', 'react-dom'],\n          utils: ['lodash', 'axios']\n        }\n      }\n    }\n  },\n  css: {\n    modules: {\n      localsConvention: 'camelCase'\n    },\n    preprocessorOptions: {\n      scss: {\n        additionalData: '@import \"@/styles/variables.scss\";'\n      }\n    }\n  }\n});\n\n// Parcel (Zero-configuration bundler)\n// package.json\n{\n  \"scripts\": {\n    \"start\": \"parcel src/index.html\",\n    \"build\": \"parcel build src/index.html\"\n  },\n  \"browserslist\": [\"> 1%\", \"last 2 versions\"]\n}\n\n// esbuild (Extremely fast bundler)\n// build.js\nconst esbuild = require('esbuild');\n\nesbuild.build({\n  entryPoints: ['src/index.js'],\n  bundle: true,\n  outfile: 'dist/bundle.js',\n  minify: true,\n  sourcemap: true,\n  target: ['es2020'],\n  loader: {\n    '.png': 'file',\n    '.svg': 'text'\n  },\n  define: {\n    'process.env.NODE_ENV': '\"production\"'\n  }\n}).catch(() => process.exit(1));\n\n// Rollup Configuration\n// rollup.config.js\nimport resolve from '@rollup/plugin-node-resolve';\nimport commonjs from '@rollup/plugin-commonjs';\nimport babel from '@rollup/plugin-babel';\nimport { terser } from 'rollup-plugin-terser';\n\nexport default {\n  input: 'src/index.js',\n  output: {\n    file: 'dist/bundle.js',\n    format: 'iife',\n    sourcemap: true\n  },\n  plugins: [\n    resolve(),\n    commonjs(),\n    babel({\n      babelHelpers: 'bundled',\n      exclude: 'node_modules/**'\n    }),\n    terser()\n  ]\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Performance Optimization Strategies"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Code Splitting Strategies\n\n// 1. Dynamic Imports\nconst loadComponent = async () => {\n  const { default: Component } = await import('./HeavyComponent');\n  return Component;\n};\n\n// 2. Route-based splitting (React Router)\nconst Home = lazy(() => import('./pages/Home'));\nconst About = lazy(() => import('./pages/About'));\n\n// 3. Vendor splitting in webpack\noptimization: {\n  splitChunks: {\n    cacheGroups: {\n      vendor: {\n        test: /[\\\\/]node_modules[\\\\/]/,\n        name: 'vendors',\n        chunks: 'all'\n      },\n      common: {\n        name: 'common',\n        minChunks: 2,\n        chunks: 'all',\n        enforce: true\n      }\n    }\n  }\n}\n\n// Tree Shaking Configuration\n// package.json\n{\n  \"sideEffects\": false, // Enable tree shaking\n  // or specify files with side effects\n  \"sideEffects\": [\"*.css\", \"*.scss\"]\n}\n\n// Webpack tree shaking\noptimization: {\n  usedExports: true,\n  sideEffects: false\n}\n\n// Bundle Analysis\n// package.json scripts\n{\n  \"scripts\": {\n    \"analyze\": \"webpack-bundle-analyzer dist/static/js/*.js\",\n    \"build:analyze\": \"npm run build && npm run analyze\"\n  }\n}\n\n// Service Worker for Caching\n// sw.js\nconst CACHE_NAME = 'my-app-v1';\nconst urlsToCache = [\n  '/',\n  '/static/js/bundle.js',\n  '/static/css/main.css'\n];\n\nself.addEventListener('install', (event) => {\n  event.waitUntil(\n    caches.open(CACHE_NAME)\n      .then((cache) => cache.addAll(urlsToCache))\n  );\n});\n\nself.addEventListener('fetch', (event) => {\n  event.respondWith(\n    caches.match(event.request)\n      .then((response) => {\n        return response || fetch(event.request);\n      })\n  );\n});\n\n// Workbox for advanced service worker\n// webpack.config.js\nconst { GenerateSW } = require('workbox-webpack-plugin');\n\nplugins: [\n  new GenerateSW({\n    clientsClaim: true,\n    skipWaiting: true,\n    runtimeCaching: [{\n      urlPattern: /^https:\\/\\/api\\./,\n      handler: 'NetworkFirst',\n      options: {\n        cacheName: 'api-cache',\n        expiration: {\n          maxEntries: 50,\n          maxAgeSeconds: 300\n        }\n      }\n    }]\n  })\n]"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What happens when you type a URL in the browser address bar?",
+      "options": [
+        "Browser directly connects to the server",
+        "Browser checks cache, performs DNS lookup, establishes connection, sends request",
+        "DNS server immediately returns the webpage",
+        "ISP handles all the communication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The browser follows a multi-step process: checks cache, performs DNS lookup through ISP and DNS servers, establishes TCP connection, performs TLS handshake if HTTPS, sends HTTP request, and receives response."
+    },
+    {
+      "id": 2,
+      "question": "What is the main difference between HTTP and HTTPS?",
+      "options": [
+        "HTTP is faster than HTTPS",
+        "HTTPS encrypts communication using TLS/SSL",
+        "HTTP supports more methods than HTTPS",
+        "HTTPS only works with certain browsers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "HTTPS encrypts all communication between client and server using TLS/SSL protocols, while HTTP sends data in plain text. This encryption protects against eavesdropping and man-in-the-middle attacks."
+    },
+    {
+      "id": 3,
+      "question": "Which HTTP method is idempotent and safe?",
+      "options": ["POST", "PUT", "GET", "DELETE"],
+      "correctAnswer": 2,
+      "explanation": "GET is both idempotent (multiple identical requests have the same effect) and safe (doesn't modify server state). It's used for retrieving data without side effects."
+    },
+    {
+      "id": 4,
+      "question": "What is CORS and why is it important?",
+      "options": [
+        "A way to compress HTTP responses",
+        "A security mechanism that controls cross-origin requests",
+        "A method to cache static resources",
+        "A protocol for real-time communication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CORS (Cross-Origin Resource Sharing) is a security mechanism that allows servers to specify which origins can access their resources, preventing unauthorized cross-origin requests."
+    },
+    {
+      "id": 5,
+      "question": "What is JSON and why is it widely used?",
+      "options": [
+        "A programming language for web development",
+        "A lightweight, human-readable data interchange format",
+        "A database query language",
+        "A web browser rendering engine"
+      ],
+      "correctAnswer": 1,
+      "explanation": "JSON (JavaScript Object Notation) is a lightweight, human-readable data format that's language-independent and widely used for data exchange between web applications and APIs."
+    },
+    {
+      "id": 6,
+      "question": "What is the difference between REST and GraphQL APIs?",
+      "options": [
+        "REST is newer than GraphQL",
+        "GraphQL allows single endpoint with flexible queries, REST uses multiple endpoints",
+        "REST supports real-time updates, GraphQL doesn't",
+        "GraphQL only works with JavaScript"
+      ],
+      "correctAnswer": 1,
+      "explanation": "GraphQL uses a single endpoint and allows clients to request exactly the data they need, while REST uses multiple endpoints with fixed data structures for different resources."
+    },
+    {
+      "id": 7,
+      "question": "What is the difference between let, const, and var in JavaScript?",
+      "options": [
+        "They all work exactly the same",
+        "let and const are block-scoped, var is function-scoped",
+        "var is the newest and recommended",
+        "const can be reassigned, let cannot"
+      ],
+      "correctAnswer": 1,
+      "explanation": "let and const are block-scoped and not hoisted, while var is function-scoped and hoisted. const cannot be reassigned after declaration, let can be reassigned."
+    },
+    {
+      "id": 8,
+      "question": "What is the purpose of the optional chaining operator (?.) in JavaScript?",
+      "options": [
+        "To create optional function parameters",
+        "To safely access nested object properties without throwing errors",
+        "To chain multiple function calls",
+        "To create conditional statements"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Optional chaining (?.) allows safe access to nested object properties. If any part of the chain is null or undefined, it returns undefined instead of throwing an error."
+    },
+    {
+      "id": 9,
+      "question": "What is the difference between querySelector and getElementById?",
+      "options": [
+        "getElementById is faster and more specific",
+        "querySelector is newer and supports CSS selectors",
+        "They work exactly the same",
+        "getElementById supports multiple elements"
+      ],
+      "correctAnswer": 0,
+      "explanation": "getElementById is faster because it directly accesses elements by ID, while querySelector is more flexible but slower as it parses CSS selectors. Both are modern and widely supported."
+    },
+    {
+      "id": 10,
+      "question": "What is event delegation in DOM manipulation?",
+      "options": [
+        "Assigning multiple events to one element",
+        "Using a parent element to handle events for child elements",
+        "Removing event listeners automatically",
+        "Creating custom events"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event delegation uses event bubbling to handle events on a parent element instead of individual child elements, which is more efficient for dynamic content."
+    },
+    {
+      "id": 11,
+      "question": "What is XSS (Cross-Site Scripting) and how can it be prevented?",
+      "options": [
+        "A way to share scripts between websites",
+        "A vulnerability where malicious scripts are injected into web pages",
+        "A method to optimize JavaScript performance",
+        "A cross-browser compatibility issue"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XSS is a security vulnerability where attackers inject malicious scripts into web pages. It can be prevented by sanitizing user input, using CSP headers, and avoiding innerHTML with user data."
+    },
+    {
+      "id": 12,
+      "question": "What is CSRF (Cross-Site Request Forgery) and how is it prevented?",
+      "options": [
+        "A method to share resources between sites",
+        "An attack where unauthorized commands are transmitted from a trusted user",
+        "A way to optimize cross-site requests",
+        "A browser caching mechanism"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSRF is an attack where a malicious site tricks a user's browser into making unauthorized requests to another site. It's prevented using CSRF tokens, SameSite cookies, and proper authentication."
+    },
+    {
+      "id": 13,
+      "question": "What is the purpose of Content Security Policy (CSP)?",
+      "options": [
+        "To compress web content",
+        "To prevent XSS attacks by controlling resource loading",
+        "To improve website performance",
+        "To manage user authentication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSP is a security header that helps prevent XSS attacks by controlling which resources (scripts, styles, images) can be loaded and executed on a web page."
+    },
+    {
+      "id": 14,
+      "question": "Why should passwords be hashed instead of encrypted?",
+      "options": [
+        "Hashing is faster than encryption",
+        "Hashing is one-way and more secure for password storage",
+        "Encryption is not supported in browsers",
+        "Hashing takes less storage space"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Hashing is one-way and irreversible, making it more secure for password storage. Even if the database is compromised, original passwords cannot be recovered from hashes."
+    },
+    {
+      "id": 15,
+      "question": "What is Webpack primarily used for?",
+      "options": [
+        "Database management",
+        "Module bundling and asset optimization",
+        "Server-side rendering",
+        "API development"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Webpack is a module bundler that takes modules with dependencies and generates static assets representing those modules, optimizing them for production use."
+    },
+    {
+      "id": 16,
+      "question": "What are loaders in Webpack?",
+      "options": [
+        "Plugins that optimize bundles",
+        "Transformations applied to files during bundling",
+        "Entry points for applications",
+        "Output configurations"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Loaders are transformations applied to files during the bundling process. They allow Webpack to process different file types (CSS, images, TypeScript) and transform them."
+    },
+    {
+      "id": 17,
+      "question": "What is the main advantage of Vite over Webpack?",
+      "options": [
+        "Better browser support",
+        "Faster development server with native ES modules",
+        "More plugin options",
+        "Better production builds"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Vite provides a much faster development server by serving native ES modules directly to the browser, eliminating the need for bundling during development."
+    },
+    {
+      "id": 18,
+      "question": "What is code splitting and why is it beneficial?",
+      "options": [
+        "Dividing code into multiple files for organization",
+        "Breaking bundles into smaller chunks for faster loading",
+        "Separating frontend and backend code",
+        "Creating different versions for different browsers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Code splitting breaks large bundles into smaller chunks that can be loaded on demand, improving initial page load time and user experience."
+    },
+    {
+      "id": 19,
+      "question": "What is tree shaking in build tools?",
+      "options": [
+        "Reorganizing file structures",
+        "Removing unused code from bundles",
+        "Optimizing image assets",
+        "Compressing CSS files"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Tree shaking is the process of removing unused code (dead code) from the final bundle, reducing bundle size and improving performance."
+    },
+    {
+      "id": 20,
+      "question": "What is the purpose of a Service Worker?",
+      "options": [
+        "To serve static files",
+        "To enable offline functionality and caching",
+        "To handle server-side logic",
+        "To manage database connections"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Service Workers run in the background and can intercept network requests, enabling offline functionality, background sync, and advanced caching strategies."
+    },
+    {
+      "id": 21,
+      "question": "What is the difference between localStorage and sessionStorage?",
+      "options": [
+        "localStorage is faster than sessionStorage",
+        "localStorage persists until cleared, sessionStorage expires with tab",
+        "sessionStorage has more storage capacity",
+        "localStorage only works in HTTPS"
+      ],
+      "correctAnswer": 1,
+      "explanation": "localStorage persists data until explicitly cleared, while sessionStorage only lasts for the duration of the browser tab/session."
+    },
+    {
+      "id": 22,
+      "question": "What is the event loop in JavaScript?",
+      "options": [
+        "A loop that handles DOM events",
+        "The mechanism that handles asynchronous operations in single-threaded JavaScript",
+        "A debugging tool for events",
+        "A method to create event listeners"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The event loop enables JavaScript to perform non-blocking operations despite being single-threaded by delegating operations and handling callbacks when they complete."
+    },
+    {
+      "id": 23,
+      "question": "What is the difference between microtasks and macrotasks?",
+      "options": [
+        "Microtasks are smaller in size",
+        "Microtasks have higher priority and execute before macrotasks",
+        "Macrotasks execute first",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Microtasks (Promises, queueMicrotask) have higher priority than macrotasks (setTimeout, setInterval) and are processed completely before the next macrotask."
+    },
+    {
+      "id": 24,
+      "question": "What is the purpose of the AbortController API?",
+      "options": [
+        "To handle JavaScript errors",
+        "To cancel ongoing asynchronous operations",
+        "To control browser navigation",
+        "To manage memory usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "AbortController provides a way to cancel ongoing asynchronous operations like fetch requests or event listeners using an abort signal."
+    },
+    {
+      "id": 25,
+      "question": "What is the difference between HTTP/1.1 and HTTP/2?",
+      "options": [
+        "HTTP/2 is text-based, HTTP/1.1 is binary",
+        "HTTP/2 is binary, supports multiplexing, and has header compression",
+        "HTTP/1.1 is faster than HTTP/2",
+        "HTTP/2 doesn't support HTTPS"
+      ],
+      "correctAnswer": 1,
+      "explanation": "HTTP/2 is a binary protocol that supports multiplexing (multiple requests over one connection), header compression, and server push, making it more efficient than HTTP/1.1."
+    },
+    {
+      "id": 26,
+      "question": "What is the Same-Origin Policy?",
+      "options": [
+        "A caching strategy",
+        "A security policy that restricts how documents from one origin can interact with resources from another origin",
+        "A method to optimize loading",
+        "A way to share cookies between sites"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Same-Origin Policy is a security concept that restricts how documents or scripts from one origin can interact with resources from another origin, preventing many security attacks."
+    },
+    {
+      "id": 27,
+      "question": "What is the purpose of the 'use strict' directive?",
+      "options": [
+        "To make JavaScript run faster",
+        "To enable strict mode which catches errors and prevents unsafe actions",
+        "To enable new ES6 features",
+        "To improve browser compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'use strict' enables strict mode, which catches common coding errors, prevents the use of undeclared variables, and disables some confusing JavaScript features."
+    },
+    {
+      "id": 28,
+      "question": "What is the difference between shallow and deep cloning?",
+      "options": [
+        "Shallow cloning is faster",
+        "Shallow cloning copies only the first level, deep cloning copies all nested levels",
+        "Deep cloning only works with objects",
+        "They produce the same result"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Shallow cloning copies only the first level of an object, while deep cloning recursively copies all nested objects and arrays, creating completely independent copies."
+    },
+    {
+      "id": 29,
+      "question": "What is debouncing and when would you use it?",
+      "options": [
+        "A way to handle errors",
+        "Delaying function execution until after a specified time has passed since the last call",
+        "A method to optimize loops",
+        "A technique for handling promises"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Debouncing delays function execution until after a specified time has passed since the last call. It's useful for search inputs, resize events, and other frequently triggered events."
+    },
+    {
+      "id": 30,
+      "question": "What is the difference between authentication and authorization?",
+      "options": [
+        "They are the same thing",
+        "Authentication verifies identity, authorization determines permissions",
+        "Authorization comes before authentication",
+        "Authentication is for APIs, authorization is for websites"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Authentication verifies who a user is (login), while authorization determines what permissions that authenticated user has (access control)."
+    }
+  ]
+}

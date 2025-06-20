@@ -1,0 +1,609 @@
+{
+  "title": "HTML & CSS Fundamentals",
+  "description": "Master HTML5 semantic elements, modern CSS features, responsive design, accessibility, performance optimization, and cutting-edge web styling techniques for 2024",
+  "sections": [
+    {
+      "id": "html5-fundamentals",
+      "title": "HTML5 Fundamentals & Semantic Elements",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is HTML5?"
+        },
+        {
+          "type": "paragraph",
+          "text": "HTML5 is the latest version of HTML (HyperText Markup Language), the standard language for creating web pages. Think of HTML as the skeleton of a webpage - it defines the structure and content. HTML5 introduced many new features that make websites more interactive, accessible, and search-engine friendly."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Semantic Elements: Tags that describe their meaning (like <header>, <nav>, <main>)",
+            "Better Accessibility: Screen readers can better understand page structure",
+            "SEO Benefits: Search engines better understand your content organization",
+            "New Input Types: Email, date, color pickers built into browsers",
+            "Multimedia Support: Native video and audio elements without plugins",
+            "Offline Capabilities: Can work without internet connection",
+            "Mobile Optimization: Better support for responsive design"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "HTML5 Document Structure"
+        },
+        {
+          "type": "paragraph",
+          "text": "Every HTML5 document follows a standard structure. Think of it like a house blueprint - each part has a specific purpose and location. The DOCTYPE tells the browser 'this is HTML5', while meta tags provide important information about your page."
+        },
+        {
+          "type": "code",
+          "language": "html",
+          "text": "<!DOCTYPE html> <!-- Tells browser: \"This is HTML5\" -->\n<html lang=\"en\"> <!-- Language helps screen readers and search engines -->\n<head>\n  <!-- HEAD: Information ABOUT the page (not visible to users) -->\n  <meta charset=\"UTF-8\"> <!-- Character encoding for emojis, special characters -->\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <!-- Makes site mobile-friendly -->\n  <meta name=\"description\" content=\"Page description for SEO\"> <!-- Shows in Google search results -->\n  <title>Modern HTML5 Document</title> <!-- Shows in browser tab -->\n</head>\n<body>\n  <!-- BODY: Everything users see and interact with -->\n  <header>\n    <!-- HEADER: Top section with logo, navigation -->\n    <nav aria-label=\"Main navigation\">\n      <ul>\n        <li><a href=\"#home\" aria-current=\"page\">Home</a></li>\n        <li><a href=\"#about\">About</a></li>\n      </ul>\n    </nav>\n  </header>\n  \n  <main>\n    <!-- MAIN: Primary content (only one per page) -->\n    <section>\n      <h1>Main Content</h1>\n      <p>Content goes here...</p>\n    </section>\n  </main>\n  \n  <footer>\n    <!-- FOOTER: Bottom section with copyright, links -->\n    <p>&copy; 2024 Your Website</p>\n  </footer>\n</body>\n</html>"
+        },
+        {
+          "type": "heading",
+          "text": "Semantic HTML5 Elements Explained"
+        },
+        {
+          "type": "paragraph",
+          "text": "Semantic elements are like labeled boxes - they tell both browsers and developers what type of content is inside. Instead of using generic <div> tags everywhere, semantic elements make your code more meaningful and accessible."
+        },
+        {
+          "type": "list",
+          "items": [
+            "<header>: Like a book cover - contains site logo, main navigation, introductory content",
+            "<nav>: The table of contents - contains navigation links to other pages or sections",
+            "<main>: The main story - contains the primary content of the page (only one per page)",
+            "<section>: Like book chapters - groups related content together, usually with a heading",
+            "<article>: Standalone content that makes sense on its own (blog posts, news articles, comments)",
+            "<aside>: Sidebar content - related but not essential (ads, related links, author bio)",
+            "<footer>: Like a book's back cover - contains copyright, contact info, additional links",
+            "<figure> & <figcaption>: For images with captions, like photos in a magazine",
+            "<details> & <summary>: Creates expandable content (FAQ sections, show/hide content)",
+            "<time>: Marks dates and times so browsers and search engines understand them better"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Real-World Example: Blog Post Structure"
+        },
+        {
+          "type": "code",
+          "language": "html",
+          "text": "<!-- Complete blog post example using semantic HTML -->\n<article>\n  <header>\n    <h1>How to Learn Web Development in 2024</h1>\n    <p>Published on <time datetime=\"2024-01-15\">January 15, 2024</time></p>\n    <p>By <a href=\"/author/jane\">Jane Developer</a></p>\n  </header>\n  \n  <section>\n    <h2>Getting Started</h2>\n    <p>Learning web development can seem overwhelming, but with the right approach...</p>\n    \n    <figure>\n      <img src=\"learning-path.jpg\" alt=\"Web development learning roadmap\">\n      <figcaption>A typical learning path for web developers</figcaption>\n    </figure>\n  </section>\n  \n  <section>\n    <h2>Essential Skills</h2>\n    <p>Here are the core technologies you should master:</p>\n    <ol>\n      <li>HTML - Structure of web pages</li>\n      <li>CSS - Styling and layout</li>\n      <li>JavaScript - Interactivity and logic</li>\n    </ol>\n  </section>\n  \n  <aside>\n    <h3>Related Articles</h3>\n    <ul>\n      <li><a href=\"/css-guide\">Complete CSS Guide</a></li>\n      <li><a href=\"/js-basics\">JavaScript Fundamentals</a></li>\n    </ul>\n  </aside>\n  \n  <footer>\n    <p>Tags: <a href=\"/tag/web-dev\">web development</a>, <a href=\"/tag/beginner\">beginner</a></p>\n  </footer>\n</article>"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Form Elements & Validation"
+        },
+        {
+          "type": "paragraph",
+          "text": "HTML5 forms are much more powerful than old HTML forms. They include built-in validation (no JavaScript needed!), better input types, and improved accessibility. Think of forms as conversations with your users - you want to make them as easy and clear as possible."
+        },
+        {
+          "type": "code",
+          "language": "html",
+          "text": "<form method=\"POST\" novalidate> <!-- novalidate lets us customize error messages -->\n  <fieldset> <!-- Groups related form fields together -->\n    <legend>Personal Information</legend> <!-- Title for the group -->\n    \n    <!-- Email input with built-in validation -->\n    <label for=\"email\">Email Address *</label>\n    <input type=\"email\" id=\"email\" name=\"email\" \n           required <!-- Browser won't submit without this -->\n           autocomplete=\"email\" <!-- Helps browsers auto-fill -->\n           aria-describedby=\"email-help\" <!-- Links to help text -->\n           placeholder=\"your@email.com\">\n    <small id=\"email-help\">We'll never share your email with anyone</small>\n    \n    <!-- Password with minimum length -->\n    <label for=\"password\">Password *</label>\n    <input type=\"password\" id=\"password\" name=\"password\" \n           required \n           minlength=\"8\" <!-- Must be at least 8 characters -->\n           autocomplete=\"new-password\"\n           aria-describedby=\"password-help\">\n    <small id=\"password-help\">Must be at least 8 characters long</small>\n    \n    <!-- Date input (shows date picker) -->\n    <label for=\"birthdate\">Birth Date</label>\n    <input type=\"date\" id=\"birthdate\" name=\"birthdate\"\n           min=\"1900-01-01\" max=\"2024-12-31\">\n    \n    <!-- Number input with range -->\n    <label for=\"age\">Age</label>\n    <input type=\"number\" id=\"age\" name=\"age\" \n           min=\"13\" max=\"120\" step=\"1\">\n    \n    <!-- Radio buttons for single choice -->\n    <fieldset>\n      <legend>Preferred Contact Method</legend>\n      <label><input type=\"radio\" name=\"contact\" value=\"email\" checked> Email</label>\n      <label><input type=\"radio\" name=\"contact\" value=\"phone\"> Phone</label>\n      <label><input type=\"radio\" name=\"contact\" value=\"text\"> Text Message</label>\n    </fieldset>\n    \n    <!-- Checkboxes for multiple choices -->\n    <fieldset>\n      <legend>Interests (select all that apply)</legend>\n      <label><input type=\"checkbox\" name=\"interests\" value=\"web-dev\"> Web Development</label>\n      <label><input type=\"checkbox\" name=\"interests\" value=\"design\"> Design</label>\n      <label><input type=\"checkbox\" name=\"interests\" value=\"mobile\"> Mobile Apps</label>\n    </fieldset>\n    \n    <!-- Dropdown selection -->\n    <label for=\"experience\">Experience Level</label>\n    <select id=\"experience\" name=\"experience\" required>\n      <option value=\"\">Please select...</option>\n      <option value=\"beginner\">Beginner (0-1 years)</option>\n      <option value=\"intermediate\">Intermediate (2-5 years)</option>\n      <option value=\"advanced\">Advanced (5+ years)</option>\n    </select>\n    \n    <!-- Large text input -->\n    <label for=\"message\">Additional Comments</label>\n    <textarea id=\"message\" name=\"message\" \n              rows=\"4\" cols=\"50\"\n              placeholder=\"Tell us more about yourself...\"></textarea>\n  </fieldset>\n  \n  <button type=\"submit\">Create Account</button>\n  <button type=\"reset\">Clear Form</button>\n</form>"
+        },
+        {
+          "type": "heading",
+          "text": "Web Accessibility & ARIA - Making Web for Everyone"
+        },
+        {
+          "type": "paragraph",
+          "text": "Web accessibility means making your website usable by everyone, including people with disabilities. ARIA (Accessible Rich Internet Applications) attributes provide extra information for screen readers and other assistive technologies. Think of ARIA as adding helpful descriptions for people who can't see your interface."
+        },
+        {
+          "type": "code",
+          "language": "html",
+          "text": "<!-- Skip navigation link (hidden until focused) -->\n<a href=\"#main\" class=\"skip-link\">Skip to main content</a>\n\n<!-- Accessible button that shows/hides menu -->\n<button aria-expanded=\"false\" <!-- Tells if menu is open/closed -->\n        aria-controls=\"main-menu\" <!-- Which element this controls -->\n        aria-label=\"Toggle main menu\"> <!-- Clear description -->\n  <span aria-hidden=\"true\">☰</span> <!-- Hide icon from screen readers -->\n  Menu\n</button>\n\n<nav id=\"main-menu\" aria-label=\"Main navigation\">\n  <ul>\n    <li><a href=\"/\" aria-current=\"page\">Home</a></li> <!-- Current page indicator -->\n    <li><a href=\"/about\">About</a></li>\n    <li><a href=\"/contact\">Contact</a></li>\n  </ul>\n</nav>\n\n<!-- Live region announces changes to screen readers -->\n<div aria-live=\"polite\" id=\"status-message\"></div>\n\n<!-- Accessible modal dialog -->\n<div role=\"dialog\" <!-- This is a dialog box -->\n     aria-labelledby=\"modal-title\" <!-- Title element -->\n     aria-describedby=\"modal-description\" <!-- Description element -->\n     aria-modal=\"true\"> <!-- This is modal (blocks interaction with page) -->\n  <h2 id=\"modal-title\">Confirm Delete</h2>\n  <p id=\"modal-description\">Are you sure you want to delete this item? This action cannot be undone.</p>\n  <button>Cancel</button>\n  <button>Delete</button>\n</div>\n\n<!-- Form with clear labels and error messages -->\n<div class=\"form-field\">\n  <label for=\"username\">Username *</label>\n  <input type=\"text\" id=\"username\" name=\"username\" \n         required\n         aria-describedby=\"username-error username-help\"\n         aria-invalid=\"false\"> <!-- Changes to true if invalid -->\n  <div id=\"username-help\">Must be 3-20 characters long</div>\n  <div id=\"username-error\" class=\"error\" hidden>Username is required</div>\n</div>\n\n<!-- Image with proper alt text -->\n<img src=\"chart.png\" \n     alt=\"Sales increased 25% from January to March 2024\"> <!-- Describes the content/purpose -->\n\n<!-- Decorative image (doesn't add information) -->\n<img src=\"decorative-border.png\" alt=\"\" role=\"presentation\">"
+        }
+      ]
+    },
+    {
+      "id": "modern-css-fundamentals",
+      "title": "Modern CSS Fundamentals & Features",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is CSS?"
+        },
+        {
+          "type": "paragraph",
+          "text": "CSS (Cascading Style Sheets) is what makes websites look beautiful. If HTML is the skeleton of a webpage, CSS is the skin, clothes, and makeup. It controls colors, fonts, layouts, animations, and how your website responds to different screen sizes. Modern CSS is incredibly powerful and can create stunning visual effects."
+        },
+        {
+          "type": "heading",
+          "text": "CSS Custom Properties (Variables) - Your Design System"
+        },
+        {
+          "type": "paragraph",
+          "text": "CSS custom properties (also called CSS variables) are like having a color palette and style guide that you can change instantly across your entire website. Instead of repeating the same colors and sizes everywhere, you define them once and reuse them. This makes maintaining and updating your design much easier."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Define your design system in :root (applies to whole document) */\n:root {\n  /* Colors - use meaningful names */\n  --primary-color: #007bff;    /* Main brand color */\n  --secondary-color: #6c757d;  /* Supporting color */\n  --success-color: #28a745;    /* For success messages */\n  --error-color: #dc3545;      /* For error messages */\n  --warning-color: #ffc107;    /* For warnings */\n  \n  /* Typography */\n  --font-family-primary: 'Inter', system-ui, sans-serif;\n  --font-family-heading: 'Poppins', sans-serif;\n  --font-size-small: 0.875rem;  /* 14px */\n  --font-size-base: 1rem;       /* 16px */\n  --font-size-large: 1.25rem;   /* 20px */\n  --font-size-xl: 1.5rem;       /* 24px */\n  \n  /* Spacing system (consistent spacing) */\n  --spacing-xs: 0.25rem;  /* 4px */\n  --spacing-sm: 0.5rem;   /* 8px */\n  --spacing-md: 1rem;     /* 16px */\n  --spacing-lg: 1.5rem;   /* 24px */\n  --spacing-xl: 2rem;     /* 32px */\n  \n  /* Border radius for consistent rounded corners */\n  --border-radius-sm: 4px;\n  --border-radius-md: 8px;\n  --border-radius-lg: 12px;\n  \n  /* Shadows for depth */\n  --shadow-light: 0 2px 4px rgba(0, 0, 0, 0.1);\n  --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.15);\n  --shadow-heavy: 0 8px 16px rgba(0, 0, 0, 0.2);\n}\n\n/* Using variables in your styles */\n.button {\n  background-color: var(--primary-color);\n  color: white;\n  padding: var(--spacing-sm) var(--spacing-md);\n  border-radius: var(--border-radius-sm);\n  font-size: var(--font-size-base);\n  font-family: var(--font-family-primary);\n  box-shadow: var(--shadow-light);\n  transition: all 0.2s ease;\n  border: none;\n  cursor: pointer;\n}\n\n.button:hover {\n  background-color: var(--primary-color);\n  filter: brightness(110%); /* Makes color slightly brighter */\n  box-shadow: var(--shadow-medium);\n  transform: translateY(-1px); /* Subtle lift effect */\n}\n\n/* Theme switching - change variables to change entire site */\n[data-theme=\"dark\"] {\n  --primary-color: #0d6efd;\n  --background-color: #1a1a1a;\n  --text-color: #ffffff;\n  --border-color: #333333;\n}\n\n[data-theme=\"light\"] {\n  --background-color: #ffffff;\n  --text-color: #333333;\n  --border-color: #e0e0e0;\n}\n\n/* Responsive variables - change based on screen size */\n@media (max-width: 768px) {\n  :root {\n    --font-size-base: 0.875rem; /* Smaller text on mobile */\n    --spacing-md: 0.75rem;      /* Tighter spacing on mobile */\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Modern CSS Selectors (2024) - Powerful Selection Tools"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern CSS selectors are like super-powered search tools that let you target exactly the elements you want to style. These new selectors make your CSS more efficient and reduce the need for extra HTML classes."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* :has() - The \"parent selector\" (finally!) */\n/* Style a form field differently if it contains an invalid input */\n.form-field:has(:invalid) {\n  border-color: var(--error-color);\n  background-color: #fef2f2; /* Light red background */\n}\n\n/* Style a card differently if it has an image */\n.card:has(img) {\n  padding: 0; /* Remove padding when there's an image */\n}\n\n/* Style navigation differently if it has active link */\n.nav:has(.active) {\n  background-color: var(--primary-color);\n}\n\n/* :is() - Group selectors efficiently */\n/* Instead of writing h1, h2, h3, h4, h5, h6 separately */\n:is(h1, h2, h3, h4, h5, h6) {\n  font-family: var(--font-family-heading);\n  font-weight: 600;\n  line-height: 1.2;\n  margin-bottom: var(--spacing-md);\n}\n\n/* :where() - Same as :is() but with 0 specificity (easier to override) */\n:where(.button, .btn, .link-button) {\n  padding: var(--spacing-sm) var(--spacing-md);\n  border-radius: var(--border-radius-sm);\n  text-decoration: none;\n  display: inline-block;\n  transition: all 0.2s ease;\n}\n\n/* Container queries - Style based on container size, not viewport */\n.card-container {\n  container-type: inline-size; /* Enable container queries */\n}\n\n@container (min-width: 400px) {\n  .card {\n    display: flex;\n    gap: var(--spacing-md);\n  }\n  \n  .card-image {\n    flex: 0 0 150px; /* Fixed width image */\n  }\n  \n  .card-content {\n    flex: 1; /* Take remaining space */\n  }\n}\n\n/* Modern attribute selectors */\n/* Style elements based on data attributes */\n[data-state=\"loading\"] {\n  opacity: 0.6;\n  pointer-events: none; /* Disable clicks */\n  cursor: wait;\n}\n\n[data-theme=\"dark\"] {\n  background-color: var(--background-color);\n  color: var(--text-color);\n}\n\n/* Style inputs based on validation state */\ninput[type=\"email\"]:user-invalid {\n  border-color: var(--error-color);\n  outline-color: var(--error-color);\n}\n\ninput[type=\"email\"]:user-valid {\n  border-color: var(--success-color);\n}\n\n/* :not() - Exclude certain elements */\n/* Style all buttons except the primary one */\nbutton:not(.primary) {\n  background-color: transparent;\n  border: 2px solid var(--border-color);\n  color: var(--text-color);\n}\n\n/* Style all list items except the first one */\nli:not(:first-child) {\n  margin-top: var(--spacing-sm);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "CSS Logical Properties - International-Friendly CSS"
+        },
+        {
+          "type": "paragraph",
+          "text": "Logical properties adapt automatically to different writing directions (left-to-right vs right-to-left languages like Arabic or Hebrew). Instead of thinking about physical directions (left/right), think about logical directions (start/end). This makes your website work better internationally."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Traditional physical properties */\n.old-way {\n  margin-left: 1rem;    /* Always left, even in RTL languages */\n  margin-right: 2rem;   /* Always right, even in RTL languages */\n  border-left: 3px solid blue;\n  text-align: left;\n}\n\n/* Modern logical properties */\n.new-way {\n  margin-inline-start: 1rem;  /* Left in LTR, Right in RTL */\n  margin-inline-end: 2rem;    /* Right in LTR, Left in RTL */\n  border-inline-start: 3px solid blue; /* Adapts to text direction */\n  text-align: start;          /* Left in LTR, Right in RTL */\n}\n\n/* Comprehensive example */\n.card {\n  /* Block = vertical (top/bottom), Inline = horizontal (start/end) */\n  padding-block: var(--spacing-md);    /* padding-top + padding-bottom */\n  padding-inline: var(--spacing-lg);   /* padding-left + padding-right (adapts to direction) */\n  \n  margin-block-start: var(--spacing-lg);  /* margin-top */\n  margin-block-end: var(--spacing-md);    /* margin-bottom */\n  margin-inline-start: 0;                 /* margin-left in LTR, margin-right in RTL */\n  \n  border-inline-start: 4px solid var(--primary-color); /* Left border in LTR, right in RTL */\n  \n  /* Logical sizes */\n  inline-size: 100%;     /* width */\n  block-size: 200px;     /* height */\n  max-inline-size: 600px; /* max-width */\n}\n\n/* See it in action */\n[dir=\"ltr\"] .card {\n  /* In left-to-right languages (English, Spanish, etc.) */\n  /* border-inline-start becomes border-left */\n  /* margin-inline-start becomes margin-left */\n}\n\n[dir=\"rtl\"] .card {\n  /* In right-to-left languages (Arabic, Hebrew, etc.) */\n  /* border-inline-start becomes border-right */\n  /* margin-inline-start becomes margin-right */\n  /* Text and layout automatically flip! */\n}\n\n/* Practical example: Navigation */\n.nav-item {\n  padding-inline: var(--spacing-md); /* Horizontal padding that adapts */\n  border-inline-end: 1px solid var(--border-color); /* Right border in LTR, left in RTL */\n}\n\n.nav-item:last-child {\n  border-inline-end: none; /* Remove border from last item */\n}"
+        }
+      ]
+    },
+    {
+      "id": "flexbox-grid-layout",
+      "title": "Modern Layout: Flexbox & CSS Grid",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Flexbox for One-Dimensional Layouts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Flexbox is perfect for distributing space and aligning items in one dimension (either row or column)."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Modern flexbox patterns */\n.flex-container {\n  display: flex;\n  gap: 1rem; /* Modern way to add space between items */\n  flex-wrap: wrap;\n}\n\n/* Centering content */\n.center-content {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n}\n\n/* Auto-sizing flex items */\n.flex-item {\n  flex: 1; /* Grow to fill available space */\n}\n\n.flex-item-fixed {\n  flex: 0 0 200px; /* Don't grow/shrink, fixed 200px */\n}\n\n/* Responsive navigation */\n.nav-list {\n  display: flex;\n  gap: 1rem;\n  list-style: none;\n  margin: 0;\n  padding: 0;\n}\n\n@media (max-width: 768px) {\n  .nav-list {\n    flex-direction: column;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "CSS Grid for Two-Dimensional Layouts"
+        },
+        {
+          "type": "paragraph",
+          "text": "CSS Grid excels at creating complex two-dimensional layouts with precise control over rows and columns."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Basic grid layout */\n.grid-container {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\n  gap: 2rem;\n  padding: 2rem;\n}\n\n/* Complex page layout */\n.page-layout {\n  display: grid;\n  grid-template-areas:\n    \"header header header\"\n    \"sidebar main aside\"\n    \"footer footer footer\";\n  grid-template-columns: 250px 1fr 200px;\n  grid-template-rows: auto 1fr auto;\n  min-height: 100vh;\n  gap: 1rem;\n}\n\n.header { grid-area: header; }\n.sidebar { grid-area: sidebar; }\n.main { grid-area: main; }\n.aside { grid-area: aside; }\n.footer { grid-area: footer; }\n\n/* Responsive grid */\n@media (max-width: 768px) {\n  .page-layout {\n    grid-template-areas:\n      \"header\"\n      \"main\"\n      \"sidebar\"\n      \"aside\"\n      \"footer\";\n    grid-template-columns: 1fr;\n  }\n}\n\n/* Grid item placement */\n.featured-item {\n  grid-column: span 2; /* Span across 2 columns */\n  grid-row: span 2; /* Span across 2 rows */\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Layout Techniques"
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Intrinsic web design with CSS Grid */\n.auto-grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));\n  gap: 1rem;\n}\n\n/* Aspect ratio (modern approach) */\n.video-container {\n  aspect-ratio: 16 / 9;\n  background-color: #000;\n}\n\n.square-thumbnail {\n  aspect-ratio: 1;\n  object-fit: cover;\n}\n\n/* Container queries for component-based responsive design */\n.card-container {\n  container-type: inline-size;\n}\n\n@container (min-width: 400px) {\n  .card {\n    display: flex;\n    gap: 1rem;\n  }\n  \n  .card-image {\n    flex: 0 0 150px;\n  }\n}\n\n/* Subgrid for nested layouts */\n.card-grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 1rem;\n}\n\n.card {\n  display: grid;\n  grid-template-rows: subgrid;\n  grid-row: span 3;\n}"
+        }
+      ]
+    },
+    {
+      "id": "responsive-design",
+      "title": "Responsive Design & Media Queries",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Mobile-First Responsive Design"
+        },
+        {
+          "type": "paragraph",
+          "text": "Mobile-first design starts with mobile styles and progressively enhances for larger screens, resulting in better performance and user experience."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Mobile-first approach */\n.container {\n  padding: 1rem;\n  max-width: 100%;\n}\n\n/* Tablet styles */\n@media (min-width: 768px) {\n  .container {\n    padding: 2rem;\n    max-width: 750px;\n    margin: 0 auto;\n  }\n}\n\n/* Desktop styles */\n@media (min-width: 1024px) {\n  .container {\n    max-width: 1200px;\n    padding: 3rem;\n  }\n}\n\n/* Modern responsive units */\n.hero-title {\n  font-size: clamp(1.5rem, 5vw, 4rem); /* Responsive font size */\n}\n\n.sidebar {\n  width: min(300px, 90vw); /* Responsive width */\n}\n\n/* Responsive images */\n.responsive-image {\n  width: 100%;\n  height: auto;\n  object-fit: cover;\n}\n\n/* Modern picture element for art direction */\n/* <picture>\n  <source media=\"(min-width: 1024px)\" srcset=\"large.jpg\">\n  <source media=\"(min-width: 768px)\" srcset=\"medium.jpg\">\n  <img src=\"small.jpg\" alt=\"Description\">\n</picture> */"
+        },
+        {
+          "type": "heading",
+          "text": "Advanced Media Queries"
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Preference-based media queries */\n@media (prefers-reduced-motion: reduce) {\n  * {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --background-color: #1a1a1a;\n    --text-color: #ffffff;\n    --border-color: #333333;\n  }\n}\n\n@media (prefers-contrast: high) {\n  .button {\n    border: 2px solid currentColor;\n  }\n}\n\n/* Interaction-based queries */\n@media (hover: hover) {\n  .button:hover {\n    transform: translateY(-2px);\n  }\n}\n\n@media (pointer: coarse) {\n  .button {\n    min-height: 44px; /* Larger touch targets */\n  }\n}\n\n/* Orientation and device queries */\n@media (orientation: landscape) and (max-height: 500px) {\n  .hero {\n    height: 100vh;\n  }\n}\n\n/* Print styles */\n@media print {\n  .no-print {\n    display: none;\n  }\n  \n  body {\n    font-size: 12pt;\n    line-height: 1.4;\n  }\n  \n  a[href]:after {\n    content: \" (\" attr(href) \")\";\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "modern-css-features",
+      "title": "Modern CSS Features (2024)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "CSS Nesting"
+        },
+        {
+          "type": "paragraph",
+          "text": "Native CSS nesting is now supported in modern browsers, allowing you to nest selectors like in Sass/SCSS."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Native CSS nesting */\n.card {\n  padding: 1rem;\n  border: 1px solid #ddd;\n  border-radius: 8px;\n  \n  & h2 {\n    margin-top: 0;\n    color: var(--primary-color);\n  }\n  \n  & p {\n    line-height: 1.6;\n    \n    &:last-child {\n      margin-bottom: 0;\n    }\n  }\n  \n  &:hover {\n    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);\n  }\n  \n  @media (min-width: 768px) {\n    padding: 2rem;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "CSS Color Functions & Spaces"
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Modern color functions */\n.color-examples {\n  /* color-mix() function */\n  background-color: color-mix(in srgb, blue 70%, white);\n  \n  /* Relative color syntax */\n  border-color: hsl(from var(--primary-color) h s calc(l - 20%));\n  \n  /* Modern color spaces */\n  color: oklch(0.7 0.15 180); /* OKLCH color space */\n  background: color(display-p3 1 0 0); /* P3 color space */\n}\n\n/* CSS-wide keywords */\n.inherit-example {\n  color: inherit;\n  font-size: initial;\n  margin: unset;\n  padding: revert;\n  border: revert-layer;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "CSS Animations & Transitions"
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Modern animations */\n@keyframes slideInUp {\n  from {\n    opacity: 0;\n    transform: translateY(30px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n.fade-in {\n  animation: slideInUp 0.6s ease-out;\n}\n\n/* Scroll-driven animations */\n@scroll-timeline scroll-in-view {\n  source: auto;\n  orientation: vertical;\n}\n\n.scroll-animate {\n  animation: slideInUp linear;\n  animation-timeline: scroll-in-view;\n  animation-range: entry 0% entry 100%;\n}\n\n/* View transitions API */\n::view-transition-old(root),\n::view-transition-new(root) {\n  animation-duration: 0.3s;\n}\n\n/* Smooth scrolling */\nhtml {\n  scroll-behavior: smooth;\n}\n\n/* Scroll snapping */\n.scroll-container {\n  scroll-snap-type: x mandatory;\n  overflow-x: scroll;\n}\n\n.scroll-item {\n  scroll-snap-align: start;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "CSS Architecture & Best Practices"
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* CSS Layers for better cascade control */\n@layer reset, base, components, utilities;\n\n@layer reset {\n  * {\n    margin: 0;\n    padding: 0;\n    box-sizing: border-box;\n  }\n}\n\n@layer base {\n  body {\n    font-family: system-ui, sans-serif;\n    line-height: 1.6;\n  }\n}\n\n@layer components {\n  .button {\n    padding: 0.5rem 1rem;\n    border: none;\n    border-radius: 4px;\n    cursor: pointer;\n  }\n}\n\n@layer utilities {\n  .sr-only {\n    position: absolute;\n    width: 1px;\n    height: 1px;\n    padding: 0;\n    margin: -1px;\n    overflow: hidden;\n    clip: rect(0, 0, 0, 0);\n    white-space: nowrap;\n    border: 0;\n  }\n}\n\n/* CSS scope for component isolation */\n@scope (.card) {\n  h2 {\n    color: var(--card-heading-color);\n  }\n  \n  p {\n    margin-bottom: 1rem;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "performance-optimization",
+      "title": "CSS Performance & Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "CSS Loading Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Optimize CSS delivery to improve page load performance and user experience."
+        },
+        {
+          "type": "code",
+          "language": "html",
+          "text": "<!-- Critical CSS inline -->\n<style>\n  /* Critical above-the-fold styles */\n  body { font-family: system-ui, sans-serif; }\n  .header { background: #fff; padding: 1rem; }\n</style>\n\n<!-- Non-critical CSS with preload -->\n<link rel=\"preload\" href=\"styles.css\" as=\"style\" onload=\"this.onload=null;this.rel='stylesheet'\">\n<noscript><link rel=\"stylesheet\" href=\"styles.css\"></noscript>\n\n<!-- Font loading optimization -->\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap\" rel=\"stylesheet\">\n\n<!-- Resource hints -->\n<link rel=\"dns-prefetch\" href=\"//example.com\">\n<link rel=\"preconnect\" href=\"https://api.example.com\">"
+        },
+        {
+          "type": "heading",
+          "text": "CSS Performance Best Practices"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use efficient selectors: avoid universal (*) and complex descendant selectors",
+            "Minimize reflows and repaints: use transform and opacity for animations",
+            "Optimize font loading: use font-display: swap for web fonts",
+            "Use CSS containment: contain: layout style paint for isolated components",
+            "Minimize CSS bundle size: remove unused CSS, use CSS purging tools",
+            "Use CSS custom properties for dynamic styling instead of JavaScript",
+            "Optimize images: use modern formats (WebP, AVIF), responsive images",
+            "Use CSS Grid and Flexbox instead of floats and positioning"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Performance-optimized CSS */\n\n/* Use transform for animations (GPU accelerated) */\n.smooth-animation {\n  transform: translateZ(0); /* Force GPU layer */\n  transition: transform 0.3s ease;\n}\n\n.smooth-animation:hover {\n  transform: translateY(-5px);\n}\n\n/* CSS containment for performance */\n.isolated-component {\n  contain: layout style paint;\n}\n\n/* Efficient font loading */\n@font-face {\n  font-family: 'CustomFont';\n  src: url('font.woff2') format('woff2');\n  font-display: swap; /* Show fallback font immediately */\n}\n\n/* Use will-change sparingly */\n.will-animate {\n  will-change: transform;\n}\n\n.will-animate.animation-done {\n  will-change: auto; /* Reset after animation */\n}\n\n/* Optimize repaints */\n.optimized-hover {\n  backface-visibility: hidden;\n  transform: translateZ(0);\n}\n\n/* Use content-visibility for performance */\n.long-content {\n  content-visibility: auto;\n  contain-intrinsic-size: 1000px; /* Estimated height */\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the purpose of the <!DOCTYPE html> declaration?",
+      "options": [
+        "It defines the HTML version and tells the browser to use HTML5 parsing rules",
+        "It's optional and doesn't affect how the page renders",
+        "It only affects SEO rankings",
+        "It defines the character encoding"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The DOCTYPE declaration is an instruction to the browser about which version of HTML the page is written in. <!DOCTYPE html> tells the browser to use HTML5 parsing rules and prevents quirks mode."
+    },
+    {
+      "id": 2,
+      "question": "Which HTML5 semantic element should contain the main content of a page?",
+      "options": ["<section>", "<article>", "<main>", "<div>"],
+      "correctAnswer": 2,
+      "explanation": "The <main> element represents the main content of the page. There should only be one <main> element per page, and it helps screen readers and other assistive technologies navigate directly to the primary content."
+    },
+    {
+      "id": 3,
+      "question": "What is the difference between <section> and <article> elements?",
+      "options": [
+        "They are exactly the same",
+        "<section> groups thematic content, <article> represents standalone content",
+        "<article> is for news only, <section> is for everything else",
+        "<section> is deprecated in HTML5"
+      ],
+      "correctAnswer": 1,
+      "explanation": "<section> represents a thematic grouping of content with a heading, while <article> represents standalone, self-contained content that could be distributed independently (like blog posts, news articles)."
+    },
+    {
+      "id": 4,
+      "question": "What does the 'aria-live' attribute do?",
+      "options": [
+        "Makes elements animate",
+        "Announces dynamic content changes to screen readers",
+        "Enables real-time data binding",
+        "Controls video playback"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The aria-live attribute creates a 'live region' that announces dynamic content changes to screen readers. 'polite' waits for the user to finish, while 'assertive' interrupts immediately."
+    },
+    {
+      "id": 5,
+      "question": "What is the advantage of using CSS custom properties (variables)?",
+      "options": [
+        "They make CSS load faster",
+        "They enable dynamic styling, better maintainability, and cascade",
+        "They are required for modern browsers",
+        "They replace all other CSS features"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSS custom properties cascade like regular CSS properties, can be manipulated with JavaScript, enable theme switching, and make CSS more maintainable by centralizing values."
+    },
+    {
+      "id": 6,
+      "question": "What does the CSS :has() pseudo-class do?",
+      "options": [
+        "Selects elements that have a specific class",
+        "Selects parent elements based on their children",
+        "Checks if an element has content",
+        "Selects elements with specific attributes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The :has() pseudo-class is a 'parent selector' that selects elements based on what they contain. For example, .form-field:has(:invalid) selects form fields that contain invalid inputs."
+    },
+    {
+      "id": 7,
+      "question": "What are CSS logical properties?",
+      "options": [
+        "Properties that use boolean logic",
+        "Properties that adapt to writing modes and text direction",
+        "Properties for mathematical calculations",
+        "Properties that validate CSS syntax"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSS logical properties like padding-inline and margin-block adapt to different writing modes and text directions, making CSS more internationalization-friendly than physical properties like left/right."
+    },
+    {
+      "id": 8,
+      "question": "When should you use Flexbox vs CSS Grid?",
+      "options": [
+        "Always use Grid, Flexbox is outdated",
+        "Flexbox for one-dimensional layouts, Grid for two-dimensional layouts",
+        "Grid for mobile, Flexbox for desktop",
+        "They are interchangeable"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Use Flexbox for one-dimensional layouts (distributing items in a row or column) and CSS Grid for two-dimensional layouts (controlling both rows and columns simultaneously)."
+    },
+    {
+      "id": 9,
+      "question": "What is the 'gap' property used for?",
+      "options": [
+        "Creating gaps in text",
+        "Adding space between flex or grid items",
+        "Controlling line height",
+        "Setting element opacity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The gap property adds space between items in flexbox and grid containers. It's the modern way to add spacing without using margins that can cause layout issues."
+    },
+    {
+      "id": 10,
+      "question": "What does 'aspect-ratio: 16 / 9' do?",
+      "options": [
+        "Sets the element to 16px by 9px",
+        "Maintains a 16:9 width-to-height ratio regardless of content",
+        "Divides the element into 16 columns and 9 rows",
+        "Sets the font size ratio"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The aspect-ratio property maintains a specific width-to-height ratio. aspect-ratio: 16 / 9 ensures the element maintains a 16:9 ratio, useful for responsive videos and images."
+    },
+    {
+      "id": 11,
+      "question": "What is mobile-first responsive design?",
+      "options": [
+        "Designing only for mobile devices",
+        "Starting with mobile styles and progressively enhancing for larger screens",
+        "Making mobile versions after desktop",
+        "Using only mobile-specific CSS properties"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Mobile-first design starts with mobile styles as the base and uses min-width media queries to progressively enhance for larger screens, resulting in better performance and user experience."
+    },
+    {
+      "id": 12,
+      "question": "What does 'clamp(1rem, 4vw, 3rem)' do?",
+      "options": [
+        "Sets a fixed font size of 1rem",
+        "Creates a responsive font size between 1rem and 3rem based on viewport width",
+        "Adds animation to font size changes",
+        "Sets different font sizes for different devices"
+      ],
+      "correctAnswer": 1,
+      "explanation": "clamp() sets a responsive value with a minimum (1rem), preferred (4vw), and maximum (3rem). The font size scales with the viewport but never goes below 1rem or above 3rem."
+    },
+    {
+      "id": 13,
+      "question": "What does '@media (prefers-reduced-motion: reduce)' detect?",
+      "options": [
+        "Slow internet connections",
+        "User preference to minimize animations for accessibility",
+        "Mobile devices only",
+        "Battery saving mode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "This media query detects when users have enabled 'reduce motion' in their system settings, often for vestibular disorders or motion sensitivity. It's important for accessibility."
+    },
+    {
+      "id": 14,
+      "question": "What is CSS nesting?",
+      "options": [
+        "Putting CSS files inside other files",
+        "Writing CSS selectors inside other selectors, like in Sass",
+        "Creating nested HTML elements",
+        "Organizing CSS into folders"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSS nesting allows you to write CSS selectors inside other selectors, similar to Sass/SCSS. This is now natively supported in modern browsers without preprocessing."
+    },
+    {
+      "id": 15,
+      "question": "What does 'color-mix(in srgb, blue 70%, white)' do?",
+      "options": [
+        "Creates a gradient from blue to white",
+        "Mixes 70% blue with 30% white to create a new color",
+        "Animates between blue and white",
+        "Sets blue as primary and white as secondary color"
+      ],
+      "correctAnswer": 1,
+      "explanation": "color-mix() is a modern CSS function that blends two colors. This example mixes 70% blue with 30% white in the sRGB color space to create a light blue color."
+    },
+    {
+      "id": 16,
+      "question": "What are CSS layers (@layer) used for?",
+      "options": [
+        "Creating 3D effects",
+        "Controlling the cascade and specificity order",
+        "Layering background images",
+        "Creating animation layers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSS layers provide explicit control over the cascade. Styles in later layers override earlier layers regardless of specificity, making CSS architecture more predictable."
+    },
+    {
+      "id": 17,
+      "question": "What does 'container-type: inline-size' enable?",
+      "options": [
+        "Responsive typography",
+        "Container queries based on the container's width",
+        "Inline element styling",
+        "Size-based animations"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Container queries allow styling based on a container's size rather than the viewport. 'inline-size' enables queries based on the container's width (inline dimension)."
+    },
+    {
+      "id": 18,
+      "question": "Why should you use 'transform' instead of changing 'left/top' for animations?",
+      "options": [
+        "Transform is newer",
+        "Transform is GPU-accelerated and doesn't trigger layout recalculation",
+        "Transform works on more browsers",
+        "Transform uses less CSS code"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Transform operations are GPU-accelerated and don't trigger layout recalculation (reflow), making animations much smoother and more performant than changing layout properties like left/top."
+    },
+    {
+      "id": 19,
+      "question": "What does 'font-display: swap' do?",
+      "options": [
+        "Swaps between different fonts randomly",
+        "Shows fallback font immediately while web font loads",
+        "Enables font animations",
+        "Switches fonts based on screen size"
+      ],
+      "correctAnswer": 1,
+      "explanation": "font-display: swap shows the fallback font immediately and swaps to the web font when it loads, preventing invisible text during font load (FOIT - Flash of Invisible Text)."
+    },
+    {
+      "id": 20,
+      "question": "What is the purpose of 'content-visibility: auto'?",
+      "options": [
+        "Automatically generates content",
+        "Optimizes rendering by skipping off-screen content",
+        "Makes content visible to screen readers",
+        "Enables automatic content updates"
+      ],
+      "correctAnswer": 1,
+      "explanation": "content-visibility: auto is a performance optimization that allows the browser to skip rendering work for off-screen content, improving page load and scroll performance."
+    },
+    {
+      "id": 21,
+      "question": "What does the 'inert' attribute do in HTML?",
+      "options": [
+        "Makes elements non-interactive and hidden from assistive technology",
+        "Adds animation effects",
+        "Makes elements load lazily",
+        "Enables drag and drop"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The inert attribute makes an element and its descendants non-interactive (can't be focused, clicked) and hidden from assistive technology, useful for modal overlays."
+    },
+    {
+      "id": 22,
+      "question": "What is the difference between 'grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))' and 'repeat(auto-fill, minmax(300px, 1fr))'?",
+      "options": [
+        "They are exactly the same",
+        "auto-fit collapses empty columns, auto-fill maintains them",
+        "auto-fill is faster than auto-fit",
+        "auto-fit only works on mobile"
+      ],
+      "correctAnswer": 1,
+      "explanation": "auto-fit collapses empty grid tracks and stretches remaining items to fill the container, while auto-fill maintains empty tracks, keeping items at their minimum size."
+    },
+    {
+      "id": 23,
+      "question": "What does 'scroll-behavior: smooth' do?",
+      "options": [
+        "Makes scrolling faster",
+        "Adds smooth scrolling animation when jumping to anchor links",
+        "Prevents scrolling entirely",
+        "Only works on mobile devices"
+      ],
+      "correctAnswer": 1,
+      "explanation": "scroll-behavior: smooth adds smooth scrolling animation when navigating to anchor links or using scrollIntoView(), improving user experience during page navigation."
+    },
+    {
+      "id": 24,
+      "question": "What is the purpose of the 'loading=\"lazy\"' attribute on images?",
+      "options": [
+        "Makes images load faster",
+        "Defers image loading until they're near the viewport",
+        "Compresses image file size",
+        "Enables image animations"
+      ],
+      "correctAnswer": 1,
+      "explanation": "loading=\"lazy\" implements native lazy loading, deferring image loading until they're about to enter the viewport, improving initial page load performance."
+    },
+    {
+      "id": 25,
+      "question": "What does ':focus-visible' target that ':focus' doesn't?",
+      "options": [
+        "All focused elements",
+        "Only elements focused via keyboard navigation",
+        "Only mouse-focused elements",
+        "Elements with visible text"
+      ],
+      "correctAnswer": 1,
+      "explanation": ":focus-visible only applies focus styles when the browser determines focus should be visible (typically keyboard navigation), avoiding unwanted focus rings on mouse clicks."
+    }
+  ]
+}
