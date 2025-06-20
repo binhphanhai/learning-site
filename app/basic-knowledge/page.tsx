@@ -9,16 +9,21 @@ import algorithmExercisesContent from "../../data/basic-knowledge/algorithm-exer
 import webBasicsContent from "../../data/basic-knowledge/web-basics.json";
 import nextjsContent from "../../data/basic-knowledge/nextjs.json";
 import htmlCssContent from "../../data/basic-knowledge/html-css.json";
-
+import nonTechnicalContent from "../../data/basic-knowledge/non-technical.json";
+import reactDeepDivingContent from "../../data/basic-knowledge/react-deep-diving.json";
+import reactContent from "../../data/basic-knowledge/react.json";
 // Define content for basic knowledge
 const contentMap = {
+  "web-basics": webBasicsContent,
+  "html-css": htmlCssContent,
   "advanced-javascript": advancedJavascriptContent,
+  nextjs: nextjsContent,
   typescript: typescriptContent,
   algorithms: algorithmsContent,
   "algorithm-exercises": algorithmExercisesContent,
-  "web-basics": webBasicsContent,
-  nextjs: nextjsContent,
-  "html-css": htmlCssContent,
+  "non-technical": nonTechnicalContent,
+  react: reactContent,
+  "react-deep-diving": reactDeepDivingContent,
 };
 
 export default function BasicKnowledgePage() {

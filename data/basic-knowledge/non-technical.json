@@ -1,0 +1,1117 @@
+{
+  "title": "Non-Technical Skills for Developers",
+  "description": "Master essential non-technical skills including resume writing, interview techniques, salary negotiation, career growth strategies, and professional communication for 2024 job market. This comprehensive guide provides step-by-step instructions and real-world examples to help you succeed.",
+  "sections": [
+    {
+      "id": "resume-optimization",
+      "title": "Resume Optimization & Job Applications",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Why Your Resume Matters More Than You Think"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine your resume as the trailer for a movie - it needs to be compelling enough to make people want to see the full film (interview you). In the tech industry, your resume is often the first and only chance to make an impression. Recruiters receive hundreds of resumes daily and spend just 6-10 seconds scanning each one. This means you have less time than it takes to read this paragraph to capture their attention."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of your resume as a marketing brochure for the most important product you'll ever sell - yourself. Every word, every bullet point, every formatting choice should be intentional and designed to showcase your value to potential employers."
+        },
+        {
+          "type": "heading",
+          "text": "The One-Page Rule: Why It Matters"
+        },
+        {
+          "type": "paragraph",
+          "text": "The one-page rule isn't arbitrary - it's based on human psychology and practical constraints. Recruiters and hiring managers are busy people who need to quickly assess whether you're worth their time. A concise, well-organized resume shows that you can communicate effectively and prioritize important information - both crucial skills for developers."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of it like writing clean, efficient code. Just as you wouldn't write unnecessarily verbose functions, your resume should be lean and purposeful. Every line should add value, just like every line of code should serve a purpose."
+        },
+        {
+          "type": "heading",
+          "text": "Essential Resume Rules (With Real-World Context)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "One page only - recruiters spend 6-10 seconds scanning resumes. Like a good API endpoint, it should be fast and return exactly what's needed.",
+            "Use ATS-friendly formatting - 90% of large companies use Applicant Tracking Systems that parse your resume before humans see it. Think of ATS as a compiler for resumes - if the syntax is wrong, it won't compile.",
+            "Include relevant keywords from job descriptions - ATS systems search for specific terms. It's like SEO for your career - the right keywords help you get discovered.",
+            "Quantify achievements with numbers and metrics - 'Improved performance by 40%' is much stronger than 'Improved performance.' Numbers provide concrete evidence of your impact.",
+            "Tailor each resume to the specific job - just like you wouldn't use the same solution for every coding problem, don't use the same resume for every job.",
+            "Include online portfolio links (GitHub, personal website, LinkedIn) - your code speaks louder than words. Make it easy for employers to see your work.",
+            "Use action verbs and focus on results - 'Implemented' and 'Optimized' are stronger than 'Responsible for' or 'Worked on.'",
+            "Remove personal pronouns ('I', 'me', 'my') - keep it concise and professional. Your resume is about facts, not personal narrative.",
+            "No buzzwords or generic phrases - 'team player' and 'hard worker' are meaningless. Show, don't tell, through specific examples."
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Understanding ATS: The Resume Robot You Must Please"
+        },
+        {
+          "type": "paragraph",
+          "text": "Applicant Tracking Systems (ATS) are like automated code review tools, but for resumes. They scan, parse, and rank resumes before any human sees them. Over 90% of large companies use ATS, so understanding how they work is crucial for getting your resume in front of actual people."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of ATS as a very literal computer program - it can't understand context or creativity the way humans can. It looks for exact keyword matches, standard formatting, and clear structure. Just like writing code for a strict compiler, you need to follow specific rules to get past the ATS filter."
+        },
+        {
+          "type": "heading",
+          "text": "ATS Optimization Strategy"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use standard section headings like 'Experience', 'Education', 'Skills' - ATS software is programmed to look for these specific terms.",
+            "Include exact keywords from job descriptions naturally in your content - if they want 'React.js', don't just put 'React'.",
+            "Use simple, clean formatting - avoid tables, graphics, or fancy designs that confuse parsing algorithms.",
+            "Save as both PDF and Word document formats - some ATS systems prefer one over the other.",
+            "Test your resume through free ATS scanners online - tools like Jobscan or Resume Worded can show you how ATS sees your resume.",
+            "Use common job titles that match industry standards - 'Software Engineer' is better than 'Code Ninja' for ATS purposes.",
+            "Include both acronyms and full terms (e.g., 'AI' and 'Artificial Intelligence') - you never know which version the ATS is searching for."
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Resume Structure: Building Your Professional Story"
+        },
+        {
+          "type": "paragraph",
+          "text": "Your resume should tell a cohesive story about your professional journey. Like a well-architected application, each section should have a clear purpose and flow logically to the next. Here's how to structure your resume for maximum impact:"
+        },
+        {
+          "type": "heading",
+          "text": "1. Header: Your Professional Identity"
+        },
+        {
+          "type": "paragraph",
+          "text": "Your header is like the main() function of your resume - it's the entry point that everything else builds from. Include your name (larger font), phone number, professional email, LinkedIn profile, GitHub profile, and portfolio website if you have one."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Header:\nJohn Smith\nSoftware Developer\n(555) 123-4567 | john.smith@email.com\nLinkedIn: linkedin.com/in/johnsmith\nGitHub: github.com/johnsmith\nPortfolio: johnsmith.dev"
+        },
+        {
+          "type": "heading",
+          "text": "2. Professional Summary: Your Value Proposition"
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of your professional summary as an elevator pitch in written form. In 2-3 lines, you need to communicate who you are, what you do, and what unique value you bring. This section should make the reader want to learn more about you."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Professional Summary:\n'Full-stack developer with 3+ years building scalable web applications using React and Node.js. Increased user engagement by 40% through performance optimizations and improved 5 legacy systems serving 10K+ daily users. Passionate about clean code, test-driven development, and mentoring junior developers.'"
+        },
+        {
+          "type": "heading",
+          "text": "3. Technical Skills: Your Developer Toolkit"
+        },
+        {
+          "type": "paragraph",
+          "text": "List your technical skills in order of relevance to the job you're applying for. Group them logically (Languages, Frameworks, Databases, Tools) and be honest about your proficiency levels. Don't list every technology you've ever touched - focus on what you can confidently discuss in an interview."
+        },
+        {
+          "type": "heading",
+          "text": "4. Experience: Your Professional Impact"
+        },
+        {
+          "type": "paragraph",
+          "text": "This is where you prove your value through concrete examples. For each role, focus on achievements and impact, not just responsibilities. Use the CAR method: Context (what was the situation), Action (what did you do), Result (what was the outcome)."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Experience Entry:\nSoftware Developer | TechCorp Inc. | Jan 2022 - Present\n• Developed and maintained 3 React applications serving 50K+ daily users, improving load times by 35%\n• Implemented automated testing suite using Jest and Cypress, reducing bug reports by 60%\n• Collaborated with design team to create responsive UI components, increasing mobile user engagement by 25%\n• Mentored 2 junior developers, leading to their promotion within 8 months"
+        },
+        {
+          "type": "heading",
+          "text": "When You're Starting Out: Building Credibility Without Experience"
+        },
+        {
+          "type": "paragraph",
+          "text": "If you're new to development or changing careers, you might feel like you don't have enough experience to fill a resume. This is a common concern, but remember that everyone starts somewhere. The key is to demonstrate your potential and passion through other means."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of yourself as a startup - you might not have the track record of an established company, but you have energy, fresh ideas, and the ability to grow quickly. Employers often prefer passionate beginners over experienced developers who've lost their enthusiasm."
+        },
+        {
+          "type": "heading",
+          "text": "Strategies for New Developers"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Apply to jobs where you meet 60-70% of requirements - job descriptions are wish lists, not strict requirements. Companies often hire based on potential and cultural fit.",
+            "Build impressive portfolio projects that solve real problems - create applications that demonstrate your skills and thinking process.",
+            "Contribute to open source projects - this shows you can work with existing codebases and collaborate with other developers.",
+            "Start a technical blog documenting your learning journey - this demonstrates communication skills and continuous learning.",
+            "Create a personal website showcasing your work and personality - this is your chance to stand out from other candidates.",
+            "Get involved in developer communities and attend tech meetups - networking often leads to opportunities.",
+            "Consider freelance projects or volunteer work - real-world experience, even unpaid, is valuable."
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Modern Job Search: It's Not Just About Job Boards"
+        },
+        {
+          "type": "paragraph",
+          "text": "The job search landscape has evolved dramatically. While job boards still exist, the most successful job searches happen through networking, referrals, and direct outreach. Think of job searching like marketing a product - you need to be where your customers (employers) are looking."
+        },
+        {
+          "type": "paragraph",
+          "text": "Studies show that 70% of jobs are never publicly posted. This 'hidden job market' is accessed through relationships, referrals, and proactive outreach. It's like having access to a private API that most people don't know exists."
+        },
+        {
+          "type": "heading",
+          "text": "Multi-Channel Job Search Strategy"
+        },
+        {
+          "type": "list",
+          "items": [
+            "LinkedIn optimization: Think of LinkedIn as your professional social media presence. Use a professional photo, write a compelling headline, and regularly share insights about your field.",
+            "GitHub profile optimization: Your GitHub is your portfolio. Pin your best repositories, write detailed README files, and contribute regularly to show consistent activity.",
+            "Networking events and meetups: These are like conferences for your career. Attend regularly, participate in discussions, and follow up with people you meet.",
+            "Employee referrals: Referrals have a 40% higher chance of getting interviews. Ask friends, former colleagues, and classmates if their companies are hiring.",
+            "Direct outreach: Email hiring managers or developers at companies you're interested in. Be genuine, specific, and offer value.",
+            "Remote job boards: We Work Remotely, Remote.co, AngelList for startups - these specialize in remote opportunities.",
+            "Company research: Follow companies on social media, read their engineering blogs, and understand their culture and challenges."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interview-preparation",
+      "title": "Interview Mastery & Preparation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What Non-Technical Interviews Really Test"
+        },
+        {
+          "type": "paragraph",
+          "text": "Non-technical interviews are like compatibility tests for teams. While technical interviews assess your coding skills, non-technical interviews determine if you're someone people want to work with every day. Think of it this way: technical skills get you in the door, but soft skills determine how far you'll go once you're inside."
+        },
+        {
+          "type": "paragraph",
+          "text": "These interviews answer three fundamental questions that every hiring manager has: 1) Can you do the job? (competence), 2) Will you do the job? (motivation), and 3) Can we work with you? (cultural fit). The third question is often the most important - teams would rather hire a decent developer who's great to work with than a brilliant developer who's difficult to collaborate with."
+        },
+        {
+          "type": "heading",
+          "text": "The Psychology of Interview Success"
+        },
+        {
+          "type": "paragraph",
+          "text": "Your mindset going into an interview is like the foundation of a building - everything else is built on top of it. Desperation and nervousness are like bugs in your code - they're obvious to experienced interviewers and can crash your entire performance."
+        },
+        {
+          "type": "paragraph",
+          "text": "Instead, approach interviews with what psychologists call 'confident curiosity.' You're not just trying to get any job - you're evaluating whether this company and role are right for you. This mindset shift changes everything about how you present yourself."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Never treat any interview as your 'only chance' - this creates desperation",
+            "Apply to multiple companies to maintain confidence and leverage",
+            "View interviews as mutual evaluation - you're interviewing them too",
+            "Enter with high energy and genuine excitement about the opportunity",
+            "Think of it as meeting potential future colleagues, not an interrogation",
+            "Prepare multiple offers to negotiate from a position of strength",
+            "Remember: if they're interviewing you, they already see potential"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The STAR Method for Behavioral Questions"
+        },
+        {
+          "type": "paragraph",
+          "text": "Prepare 4-6 compelling stories that demonstrate your skills using the STAR method. These stories should showcase problem-solving, leadership, teamwork, and growth mindset."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Situation: Set the context and background of your story",
+            "Task: Describe the challenge or responsibility you faced",
+            "Action: Explain the specific steps you took to address the situation",
+            "Result: Share the outcomes and what you learned from the experience"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example STAR Story Structure:\nSituation: 'While working on a team project, our main developer left unexpectedly'\nTask: 'I needed to take over their complex authentication system with a tight deadline'\nAction: 'I spent weekend studying the codebase, reached out to former developer for clarification, and broke down the work into manageable pieces'\nResult: 'Delivered the feature on time, learned advanced authentication patterns, and became the team's go-to person for security implementations'"
+        },
+        {
+          "type": "heading",
+          "text": "Mastering Common Interview Questions"
+        },
+        {
+          "type": "heading",
+          "text": "1. 'Tell Me About Yourself'"
+        },
+        {
+          "type": "paragraph",
+          "text": "This is your chance to control the conversation's direction. Your answer should be exactly 60-90 seconds - long enough to be informative, short enough to maintain interest. Focus on your professional journey, key achievements, and what makes you unique."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Start with your current situation or recent transition into tech",
+            "Highlight 2-3 key achievements or projects that demonstrate your skills",
+            "Mention technologies or methodologies relevant to the role",
+            "End with why you're excited about this specific opportunity",
+            "Practice until it sounds natural, not rehearsed"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Answer:\n'I'm a full-stack developer with a unique background in business operations, which gives me a strong understanding of how technology solves real business problems. Over the past two years, I've built several web applications using React and Node.js, including a project management tool that reduced my previous team's workflow time by 30%. I'm particularly passionate about writing clean, maintainable code and have contributed to three open-source projects. I'm excited about this role because it combines my technical skills with my business acumen, and I'd love to help [Company] build solutions that truly impact users.'"
+        },
+        {
+          "type": "heading",
+          "text": "2. 'Why Do You Want to Work Here?'"
+        },
+        {
+          "type": "paragraph",
+          "text": "This question tests whether you've done your homework and are genuinely interested in the company. Generic answers like 'I need a job' or 'you have good benefits' will hurt your chances."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Research the company's recent news, blog posts, and product updates",
+            "Understand their technical challenges and how you can contribute",
+            "Mention specific projects, technologies, or company values that excite you",
+            "Show how the role aligns with your career goals and growth",
+            "Demonstrate that you see this as a long-term opportunity, not just any job"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "3. 'What's Your Biggest Weakness?'"
+        },
+        {
+          "type": "paragraph",
+          "text": "Avoid cliché answers like 'I work too hard' or 'I'm a perfectionist.' Choose a real weakness that won't disqualify you for the role, and focus on how you're actively improving it."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Choose a genuine weakness that's not critical for the role",
+            "Explain specific steps you're taking to improve",
+            "Show self-awareness and commitment to growth",
+            "Provide examples of progress you've already made"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Answer:\n'I sometimes jump into coding solutions too quickly without fully planning the architecture. I realized this was causing me to refactor more than necessary. Now I spend the first 15-20 minutes of any coding session writing pseudocode and sketching out the component structure. This approach has reduced my debugging time by about 40% and makes my code more maintainable.'"
+        },
+        {
+          "type": "heading",
+          "text": "4. 'Tell Me About a Challenging Project'"
+        },
+        {
+          "type": "paragraph",
+          "text": "Use this opportunity to showcase your problem-solving skills, technical abilities, and resilience. Choose a project that demonstrates growth and learning."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Select a project relevant to the role you're applying for",
+            "Focus on the technical and interpersonal challenges you overcame",
+            "Quantify the impact and results of your work",
+            "Highlight what you learned and how it made you a better developer",
+            "Show collaboration and communication skills if it was a team project"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "salary-negotiation",
+      "title": "Salary Negotiation & Offer Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Understanding Your Market Value (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Knowing your worth is the foundation of successful negotiation. The tech job market in 2024 remains competitive, with remote work expanding opportunities globally while also increasing competition."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Research salary ranges on Glassdoor, levels.fyi, and PayScale",
+            "Consider total compensation: base salary, bonuses, equity, benefits",
+            "Factor in location - remote roles often pay based on company location",
+            "Account for your experience level, skills, and unique value proposition",
+            "Network with other developers to understand current market rates",
+            "Consider the company size and stage (startup vs. enterprise)",
+            "Research the specific role's responsibilities and scope"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Negotiation Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Negotiation is a collaborative process to find a win-win solution. The key is having leverage - other options that give you the confidence to walk away if necessary."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Always negotiate - companies expect it and budget for it",
+            "Never accept the first offer immediately - it signals desperation",
+            "Have multiple offers to create leverage and competition",
+            "Focus on value you bring, not your personal financial needs",
+            "Be positive and collaborative, never confrontational",
+            "Negotiate total package, not just base salary",
+            "Get everything in writing before accepting"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "The Negotiation Process"
+        },
+        {
+          "type": "paragraph",
+          "text": "Effective negotiation requires preparation, timing, and strategic communication. Here's how to handle the process professionally:"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Step 1 - Receiving an Offer:\n'Thank you so much for this offer. I'm very excited about potentially joining your team and contributing to [specific project/goal]. This is a significant decision for me and my family, and I'd like to take some time to review all the details carefully. Could we schedule a call in a couple of days to discuss this further?'"
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Step 2 - Counter Offer:\n'I've had a chance to review the offer, and I'm genuinely excited about the role and the team. Based on my research of market rates for similar positions and the unique value I bring through [specific skills/experience], I was hoping we could discuss adjusting the base salary to $X. I'm also interested in discussing [equity/benefits/professional development budget].'"
+        },
+        {
+          "type": "heading",
+          "text": "Leveraging Multiple Offers"
+        },
+        {
+          "type": "paragraph",
+          "text": "Having multiple offers dramatically increases your negotiating power. Here's how to manage the process ethically and effectively:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Be transparent about your timeline with all companies",
+            "Don't lie about having offers you don't have",
+            "Use competing offers to accelerate slow-moving processes",
+            "Focus on fit and growth potential, not just highest salary",
+            "Maintain professionalism with all parties throughout the process"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Accelerating Other Companies:\n'Hi [Name], I wanted to give you an update on my interview process. I've received an offer from another company with a decision deadline of [date]. I'm very interested in your company and would love to see if we can move forward with the next steps. Is there any way to expedite the process so I can make a fully informed decision?'"
+        },
+        {
+          "type": "heading",
+          "text": "Beyond Base Salary: Total Compensation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern compensation packages include many components beyond base salary. Understanding and negotiating these can significantly increase your total compensation."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Equity/Stock Options: Especially valuable in growing companies",
+            "Signing Bonus: One-time payment to offset lost bonuses from previous job",
+            "Annual Bonus: Performance-based additional compensation",
+            "Professional Development: Conference attendance, course budgets, certifications",
+            "Flexible Work Arrangements: Remote work, flexible hours, sabbaticals",
+            "Health Benefits: Premium health, dental, vision insurance",
+            "Retirement Benefits: 401k matching, pension contributions",
+            "Vacation Time: Additional PTO days, especially for senior roles"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Handling Rejection and Counter-Offers"
+        },
+        {
+          "type": "paragraph",
+          "text": "Not every negotiation will go your way. How you handle rejection shows professionalism and can lead to future opportunities."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Professional Rejection Response:\n'I understand the constraints you're working within, and I appreciate you taking the time to consider my request. While the compensation isn't quite what I was hoping for, I'm still very interested in the role and the team. Could we revisit this conversation in 6 months based on my performance and contributions?'"
+        }
+      ]
+    },
+    {
+      "id": "career-growth-strategies",
+      "title": "Career Growth & Professional Development",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Building Your Professional Brand (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "In today's digital-first world, your online presence is often the first impression potential employers have of you. Building a strong professional brand helps you stand out and attract opportunities."
+        },
+        {
+          "type": "list",
+          "items": [
+            "LinkedIn Optimization: Professional headshot, compelling summary, regular posts",
+            "GitHub Profile: Clean, well-documented repositories with good README files",
+            "Personal Website: Portfolio showcasing your best work and personality",
+            "Technical Blog: Share your learning journey and insights",
+            "Speaking Engagements: Present at meetups, conferences, or podcasts",
+            "Open Source Contributions: Demonstrate collaboration and code quality",
+            "Social Media Presence: Professional Twitter/X account sharing tech insights"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Continuous Learning Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "The tech industry evolves rapidly. Successful developers are lifelong learners who stay current with new technologies and best practices."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Follow industry leaders and companies on social media",
+            "Subscribe to tech newsletters and podcasts",
+            "Attend virtual and in-person conferences and meetups",
+            "Take online courses on platforms like Pluralsight, Udemy, or Coursera",
+            "Read technical books and documentation",
+            "Experiment with new technologies in side projects",
+            "Join developer communities and forums",
+            "Find mentors and also mentor others"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Getting Promotions and Raises"
+        },
+        {
+          "type": "paragraph",
+          "text": "Career advancement requires intentional effort and strategic thinking. It's not enough to just do good work - you need to make your contributions visible and align with company goals."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Document your achievements and impact regularly",
+            "Seek feedback proactively and act on it",
+            "Take on high-visibility projects that align with business goals",
+            "Develop leadership skills by mentoring junior developers",
+            "Build relationships across different teams and departments",
+            "Communicate your career goals with your manager",
+            "Ask for specific feedback on what's needed for advancement"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Building a Promotion Case"
+        },
+        {
+          "type": "paragraph",
+          "text": "When asking for a promotion or raise, you need to present a compelling business case based on your value and contributions."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Keep a 'brag document' of all your accomplishments",
+            "Quantify your impact with metrics and numbers",
+            "Show how you've grown since your last promotion/hire",
+            "Demonstrate leadership and initiative beyond your job description",
+            "Present a clear plan for your continued growth",
+            "Research market rates for your desired role",
+            "Time your request strategically (after successful projects, during review cycles)"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Promotion Document Structure:\n\n1. Current Role Summary\n   - Key responsibilities and achievements\n   - Metrics showing your impact\n\n2. Growth and Development\n   - New skills acquired\n   - Additional responsibilities taken on\n   - Leadership examples\n\n3. Business Impact\n   - Cost savings or revenue generated\n   - Process improvements implemented\n   - Team productivity enhancements\n\n4. Future Contributions\n   - Goals for next 6-12 months\n   - How promotion aligns with company objectives\n   - Additional value you'll provide in new role"
+        },
+        {
+          "type": "heading",
+          "text": "Networking and Relationship Building"
+        },
+        {
+          "type": "paragraph",
+          "text": "Professional relationships are crucial for career advancement. Most opportunities come through networks, not job boards."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Attend local tech meetups and conferences",
+            "Join professional organizations and online communities",
+            "Connect with colleagues on LinkedIn and maintain relationships",
+            "Offer help and value to others before asking for favors",
+            "Follow up with new connections within 48 hours",
+            "Participate in hackathons and coding competitions",
+            "Volunteer for tech-related causes or events"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "communication-skills",
+      "title": "Professional Communication & Soft Skills",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Effective Technical Communication"
+        },
+        {
+          "type": "paragraph",
+          "text": "As a developer, you'll need to explain complex technical concepts to both technical and non-technical audiences. Clear communication is often what separates senior developers from junior ones."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Learn to explain technical concepts in simple terms",
+            "Use analogies and visual aids when appropriate",
+            "Structure your communication with clear beginning, middle, and end",
+            "Ask clarifying questions to ensure understanding",
+            "Write clear, concise emails and documentation",
+            "Practice active listening in meetings and discussions",
+            "Give and receive feedback constructively"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Code Reviews and Collaboration"
+        },
+        {
+          "type": "paragraph",
+          "text": "Code reviews are opportunities to learn, teach, and maintain code quality. How you handle these interactions affects team dynamics and your professional reputation."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Focus on the code, not the person ('This function could...' vs 'You should...')",
+            "Provide specific, actionable feedback with examples",
+            "Acknowledge good practices and clever solutions",
+            "Ask questions to understand the reasoning behind decisions",
+            "Be open to feedback on your own code",
+            "Suggest improvements rather than just pointing out problems",
+            "Consider the bigger picture: maintainability, performance, readability"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Meeting Participation and Leadership"
+        },
+        {
+          "type": "paragraph",
+          "text": "Effective meeting participation shows leadership potential and helps you build influence within your organization."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Come prepared with relevant information and questions",
+            "Speak up with ideas and solutions, not just problems",
+            "Listen actively and build on others' ideas",
+            "Keep discussions focused and on-topic",
+            "Follow up on action items and commitments",
+            "Take initiative to schedule follow-up meetings when needed",
+            "Help facilitate discussions when appropriate"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Conflict Resolution and Difficult Conversations"
+        },
+        {
+          "type": "paragraph",
+          "text": "Workplace conflicts are inevitable. How you handle them determines whether they become growth opportunities or career obstacles."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Address issues early before they escalate",
+            "Focus on finding solutions, not assigning blame",
+            "Use 'I' statements to express your perspective",
+            "Listen to understand, not just to respond",
+            "Find common ground and shared goals",
+            "Know when to involve a manager or HR",
+            "Follow up to ensure issues are truly resolved"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Remote Work Communication (2024 Essential)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Remote and hybrid work models are now standard in tech. Mastering remote communication is essential for career success."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Over-communicate important information - what seems obvious to you may not be to others",
+            "Use video calls for complex discussions, chat for quick updates",
+            "Be mindful of time zones when scheduling meetings",
+            "Document decisions and important discussions",
+            "Create clear agendas for meetings and stick to them",
+            "Use collaborative tools effectively (Slack, Notion, Figma, etc.)",
+            "Maintain regular check-ins with team members and managers"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Emotional Intelligence in Tech"
+        },
+        {
+          "type": "paragraph",
+          "text": "Technical skills get you hired, but emotional intelligence gets you promoted. Understanding and managing emotions - yours and others' - is crucial for leadership roles."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Self-awareness: Recognize your emotional triggers and responses",
+            "Self-regulation: Manage your reactions, especially under stress",
+            "Empathy: Understand others' perspectives and motivations",
+            "Social skills: Build rapport and influence others positively",
+            "Motivation: Stay driven and help motivate team members",
+            "Stress management: Maintain performance under pressure",
+            "Adaptability: Embrace change and help others through transitions"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interview-follow-up",
+      "title": "Interview Follow-up & Professional Etiquette",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Post-Interview Best Practices"
+        },
+        {
+          "type": "paragraph",
+          "text": "What you do after an interview can be just as important as the interview itself. Proper follow-up shows professionalism and can differentiate you from other candidates."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Send thank-you emails within 24 hours to all interviewers",
+            "Reference specific topics discussed during the interview",
+            "Reiterate your interest and enthusiasm for the role",
+            "Address any concerns or questions that came up",
+            "Provide additional information if you forgot to mention something important",
+            "Ask about next steps and timeline for decisions",
+            "Connect with interviewers on LinkedIn with personalized messages"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Thank-You Email:\n\nSubject: Thank you for the Senior Developer interview\n\nHi [Name],\n\nThank you for taking the time to speak with me today about the Senior Developer position. I really enjoyed our conversation about [specific topic discussed], and it reinforced my excitement about the opportunity to contribute to [specific project or goal].\n\nOur discussion about [technical challenge] got me thinking, and I wanted to share an additional approach I've used successfully in the past: [brief technical insight or solution].\n\nI'm very interested in joining the team and contributing to [company's specific goals]. Please let me know if you need any additional information from me.\n\nI look forward to hearing about the next steps.\n\nBest regards,\n[Your name]"
+        },
+        {
+          "type": "heading",
+          "text": "Handling Different Interview Outcomes"
+        },
+        {
+          "type": "paragraph",
+          "text": "Not every interview will result in an offer, but how you handle different outcomes can impact your professional reputation and future opportunities."
+        },
+        {
+          "type": "heading",
+          "text": "When You Get the Job"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Express genuine enthusiasm and gratitude",
+            "Ask about start date, onboarding process, and first-day logistics",
+            "Clarify any remaining questions about the role or compensation",
+            "Maintain professionalism during salary negotiations",
+            "Give appropriate notice to your current employer",
+            "Stay connected with other companies you interviewed with"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "When You Don't Get the Job"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Thank them for the opportunity and feedback",
+            "Ask for specific areas where you can improve",
+            "Express interest in future opportunities",
+            "Ask when it would be appropriate to reapply",
+            "Maintain connections with people you met during the process",
+            "Use the feedback to improve for future interviews"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "Example Rejection Response:\n\nHi [Name],\n\nThank you for letting me know about your decision and for the feedback. While I'm disappointed, I really appreciate the time you and the team invested in getting to know me.\n\nI'm committed to improving in the areas you mentioned, particularly [specific feedback]. I'd love to stay in touch and would be interested in future opportunities that might be a better fit.\n\nThank you again for the positive interview experience.\n\nBest regards,\n[Your name]"
+        },
+        {
+          "type": "heading",
+          "text": "Professional Networking During Job Search"
+        },
+        {
+          "type": "paragraph",
+          "text": "The interview process is also a networking opportunity. The relationships you build can lead to future opportunities even if the current role doesn't work out."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Connect with interviewers on LinkedIn with personalized messages",
+            "Follow the company's engineering blog and social media",
+            "Engage thoughtfully with their technical content",
+            "Attend company-sponsored events or meetups",
+            "Refer qualified candidates when appropriate",
+            "Share relevant opportunities with your network",
+            "Maintain relationships even after accepting other offers"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Building Long-term Professional Relationships"
+        },
+        {
+          "type": "paragraph",
+          "text": "The tech industry is smaller than it appears. People move between companies, and today's interviewer might be tomorrow's colleague or hiring manager at your dream company."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Keep track of people you meet using a CRM or spreadsheet",
+            "Set reminders to check in with connections periodically",
+            "Share interesting articles or opportunities with your network",
+            "Congratulate connections on promotions and achievements",
+            "Offer help and expertise when others need it",
+            "Attend industry events and conferences regularly",
+            "Be generous with introductions and referrals"
+          ]
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the most important rule for modern resume writing?",
+      "options": [
+        "Include as much detail as possible",
+        "Keep it to one page with relevant, quantified achievements",
+        "Use creative fonts and colors to stand out",
+        "List every technology you've ever used"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Modern resumes should be one page, focused on relevant achievements with quantified results. Recruiters spend only 6-10 seconds scanning resumes, so conciseness and relevance are crucial."
+    },
+    {
+      "id": 2,
+      "question": "What should you do immediately after receiving a job offer?",
+      "options": [
+        "Accept it immediately to show enthusiasm",
+        "Reject it and ask for more money",
+        "Thank them and ask for time to review the details",
+        "Ignore it until you have other offers"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Always thank them for the offer and ask for time to review. This shows professionalism and gives you time to evaluate and potentially negotiate without appearing desperate."
+    },
+    {
+      "id": 3,
+      "question": "What percentage of job requirements should you typically meet before applying?",
+      "options": [
+        "100% - only apply if you meet every requirement",
+        "90% - you need to be almost perfect",
+        "60-70% - job descriptions are often wish lists",
+        "30% - apply to everything and hope for the best"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Job descriptions are often wish lists. Meeting 60-70% of requirements is typically sufficient to apply, as companies are often willing to train the right candidate."
+    },
+    {
+      "id": 4,
+      "question": "How long should your 'Tell me about yourself' answer be?",
+      "options": [
+        "30 seconds - keep it very brief",
+        "60-90 seconds - informative but engaging",
+        "3-5 minutes - give them lots of detail",
+        "As long as needed to cover everything"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The ideal length is 60-90 seconds - long enough to be informative and highlight key points, but short enough to maintain the interviewer's attention and leave room for follow-up questions."
+    },
+    {
+      "id": 5,
+      "question": "What is the STAR method used for in interviews?",
+      "options": [
+        "Rating your technical skills",
+        "Structuring behavioral question answers",
+        "Negotiating salary offers",
+        "Following up after interviews"
+      ],
+      "correctAnswer": 1,
+      "explanation": "STAR (Situation, Task, Action, Result) is a method for structuring answers to behavioral interview questions, helping you tell compelling stories that demonstrate your skills and experience."
+    },
+    {
+      "id": 6,
+      "question": "What's the best approach when asked about your biggest weakness?",
+      "options": [
+        "Say you don't have any weaknesses",
+        "Give a fake weakness like 'I work too hard'",
+        "Share a real weakness and how you're improving it",
+        "Deflect and talk about your strengths instead"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Choose a genuine weakness that won't disqualify you for the role, and focus on the specific steps you're taking to improve. This shows self-awareness and commitment to growth."
+    },
+    {
+      "id": 7,
+      "question": "What gives you the most leverage in salary negotiations?",
+      "options": [
+        "Threatening to quit",
+        "Having multiple job offers",
+        "Working overtime to prove your value",
+        "Comparing salaries with coworkers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Having multiple offers gives you the most leverage because it demonstrates your market value and gives you the confidence to negotiate or walk away if necessary."
+    },
+    {
+      "id": 8,
+      "question": "What should you focus on when asking for a promotion or raise?",
+      "options": [
+        "Your personal financial needs",
+        "How long you've been in the role",
+        "The value and impact you've provided",
+        "What other companies are paying"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Focus on the measurable value and impact you've provided to the company. Document your achievements, cost savings, and contributions that justify the increased compensation."
+    },
+    {
+      "id": 9,
+      "question": "How should you handle a job rejection?",
+      "options": [
+        "Don't respond - move on to the next opportunity",
+        "Ask why you were rejected and argue their decision",
+        "Thank them, ask for feedback, and express interest in future opportunities",
+        "Leave negative reviews about the company online"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Professional handling of rejection includes thanking them, asking for constructive feedback, and expressing interest in future opportunities. This maintains relationships and shows maturity."
+    },
+    {
+      "id": 10,
+      "question": "What is the primary purpose of ATS (Applicant Tracking Systems)?",
+      "options": [
+        "To automatically hire the best candidates",
+        "To filter and rank resumes before human review",
+        "To schedule interviews automatically",
+        "To conduct background checks"
+      ],
+      "correctAnswer": 1,
+      "explanation": "ATS systems are used by over 90% of large companies to filter and rank resumes before human recruiters review them. Understanding how to optimize for ATS is crucial for getting past initial screening."
+    },
+    {
+      "id": 11,
+      "question": "What's the best strategy for building your professional brand online?",
+      "options": [
+        "Post frequently about your personal life",
+        "Only update your profiles when job searching",
+        "Consistently share valuable content and insights in your field",
+        "Copy content from other successful developers"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Building a professional brand requires consistently sharing valuable, original content that demonstrates your expertise and thought leadership in your field."
+    },
+    {
+      "id": 12,
+      "question": "When should you send a thank-you email after an interview?",
+      "options": [
+        "Within 24 hours",
+        "Within a week",
+        "Only if you get the job",
+        "Never - it seems desperate"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Send thank-you emails within 24 hours to all interviewers. This shows professionalism, reinforces your interest, and keeps you top-of-mind during the decision process."
+    },
+    {
+      "id": 13,
+      "question": "What's the most important factor in effective remote communication?",
+      "options": [
+        "Using the most advanced communication tools",
+        "Having perfect video quality",
+        "Over-communicating important information",
+        "Scheduling frequent meetings"
+      ],
+      "correctAnswer": 2,
+      "explanation": "In remote work, over-communication is key. What seems obvious to you may not be clear to others, so it's better to provide too much context than too little."
+    },
+    {
+      "id": 14,
+      "question": "What should you include in your 'brag document' for promotion discussions?",
+      "options": [
+        "Only your biggest achievements",
+        "Quantified impact, growth, and future goals",
+        "Complaints about your current role",
+        "Comparisons with coworkers' performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A brag document should include quantified impact of your work, evidence of your growth and skill development, and clear goals for future contributions in a higher role."
+    },
+    {
+      "id": 15,
+      "question": "How should you approach code reviews to build positive team relationships?",
+      "options": [
+        "Focus on finding as many issues as possible",
+        "Only comment on critical bugs",
+        "Focus on the code, provide specific feedback, and acknowledge good practices",
+        "Avoid giving feedback to prevent conflicts"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Effective code reviews focus on the code (not the person), provide specific and actionable feedback, and acknowledge good practices. This builds trust and improves team dynamics."
+    },
+    {
+      "id": 16,
+      "question": "What's the key to successful networking in the tech industry?",
+      "options": [
+        "Collecting as many business cards as possible",
+        "Only networking when you need a job",
+        "Providing value to others before asking for help",
+        "Focusing only on senior-level connections"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Successful networking is about building genuine relationships by providing value to others first. This creates a foundation of trust and reciprocity that benefits everyone involved."
+    },
+    {
+      "id": 17,
+      "question": "What should you research before a 'Why do you want to work here?' question?",
+      "options": [
+        "Only the job description",
+        "Just the company's stock price",
+        "Company's recent news, blog posts, technical challenges, and values",
+        "Only the company's competitors"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Thorough research should include recent company news, technical blog posts, current challenges they're facing, company values, and how your skills align with their needs."
+    },
+    {
+      "id": 18,
+      "question": "What's the most professional way to handle workplace conflict?",
+      "options": [
+        "Avoid the person causing conflict",
+        "Address issues early and focus on solutions",
+        "Complain to other coworkers first",
+        "Wait for someone else to resolve it"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Address conflicts early before they escalate, focus on finding solutions rather than assigning blame, and approach discussions with a collaborative mindset."
+    },
+    {
+      "id": 19,
+      "question": "What components should you consider when evaluating total compensation?",
+      "options": [
+        "Only base salary",
+        "Base salary and health benefits",
+        "Base salary, equity, bonuses, benefits, and growth opportunities",
+        "Just the highest paying offer"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Total compensation includes base salary, equity/stock options, bonuses, health benefits, professional development opportunities, work-life balance, and long-term growth potential."
+    },
+    {
+      "id": 20,
+      "question": "What's the best mindset to have going into an interview?",
+      "options": [
+        "This is your only chance - be desperate",
+        "You're evaluating them as much as they're evaluating you",
+        "Focus only on what you can get from them",
+        "Assume you won't get the job"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Approach interviews as mutual evaluation. You're assessing whether the company, role, and team are right for you, just as they're evaluating your fit for the position."
+    },
+    {
+      "id": 21,
+      "question": "How often should you ask for a raise at your current job?",
+      "options": [
+        "Every month until you get one",
+        "Never - wait for them to offer",
+        "Every 6-12 months with documented value",
+        "Only when you have another job offer"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Ask for raises every 6-12 months if you can document significant value and growth. Regular discussions show ambition and give you opportunities to demonstrate your increasing worth."
+    },
+    {
+      "id": 22,
+      "question": "What's the most important aspect of emotional intelligence for developers?",
+      "options": [
+        "Being the smartest person in the room",
+        "Never showing emotions at work",
+        "Understanding and managing your reactions, especially under stress",
+        "Always agreeing with everyone"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Self-regulation - understanding your emotional triggers and managing your reactions, especially under stress - is crucial for maintaining professionalism and effective collaboration."
+    },
+    {
+      "id": 23,
+      "question": "What should you do if you realize you made a mistake during an interview?",
+      "options": [
+        "Hope they didn't notice",
+        "Address it in your thank-you email with the correct information",
+        "Call them immediately to correct it",
+        "Pretend it never happened"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Address mistakes professionally in your thank-you email by providing the correct information. This shows integrity and attention to detail."
+    },
+    {
+      "id": 24,
+      "question": "What's the best way to stay current with technology trends?",
+      "options": [
+        "Only learn when starting a new job",
+        "Wait for your company to provide training",
+        "Continuously learn through multiple channels: blogs, courses, conferences, and side projects",
+        "Only focus on the technologies you currently use"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Continuous learning through diverse channels (industry blogs, online courses, conferences, side projects, and networking) is essential for staying current in the rapidly evolving tech industry."
+    },
+    {
+      "id": 25,
+      "question": "How should you handle multiple job offers?",
+      "options": [
+        "Accept the first one you receive",
+        "Always choose the highest salary",
+        "Evaluate based on total compensation, growth potential, and company fit",
+        "Reject all of them and keep looking"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Evaluate offers holistically considering total compensation, long-term growth potential, company culture, learning opportunities, and overall career fit - not just base salary."
+    }
+  ]
+}

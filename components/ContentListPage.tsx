@@ -146,7 +146,7 @@ export default function ContentListPage({
   return (
     <Layout
       className="min-h-screen"
-      style={{ overflowY: "auto", height: "100vh" }}
+      style={{ overflowY: "auto", height: "100vh", background: "#fff" }}
     >
       <Header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

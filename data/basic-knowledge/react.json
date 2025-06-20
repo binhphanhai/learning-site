@@ -1,0 +1,837 @@
+{
+  "title": "React Development",
+  "description": "Master React development from fundamentals to advanced concepts. Learn components, hooks, state management, performance optimization, testing, and modern React patterns for building scalable applications in 2024",
+  "sections": [
+    {
+      "id": "react-fundamentals",
+      "title": "React Fundamentals & Core Concepts",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is React? (2024 Perspective)"
+        },
+        {
+          "type": "paragraph",
+          "text": "React is a JavaScript library (not a framework) for building user interfaces, specifically focused on creating reusable UI components. Think of React like a smart construction system for websites - instead of building everything from scratch each time, you create reusable 'components' (like LEGO blocks) that can be combined to build complex applications."
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine you're building a house. Traditional web development is like crafting every single brick, window, and door by hand for each house. React is like having a factory that produces standardized, high-quality components (bricks, windows, doors) that you can quickly assemble into different house designs. Each component knows how to behave and can be reused across multiple projects."
+        },
+        {
+          "type": "paragraph",
+          "text": "Unlike frameworks like Angular or Vue that provide everything you need (routing, HTTP requests, etc.), React focuses solely on the UI layer. This makes React incredibly flexible - you choose the tools you want for other parts of your application. It's like React gives you the best construction materials, but you decide what tools to use for plumbing, electricity, etc."
+        },
+        {
+          "type": "heading",
+          "text": "Why React? The Key Benefits"
+        },
+        {
+          "type": "paragraph",
+          "text": "React solves fundamental problems in web development through several key innovations. Before React, building interactive websites was like being a juggler trying to keep track of dozens of balls in the air - every time something changed, you had to manually update multiple parts of your website, and it was easy to drop a ball and break something."
+        },
+        {
+          "type": "heading",
+          "text": "1. Virtual DOM: Smart Updates"
+        },
+        {
+          "type": "paragraph",
+          "text": "The DOM (Document Object Model) is like the blueprint of your webpage that the browser uses to display content. Directly manipulating the DOM is expensive because it can trigger repaints (visual changes) and reflows (layout recalculations). Think of it like renovating a house - every time you change something, you might need to repaint walls, move furniture, or even rebuild sections."
+        },
+        {
+          "type": "paragraph",
+          "text": "React's Virtual DOM is like having a digital 3D model of your house that you can experiment with before making real changes. You can try different layouts, colors, and furniture arrangements in the digital model, then React compares your new design with the current house and makes only the necessary real-world changes. This means instead of rebuilding the entire house, you might only need to repaint one room or move one piece of furniture."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Without React (Imperative - you tell HOW to do things)\n// Like giving step-by-step instructions to renovate a house\nconst button = document.getElementById('myButton');\nbutton.addEventListener('click', () => {\n  const counter = document.getElementById('counter');\n  const currentValue = parseInt(counter.textContent);\n  \n  // Step 1: Update the counter text\n  counter.textContent = currentValue + 1;\n  \n  // Step 2: Check if we need to disable the button\n  if (currentValue + 1 > 10) {\n    button.disabled = true;\n    button.textContent = 'Limit reached';\n    button.style.opacity = '0.5';\n  }\n  \n  // You have to manually manage all the steps and remember to update everything\n});\n\n// With React (Declarative - you tell WHAT you want)\n// Like describing your ideal house and letting React figure out how to build it\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  \n  return (\n    <div>\n      <p id=\"counter\">{count}</p>\n      <button \n        onClick={() => setCount(count + 1)}\n        disabled={count >= 10}\n        style={{ opacity: count >= 10 ? 0.5 : 1 }}\n      >\n        {count >= 10 ? 'Limit reached' : 'Click me'}\n      </button>\n    </div>\n  );\n  // React automatically figures out what needs to change when count updates\n}"
+        },
+        {
+          "type": "heading",
+          "text": "2. Component-Based Architecture: Building with LEGO Blocks"
+        },
+        {
+          "type": "paragraph",
+          "text": "Components are like functions for your UI, but think of them more like smart LEGO blocks. Just as you wouldn't write all your code in one giant function, you shouldn't build your UI as one giant HTML file. Each component is a self-contained piece that knows how to display itself and respond to interactions."
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine building a car. Instead of welding every piece of metal from scratch, you have pre-made components: an engine that knows how to run, wheels that know how to spin, a steering wheel that knows how to turn. Each component has a specific job and can be tested independently. If the engine breaks, you fix or replace just the engine - you don't rebuild the entire car."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Reusable Button component\nfunction Button({ children, variant = 'primary', onClick, disabled }) {\n  const baseClasses = 'px-4 py-2 rounded font-medium transition-colors';\n  const variantClasses = {\n    primary: 'bg-blue-500 text-white hover:bg-blue-600',\n    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',\n    danger: 'bg-red-500 text-white hover:bg-red-600'\n  };\n  \n  return (\n    <button \n      className={`${baseClasses} ${variantClasses[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}\n      onClick={onClick}\n      disabled={disabled}\n    >\n      {children}\n    </button>\n  );\n}\n\n// Using the component multiple times\nfunction App() {\n  return (\n    <div>\n      <Button onClick={() => console.log('Save')}>Save</Button>\n      <Button variant=\"secondary\" onClick={() => console.log('Cancel')}>Cancel</Button>\n      <Button variant=\"danger\" onClick={() => console.log('Delete')}>Delete</Button>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "3. One-Way Data Flow"
+        },
+        {
+          "type": "paragraph",
+          "text": "React enforces a one-way data flow: data flows down from parent to child components through props, and events flow up through callback functions. This makes your application predictable and easier to debug - you always know where data is coming from and where changes originate."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Parent component manages state\nfunction TodoApp() {\n  const [todos, setTodos] = useState([\n    { id: 1, text: 'Learn React', completed: false },\n    { id: 2, text: 'Build an app', completed: false }\n  ]);\n  \n  // Data flows DOWN to children\n  // Events flow UP through callbacks\n  const toggleTodo = (id) => {\n    setTodos(todos.map(todo => \n      todo.id === id ? { ...todo, completed: !todo.completed } : todo\n    ));\n  };\n  \n  return (\n    <div>\n      <h1>My Todos</h1>\n      <TodoList todos={todos} onToggle={toggleTodo} />\n    </div>\n  );\n}\n\n// Child component receives data and callbacks\nfunction TodoList({ todos, onToggle }) {\n  return (\n    <ul>\n      {todos.map(todo => (\n        <TodoItem \n          key={todo.id} \n          todo={todo} \n          onToggle={onToggle} \n        />\n      ))}\n    </ul>\n  );\n}\n\nfunction TodoItem({ todo, onToggle }) {\n  return (\n    <li>\n      <input \n        type=\"checkbox\" \n        checked={todo.completed}\n        onChange={() => onToggle(todo.id)} // Event flows UP\n      />\n      <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>\n        {todo.text}\n      </span>\n    </li>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "The React Developer's Job"
+        },
+        {
+          "type": "paragraph",
+          "text": "As a React developer, your main responsibilities are:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Decide on Components: Break down UI into logical, reusable pieces",
+            "Decide the State: Determine what data needs to be tracked and where it should live",
+            "Handle State Changes: Define what happens when state changes and how it affects the UI",
+            "Optimize Rendering: Ensure your app performs well by controlling when and how components re-render"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "React vs ReactDOM: The Two-Part System"
+        },
+        {
+          "type": "paragraph",
+          "text": "React is actually split into two libraries:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "React: Creates React elements (like document.createElement() but for React)",
+            "ReactDOM: Renders React elements to the actual DOM (like element.appendChild() but smarter)"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// React creates the element description\nconst element = React.createElement('h1', { className: 'greeting' }, 'Hello, World!');\n\n// ReactDOM renders it to the page\nconst root = ReactDOM.createRoot(document.getElementById('root'));\nroot.render(element);\n\n// With JSX (more readable syntax):\nconst element = <h1 className=\"greeting\">Hello, World!</h1>;\nroot.render(element);"
+        }
+      ]
+    },
+    {
+      "id": "jsx-babel",
+      "title": "JSX & Modern JavaScript Setup",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Understanding JSX: HTML-like Syntax in JavaScript"
+        },
+        {
+          "type": "paragraph",
+          "text": "JSX (JavaScript XML) is a syntax extension that lets you write HTML-like code inside JavaScript. Think of it as a more readable way to create React elements. Under the hood, JSX gets transformed into regular JavaScript function calls."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// JSX (what you write)\nconst element = (\n  <div className=\"container\">\n    <h1>Welcome to React</h1>\n    <p>This is much more readable than createElement calls!</p>\n  </div>\n);\n\n// What Babel transforms it to (what JavaScript understands)\nconst element = React.createElement(\n  'div',\n  { className: 'container' },\n  React.createElement('h1', null, 'Welcome to React'),\n  React.createElement('p', null, 'This is much more readable than createElement calls!')\n);"
+        },
+        {
+          "type": "heading",
+          "text": "JSX Rules and Best Practices (2024)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Component names must start with uppercase letters (React treats lowercase as HTML elements)",
+            "Use className instead of class (since class is a reserved word in JavaScript)",
+            "Use camelCase for props (onClick instead of onclick)",
+            "Self-closing tags must end with /> (like <img /> or <br />)",
+            "Return only one parent element (use fragments <> </> if you don't want extra divs)",
+            "Use {} to embed JavaScript expressions inside JSX"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ✅ Good JSX examples\nfunction GoodComponent({ name, age, isActive }) {\n  return (\n    <>\n      {/* Fragment avoids extra div wrapper */}\n      <h1 className=\"title\">Hello, {name}!</h1>\n      \n      {/* Conditional rendering */}\n      {isActive && <span className=\"status\">Active User</span>}\n      \n      {/* Conditional styling */}\n      <p style={{ color: age >= 18 ? 'green' : 'orange' }}>\n        Age: {age}\n      </p>\n      \n      {/* Self-closing tag */}\n      <img src=\"/avatar.jpg\" alt={`${name}'s avatar`} />\n    </>\n  );\n}\n\n// ❌ Common JSX mistakes\nfunction BadComponent() {\n  return (\n    // Missing fragment - can't return multiple elements\n    <h1>Title</h1>\n    <p>Content</p> // This will cause an error\n    \n    // Wrong attribute names\n    <div class=\"container\" onclick={handleClick}> // Should be className and onClick\n      <img src=\"image.jpg\"> // Should be self-closing: <img src=\"image.jpg\" />\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Build Tools (2024 Update)"
+        },
+        {
+          "type": "paragraph",
+          "text": "While Babel was traditionally used to transform JSX, modern tools have made the setup much easier:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Vite: Lightning-fast build tool with instant hot reload",
+            "Create React App: Still popular but being superseded by Vite",
+            "Next.js: Full-stack React framework with built-in optimization",
+            "Parcel: Zero-configuration build tool",
+            "SWC: Rust-based compiler that's much faster than Babel"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Modern React project setup (2024)\n\n# Vite (Recommended - fastest)\nnpm create vite@latest my-react-app -- --template react\ncd my-react-app\nnpm install\nnpm run dev\n\n# Next.js (Full-stack framework)\nnpx create-next-app@latest my-next-app\ncd my-next-app\nnpm run dev\n\n# Create React App (Traditional)\nnpx create-react-app my-app\ncd my-app\nnpm start"
+        },
+        {
+          "type": "heading",
+          "text": "Props: Making Components Dynamic"
+        },
+        {
+          "type": "paragraph",
+          "text": "Props (properties) are how you pass data to components. Think of props like function parameters - they make your components flexible and reusable by allowing them to work with different data."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Component that receives props\nfunction UserCard({ user, showEmail = false, onEdit }) {\n  return (\n    <div className=\"user-card\">\n      <img src={user.avatar} alt={`${user.name}'s avatar`} />\n      <h3>{user.name}</h3>\n      <p>Age: {user.age}</p>\n      \n      {/* Conditional rendering based on props */}\n      {showEmail && <p>Email: {user.email}</p>}\n      \n      {/* Props can be functions (callbacks) */}\n      <button onClick={() => onEdit(user.id)}>Edit User</button>\n    </div>\n  );\n}\n\n// Using the component with different props\nfunction App() {\n  const users = [\n    { id: 1, name: 'Alice', age: 25, email: 'alice@example.com', avatar: '/alice.jpg' },\n    { id: 2, name: 'Bob', age: 30, email: 'bob@example.com', avatar: '/bob.jpg' }\n  ];\n  \n  const handleEdit = (userId) => {\n    console.log(`Editing user ${userId}`);\n  };\n  \n  return (\n    <div>\n      {users.map(user => (\n        <UserCard \n          key={user.id}\n          user={user}\n          showEmail={true}\n          onEdit={handleEdit}\n        />\n      ))}\n    </div>\n  );\n}\n\n// Props.children - special prop for nested content\nfunction Card({ children, title }) {\n  return (\n    <div className=\"card\">\n      <h2>{title}</h2>\n      <div className=\"card-content\">\n        {children} {/* Renders whatever is inside <Card>...</Card> */}\n      </div>\n    </div>\n  );\n}\n\n// Usage\n<Card title=\"My Card\">\n  <p>This content becomes props.children</p>\n  <button>Click me</button>\n</Card>"
+        },
+        {
+          "type": "heading",
+          "text": "Important Props Concepts"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Props are immutable - components cannot modify their props",
+            "Props flow down from parent to child (one-way data flow)",
+            "Use destructuring to make props easier to work with",
+            "The 'key' prop is special - it helps React track list items but isn't passed to the component",
+            "Default values can be set using default parameters or defaultProps"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "state-events",
+      "title": "State Management & Event Handling",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Understanding State: The Heart of Interactive UIs"
+        },
+        {
+          "type": "paragraph",
+          "text": "State is data that can change over time and affects what your component displays. Think of state like the memory of your component - it remembers things like whether a modal is open, what the user typed in a form, or which tab is currently active."
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine your component is like a smart light switch. A regular light switch just turns lights on or off when you flip it, but a smart switch 'remembers' things: the current brightness level, what time it was last used, user preferences, etc. This memory is what we call 'state' in React."
+        },
+        {
+          "type": "paragraph",
+          "text": "The key difference between props and state: props are given to a component by its parent (like function parameters), while state is managed within the component itself (like local variables that persist between renders). Props are like instructions given to you ('paint this room blue'), while state is like your personal notebook where you track your progress ('I've painted 3 walls so far')."
+        },
+        {
+          "type": "heading",
+          "text": "useState Hook: Managing State in Functional Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "The useState hook is like giving your component a memory notebook and a pencil. It returns two things: the current value written in the notebook, and a special pencil (setter function) that can update what's written. Every time you use the special pencil to write something new, React notices the change and re-renders your component to show the updated information."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { useState } from 'react';\n\nfunction Counter() {\n  // useState returns [currentValue, setterFunction]\n  const [count, setCount] = useState(0); // 0 is the initial value\n  \n  return (\n    <div>\n      <p>Current count: {count}</p>\n      <button onClick={() => setCount(count + 1)}>Increment</button>\n      <button onClick={() => setCount(count - 1)}>Decrement</button>\n      <button onClick={() => setCount(0)}>Reset</button>\n    </div>\n  );\n}\n\n// State with objects and arrays\nfunction UserProfile() {\n  const [user, setUser] = useState({\n    name: '',\n    email: '',\n    age: 0\n  });\n  \n  const [hobbies, setHobbies] = useState([]);\n  \n  // When updating objects, always create a new object\n  const updateUser = (field, value) => {\n    setUser(prevUser => ({\n      ...prevUser,  // Spread the previous state\n      [field]: value // Update the specific field\n    }));\n  };\n  \n  // When updating arrays, create a new array\n  const addHobby = (hobby) => {\n    setHobbies(prevHobbies => [...prevHobbies, hobby]);\n  };\n  \n  const removeHobby = (index) => {\n    setHobbies(prevHobbies => prevHobbies.filter((_, i) => i !== index));\n  };\n  \n  return (\n    <div>\n      <input \n        value={user.name}\n        onChange={(e) => updateUser('name', e.target.value)}\n        placeholder=\"Name\"\n      />\n      {/* More form fields... */}\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "setState Best Practices (Critical for Avoiding Bugs)"
+        },
+        {
+          "type": "paragraph",
+          "text": "setState is asynchronous and React may batch multiple setState calls for performance. This can lead to unexpected behavior if you're not careful. Think of it like this: imagine you're updating your bank account balance, but the bank processes updates in batches rather than immediately. If you try to make multiple transactions based on what you think your current balance is, you might get unexpected results because your balance information might be outdated."
+        },
+        {
+          "type": "paragraph",
+          "text": "Here's the key insight: when you call setState multiple times in the same function, React doesn't update the state immediately after each call. Instead, it 'batches' these updates together for performance. This means if you use the current state value directly (like count + 1), all your updates might be using the same 'old' value instead of building on each other."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function Counter() {\n  const [count, setCount] = useState(0);\n  \n  // ❌ WRONG: This might not work as expected\n  const handleTripleIncrement = () => {\n    setCount(count + 1); // All three calls use the same 'count' value\n    setCount(count + 1); // React batches these, so count only increases by 1\n    setCount(count + 1);\n  };\n  \n  // ✅ CORRECT: Use functional updates\n  const handleTripleIncrementCorrect = () => {\n    setCount(prevCount => prevCount + 1); // Each call gets the latest value\n    setCount(prevCount => prevCount + 1);\n    setCount(prevCount => prevCount + 1);\n  };\n  \n  // ✅ ALSO CORRECT: For simple cases, just do the math\n  const handleTripleIncrementSimple = () => {\n    setCount(prevCount => prevCount + 3);\n  };\n  \n  return (\n    <div>\n      <p>Count: {count}</p>\n      <button onClick={handleTripleIncrement}>Wrong Way</button>\n      <button onClick={handleTripleIncrementCorrect}>Correct Way</button>\n      <button onClick={handleTripleIncrementSimple}>Simple Way</button>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Lazy Initial State: Performance Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "If your initial state requires expensive computation, you can pass a function to useState to avoid recalculating it on every render:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ❌ EXPENSIVE: This runs on every render\nfunction ExpensiveComponent() {\n  const [data, setData] = useState(expensiveCalculation());\n  // expensiveCalculation() runs every time the component re-renders!\n  \n  return <div>{data}</div>;\n}\n\n// ✅ OPTIMIZED: This runs only once\nfunction OptimizedComponent() {\n  const [data, setData] = useState(() => expensiveCalculation());\n  // Function only runs once, on the first render\n  \n  return <div>{data}</div>;\n}\n\n// Example: Reading from localStorage\nfunction UserSettings() {\n  const [settings, setSettings] = useState(() => {\n    // This only runs once, not on every render\n    const saved = localStorage.getItem('userSettings');\n    return saved ? JSON.parse(saved) : { theme: 'light', language: 'en' };\n  });\n  \n  return (\n    <div>\n      <p>Theme: {settings.theme}</p>\n      <p>Language: {settings.language}</p>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Event Handling: Responding to User Interactions"
+        },
+        {
+          "type": "paragraph",
+          "text": "React uses SyntheticEvents, which are wrappers around native browser events. They provide consistent behavior across different browsers and additional features."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function EventExamples() {\n  const [message, setMessage] = useState('');\n  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });\n  \n  // Basic event handling\n  const handleClick = (e) => {\n    e.preventDefault(); // Prevent default behavior\n    e.stopPropagation(); // Stop event bubbling\n    console.log('Button clicked!', e.target);\n  };\n  \n  // Event with parameters\n  const handleClickWithParam = (param) => {\n    return (e) => {\n      console.log('Parameter:', param, 'Event:', e);\n    };\n  };\n  \n  // Form events\n  const handleSubmit = (e) => {\n    e.preventDefault(); // Prevent page refresh\n    const formData = new FormData(e.target);\n    const data = Object.fromEntries(formData);\n    console.log('Form data:', data);\n  };\n  \n  // Input events\n  const handleInputChange = (e) => {\n    setMessage(e.target.value);\n  };\n  \n  // Mouse events\n  const handleMouseMove = (e) => {\n    setMousePos({ x: e.clientX, y: e.clientY });\n  };\n  \n  // Keyboard events\n  const handleKeyPress = (e) => {\n    if (e.key === 'Enter') {\n      console.log('Enter pressed!');\n    }\n  };\n  \n  return (\n    <div onMouseMove={handleMouseMove}>\n      <p>Mouse position: {mousePos.x}, {mousePos.y}</p>\n      \n      <button onClick={handleClick}>Basic Click</button>\n      \n      <button onClick={handleClickWithParam('hello')}>Click with Param</button>\n      \n      <form onSubmit={handleSubmit}>\n        <input \n          name=\"username\"\n          value={message}\n          onChange={handleInputChange}\n          onKeyPress={handleKeyPress}\n          placeholder=\"Type something...\"\n        />\n        <button type=\"submit\">Submit</button>\n      </form>\n      \n      <p>You typed: {message}</p>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Event Binding and 'this' Context (Class Components)"
+        },
+        {
+          "type": "paragraph",
+          "text": "While functional components with hooks are now preferred, you might still encounter class components. Here's how event binding works:"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class ClassComponent extends React.Component {\n  constructor(props) {\n    super(props);\n    this.state = { count: 0 };\n    \n    // Method 1: Bind in constructor (traditional)\n    this.handleClick = this.handleClick.bind(this);\n  }\n  \n  // Method 2: Arrow function (modern)\n  handleClickArrow = () => {\n    this.setState({ count: this.state.count + 1 });\n  };\n  \n  handleClick() {\n    this.setState({ count: this.state.count + 1 });\n  }\n  \n  render() {\n    return (\n      <div>\n        <p>Count: {this.state.count}</p>\n        \n        {/* ❌ WRONG: 'this' will be undefined */}\n        <button onClick={this.handleClick}>Won't work</button>\n        \n        {/* ✅ CORRECT: Bound in constructor */}\n        <button onClick={this.handleClick}>Works</button>\n        \n        {/* ✅ CORRECT: Arrow function */}\n        <button onClick={this.handleClickArrow}>Works</button>\n        \n        {/* ✅ CORRECT: Inline arrow function (less efficient) */}\n        <button onClick={() => this.handleClickArrow()}>Works but re-creates function</button>\n      </div>\n    );\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "conditional-rendering-lists",
+      "title": "Conditional Rendering & Lists",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Conditional Rendering: Showing Different Content"
+        },
+        {
+          "type": "paragraph",
+          "text": "Conditional rendering in React works just like conditions in JavaScript. You can use if statements, ternary operators, or logical operators to decide what to render based on your component's state or props."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of conditional rendering like a smart billboard that changes its message based on different conditions. During the day it might show coffee ads, at night it shows dinner specials, and when it's raining it shows umbrella advertisements. Your React component is like this smart billboard - it looks at its current state and props to decide what content to display."
+        },
+        {
+          "type": "paragraph",
+          "text": "React gives you several patterns for conditional rendering, each suited for different scenarios. It's like having different tools in a toolbox - you pick the right tool for the job."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function ConditionalRenderingExamples({ user, isLoading, error }) {\n  // Method 1: Early return pattern\n  if (isLoading) {\n    return <div className=\"spinner\">Loading...</div>;\n  }\n  \n  if (error) {\n    return (\n      <div className=\"error\">\n        <h2>Something went wrong!</h2>\n        <p>{error.message}</p>\n      </div>\n    );\n  }\n  \n  if (!user) {\n    return <div>No user data available</div>;\n  }\n  \n  return (\n    <div>\n      <h1>Welcome, {user.name}!</h1>\n      \n      {/* Method 2: Ternary operator for simple conditions */}\n      <p>\n        Status: {user.isActive ? (\n          <span className=\"active\">Active</span>\n        ) : (\n          <span className=\"inactive\">Inactive</span>\n        )}\n      </p>\n      \n      {/* Method 3: Logical AND (&&) for showing/hiding elements */}\n      {user.isAdmin && (\n        <div className=\"admin-panel\">\n          <h2>Admin Panel</h2>\n          <button>Manage Users</button>\n        </div>\n      )}\n      \n      {/* Method 4: Multiple conditions */}\n      {user.notifications && user.notifications.length > 0 && (\n        <div className=\"notifications\">\n          <h3>You have {user.notifications.length} notifications</h3>\n          {user.notifications.map(notification => (\n            <div key={notification.id} className=\"notification\">\n              {notification.message}\n            </div>\n          ))}\n        </div>\n      )}\n      \n      {/* Method 5: Complex conditions with variables */}\n      {(() => {\n        const canEdit = user.isAdmin || user.isOwner;\n        const hasPermission = user.permissions.includes('edit');\n        \n        if (canEdit && hasPermission) {\n          return <button>Edit Profile</button>;\n        } else if (canEdit) {\n          return <p>You need edit permission</p>;\n        } else {\n          return <p>Contact admin for access</p>;\n        }\n      })()}\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "List Rendering: Displaying Dynamic Content"
+        },
+        {
+          "type": "paragraph",
+          "text": "Rendering lists is one of the most common tasks in React. You'll use JavaScript's array methods like map(), filter(), and reduce() to transform your data into JSX elements."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function ListExamples() {\n  const [todos, setTodos] = useState([\n    { id: 1, text: 'Learn React', completed: false, priority: 'high' },\n    { id: 2, text: 'Build a project', completed: false, priority: 'medium' },\n    { id: 3, text: 'Get a job', completed: false, priority: 'high' },\n    { id: 4, text: 'Celebrate', completed: true, priority: 'low' }\n  ]);\n  \n  const [filter, setFilter] = useState('all'); // 'all', 'active', 'completed'\n  const [sortBy, setSortBy] = useState('priority'); // 'priority', 'text'\n  \n  // Filter and sort todos\n  const filteredTodos = todos\n    .filter(todo => {\n      if (filter === 'active') return !todo.completed;\n      if (filter === 'completed') return todo.completed;\n      return true; // 'all'\n    })\n    .sort((a, b) => {\n      if (sortBy === 'priority') {\n        const priorityOrder = { high: 3, medium: 2, low: 1 };\n        return priorityOrder[b.priority] - priorityOrder[a.priority];\n      }\n      return a.text.localeCompare(b.text);\n    });\n  \n  const toggleTodo = (id) => {\n    setTodos(todos.map(todo => \n      todo.id === id ? { ...todo, completed: !todo.completed } : todo\n    ));\n  };\n  \n  const deleteTodo = (id) => {\n    setTodos(todos.filter(todo => todo.id !== id));\n  };\n  \n  return (\n    <div>\n      {/* Filter controls */}\n      <div className=\"filters\">\n        <button \n          className={filter === 'all' ? 'active' : ''}\n          onClick={() => setFilter('all')}\n        >\n          All ({todos.length})\n        </button>\n        <button \n          className={filter === 'active' ? 'active' : ''}\n          onClick={() => setFilter('active')}\n        >\n          Active ({todos.filter(t => !t.completed).length})\n        </button>\n        <button \n          className={filter === 'completed' ? 'active' : ''}\n          onClick={() => setFilter('completed')}\n        >\n          Completed ({todos.filter(t => t.completed).length})\n        </button>\n      </div>\n      \n      {/* Sort controls */}\n      <div className=\"sort\">\n        <label>\n          Sort by:\n          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>\n            <option value=\"priority\">Priority</option>\n            <option value=\"text\">Text</option>\n          </select>\n        </label>\n      </div>\n      \n      {/* Todo list */}\n      {filteredTodos.length === 0 ? (\n        <p>No todos found for the current filter.</p>\n      ) : (\n        <ul className=\"todo-list\">\n          {filteredTodos.map(todo => (\n            <li \n              key={todo.id} \n              className={`todo-item ${todo.completed ? 'completed' : ''} priority-${todo.priority}`}\n            >\n              <input \n                type=\"checkbox\"\n                checked={todo.completed}\n                onChange={() => toggleTodo(todo.id)}\n              />\n              <span className=\"todo-text\">{todo.text}</span>\n              <span className=\"priority-badge\">{todo.priority}</span>\n              <button \n                className=\"delete-btn\"\n                onClick={() => deleteTodo(todo.id)}\n              >\n                Delete\n              </button>\n            </li>\n          ))}\n        </ul>\n      )}\n      \n      {/* Summary */}\n      <div className=\"summary\">\n        <p>Total: {todos.length} | Active: {todos.filter(t => !t.completed).length} | Completed: {todos.filter(t => t.completed).length}</p>\n      </div>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "The Key Prop: Why It's Critical for Performance"
+        },
+        {
+          "type": "paragraph",
+          "text": "The 'key' prop is React's way of tracking which items in a list have changed, been added, or removed. Understanding keys is crucial for both performance and avoiding bugs."
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine you're a teacher with a classroom of students, and every day some students might be absent, new students might join, or students might change seats. Without name tags, you'd have to check every single seat to figure out who's who and what changed. But with name tags (keys), you can quickly identify each student regardless of where they're sitting."
+        },
+        {
+          "type": "paragraph",
+          "text": "React faces the same challenge with lists. When your list changes, React needs to figure out which items are the same, which are new, and which were removed. Without keys, React assumes items are identified by their position in the list, which can lead to performance issues and bugs when the list order changes."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ❌ BAD: Using array index as key\nfunction BadKeyExample({ items }) {\n  return (\n    <ul>\n      {items.map((item, index) => (\n        <li key={index}> {/* This causes problems! */}\n          <input type=\"text\" defaultValue={item.name} />\n          <button onClick={() => deleteItem(index)}>Delete</button>\n        </li>\n      ))}\n    </ul>\n  );\n}\n\n// ✅ GOOD: Using unique, stable identifiers\nfunction GoodKeyExample({ items }) {\n  return (\n    <ul>\n      {items.map(item => (\n        <li key={item.id}> {/* Unique and stable */}\n          <input type=\"text\" defaultValue={item.name} />\n          <button onClick={() => deleteItem(item.id)}>Delete</button>\n        </li>\n      ))}\n    </ul>\n  );\n}\n\n// Why keys matter: A demonstration\nfunction KeyDemonstration() {\n  const [users, setUsers] = useState([\n    { id: 1, name: 'Alice', email: 'alice@example.com' },\n    { id: 2, name: 'Bob', email: 'bob@example.com' },\n    { id: 3, name: 'Charlie', email: 'charlie@example.com' }\n  ]);\n  \n  const addUser = () => {\n    const newUser = {\n      id: Date.now(),\n      name: `User ${users.length + 1}`,\n      email: `user${users.length + 1}@example.com`\n    };\n    setUsers([newUser, ...users]); // Add to beginning\n  };\n  \n  const removeUser = (id) => {\n    setUsers(users.filter(user => user.id !== id));\n  };\n  \n  return (\n    <div>\n      <button onClick={addUser}>Add User to Top</button>\n      \n      <h3>With Index Keys (Notice the bug when you type in inputs):</h3>\n      <ul>\n        {users.map((user, index) => (\n          <li key={index}> {/* BUG: Input values get mixed up */}\n            <input \n              type=\"text\" \n              defaultValue={user.name} \n              placeholder=\"Type here to see the bug\"\n            />\n            <span> - {user.email}</span>\n            <button onClick={() => removeUser(user.id)}>Remove</button>\n          </li>\n        ))}\n      </ul>\n      \n      <h3>With Proper Keys (Inputs work correctly):</h3>\n      <ul>\n        {users.map(user => (\n          <li key={user.id}> {/* CORRECT: Input values stay with their user */}\n            <input \n              type=\"text\" \n              defaultValue={user.name} \n              placeholder=\"This works correctly\"\n            />\n            <span> - {user.email}</span>\n            <button onClick={() => removeUser(user.id)}>Remove</button>\n          </li>\n        ))}\n      </ul>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "When to Use Index as Key (Rare Cases)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Using array index as key is only acceptable when ALL of these conditions are true:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "The list items don't have unique IDs",
+            "The list is static (never reordered, added to, or removed from)",
+            "The list items don't contain form inputs or other stateful elements",
+            "You're not using any animations or transitions"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ✅ OK to use index as key (static list, no state)\nfunction StaticList({ menuItems }) {\n  return (\n    <nav>\n      {menuItems.map((item, index) => (\n        <a key={index} href={item.url}>\n          {item.label}\n        </a>\n      ))}\n    </nav>\n  );\n}\n\n// ✅ Better: Generate stable keys even for static content\nfunction BetterStaticList({ menuItems }) {\n  return (\n    <nav>\n      {menuItems.map(item => (\n        <a key={item.url} href={item.url}> {/* URL is unique and stable */}\n          {item.label}\n        </a>\n      ))}\n    </nav>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "styling-forms",
+      "title": "Styling & Form Handling",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Styling React Components: Modern Approaches (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "React gives you multiple ways to style your components. Each approach has its pros and cons, and the choice often depends on your project's needs and team preferences."
+        },
+        {
+          "type": "heading",
+          "text": "1. CSS Modules: Scoped Styling"
+        },
+        {
+          "type": "paragraph",
+          "text": "CSS Modules automatically scope your CSS classes to avoid naming conflicts. It's like having private CSS for each component."
+        },
+        {
+          "type": "code",
+          "language": "css",
+          "text": "/* Button.module.css */\n.button {\n  padding: 12px 24px;\n  border-radius: 8px;\n  border: none;\n  cursor: pointer;\n  font-weight: 500;\n  transition: all 0.2s ease;\n}\n\n.primary {\n  background-color: #3b82f6;\n  color: white;\n}\n\n.primary:hover {\n  background-color: #2563eb;\n}\n\n.secondary {\n  background-color: #e5e7eb;\n  color: #374151;\n}\n\n.secondary:hover {\n  background-color: #d1d5db;\n}"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Button.jsx\nimport styles from './Button.module.css';\n\nfunction Button({ children, variant = 'primary', ...props }) {\n  return (\n    <button \n      className={`${styles.button} ${styles[variant]}`}\n      {...props}\n    >\n      {children}\n    </button>\n  );\n}\n\n// Usage\n<Button variant=\"primary\">Save</Button>\n<Button variant=\"secondary\">Cancel</Button>"
+        },
+        {
+          "type": "heading",
+          "text": "2. Styled-Components: CSS-in-JS"
+        },
+        {
+          "type": "paragraph",
+          "text": "Styled-components lets you write CSS directly in your JavaScript, with the power of JavaScript logic and automatic vendor prefixing."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import styled from 'styled-components';\n\n// Define styled components\nconst StyledButton = styled.button`\n  padding: 12px 24px;\n  border-radius: 8px;\n  border: none;\n  cursor: pointer;\n  font-weight: 500;\n  transition: all 0.2s ease;\n  \n  background-color: ${props => props.variant === 'primary' ? '#3b82f6' : '#e5e7eb'};\n  color: ${props => props.variant === 'primary' ? 'white' : '#374151'};\n  \n  &:hover {\n    background-color: ${props => props.variant === 'primary' ? '#2563eb' : '#d1d5db'};\n  }\n  \n  &:disabled {\n    opacity: 0.5;\n    cursor: not-allowed;\n  }\n`;\n\nconst Card = styled.div`\n  background: white;\n  border-radius: 12px;\n  padding: 24px;\n  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);\n  \n  ${props => props.highlighted && `\n    border: 2px solid #3b82f6;\n    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);\n  `}\n`;\n\n// Usage\nfunction App() {\n  return (\n    <Card highlighted>\n      <h2>Welcome</h2>\n      <StyledButton variant=\"primary\">Get Started</StyledButton>\n      <StyledButton variant=\"secondary\">Learn More</StyledButton>\n    </Card>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "3. Tailwind CSS: Utility-First Styling"
+        },
+        {
+          "type": "paragraph",
+          "text": "Tailwind CSS provides utility classes that you can combine to build any design. It's become very popular in the React community for its speed and consistency."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Using Tailwind classes\nfunction Button({ children, variant = 'primary', size = 'md', disabled, ...props }) {\n  const baseClasses = 'font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';\n  \n  const variantClasses = {\n    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',\n    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',\n    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500'\n  };\n  \n  const sizeClasses = {\n    sm: 'px-3 py-1.5 text-sm',\n    md: 'px-4 py-2 text-base',\n    lg: 'px-6 py-3 text-lg'\n  };\n  \n  const disabledClasses = disabled ? 'opacity-50 cursor-not-allowed' : '';\n  \n  return (\n    <button \n      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${disabledClasses}`}\n      disabled={disabled}\n      {...props}\n    >\n      {children}\n    </button>\n  );\n}\n\n// Card component with Tailwind\nfunction Card({ children, className = '' }) {\n  return (\n    <div className={`bg-white rounded-xl p-6 shadow-lg ${className}`}>\n      {children}\n    </div>\n  );\n}\n\n// Usage\n<Card className=\"max-w-md mx-auto\">\n  <h2 className=\"text-2xl font-bold mb-4\">Welcome</h2>\n  <div className=\"space-x-2\">\n    <Button variant=\"primary\" size=\"lg\">Get Started</Button>\n    <Button variant=\"secondary\">Learn More</Button>\n  </div>\n</Card>"
+        },
+        {
+          "type": "heading",
+          "text": "Form Handling: Controlled vs Uncontrolled Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "React offers two approaches to handle form inputs: controlled components (React manages the input state) and uncontrolled components (DOM manages the input state)."
+        },
+        {
+          "type": "heading",
+          "text": "Controlled Components (Recommended)"
+        },
+        {
+          "type": "paragraph",
+          "text": "In controlled components, React state is the single source of truth for input values. This gives you full control over the form data and enables features like validation, formatting, and conditional logic."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "function ContactForm() {\n  const [formData, setFormData] = useState({\n    name: '',\n    email: '',\n    message: '',\n    newsletter: false,\n    priority: 'medium'\n  });\n  \n  const [errors, setErrors] = useState({});\n  const [isSubmitting, setIsSubmitting] = useState(false);\n  \n  // Handle input changes\n  const handleChange = (e) => {\n    const { name, value, type, checked } = e.target;\n    setFormData(prev => ({\n      ...prev,\n      [name]: type === 'checkbox' ? checked : value\n    }));\n    \n    // Clear error when user starts typing\n    if (errors[name]) {\n      setErrors(prev => ({ ...prev, [name]: '' }));\n    }\n  };\n  \n  // Validation function\n  const validateForm = () => {\n    const newErrors = {};\n    \n    if (!formData.name.trim()) {\n      newErrors.name = 'Name is required';\n    }\n    \n    if (!formData.email.trim()) {\n      newErrors.email = 'Email is required';\n    } else if (!/\\S+@\\S+\\.\\S+/.test(formData.email)) {\n      newErrors.email = 'Email is invalid';\n    }\n    \n    if (!formData.message.trim()) {\n      newErrors.message = 'Message is required';\n    } else if (formData.message.length < 10) {\n      newErrors.message = 'Message must be at least 10 characters';\n    }\n    \n    return newErrors;\n  };\n  \n  // Handle form submission\n  const handleSubmit = async (e) => {\n    e.preventDefault();\n    \n    const newErrors = validateForm();\n    if (Object.keys(newErrors).length > 0) {\n      setErrors(newErrors);\n      return;\n    }\n    \n    setIsSubmitting(true);\n    \n    try {\n      // Simulate API call\n      await new Promise(resolve => setTimeout(resolve, 2000));\n      console.log('Form submitted:', formData);\n      \n      // Reset form on success\n      setFormData({\n        name: '',\n        email: '',\n        message: '',\n        newsletter: false,\n        priority: 'medium'\n      });\n      \n      alert('Message sent successfully!');\n    } catch (error) {\n      console.error('Submission error:', error);\n      alert('Failed to send message. Please try again.');\n    } finally {\n      setIsSubmitting(false);\n    }\n  };\n  \n  return (\n    <form onSubmit={handleSubmit} className=\"max-w-md mx-auto space-y-4\">\n      {/* Name field */}\n      <div>\n        <label htmlFor=\"name\" className=\"block text-sm font-medium mb-1\">\n          Name *\n        </label>\n        <input\n          type=\"text\"\n          id=\"name\"\n          name=\"name\"\n          value={formData.name}\n          onChange={handleChange}\n          className={`w-full px-3 py-2 border rounded-md ${\n            errors.name ? 'border-red-500' : 'border-gray-300'\n          }`}\n          placeholder=\"Your name\"\n        />\n        {errors.name && <p className=\"text-red-500 text-sm mt-1\">{errors.name}</p>}\n      </div>\n      \n      {/* Email field */}\n      <div>\n        <label htmlFor=\"email\" className=\"block text-sm font-medium mb-1\">\n          Email *\n        </label>\n        <input\n          type=\"email\"\n          id=\"email\"\n          name=\"email\"\n          value={formData.email}\n          onChange={handleChange}\n          className={`w-full px-3 py-2 border rounded-md ${\n            errors.email ? 'border-red-500' : 'border-gray-300'\n          }`}\n          placeholder=\"your@email.com\"\n        />\n        {errors.email && <p className=\"text-red-500 text-sm mt-1\">{errors.email}</p>}\n      </div>\n      \n      {/* Priority select */}\n      <div>\n        <label htmlFor=\"priority\" className=\"block text-sm font-medium mb-1\">\n          Priority\n        </label>\n        <select\n          id=\"priority\"\n          name=\"priority\"\n          value={formData.priority}\n          onChange={handleChange}\n          className=\"w-full px-3 py-2 border border-gray-300 rounded-md\"\n        >\n          <option value=\"low\">Low</option>\n          <option value=\"medium\">Medium</option>\n          <option value=\"high\">High</option>\n        </select>\n      </div>\n      \n      {/* Message textarea */}\n      <div>\n        <label htmlFor=\"message\" className=\"block text-sm font-medium mb-1\">\n          Message *\n        </label>\n        <textarea\n          id=\"message\"\n          name=\"message\"\n          value={formData.message}\n          onChange={handleChange}\n          rows={4}\n          className={`w-full px-3 py-2 border rounded-md ${\n            errors.message ? 'border-red-500' : 'border-gray-300'\n          }`}\n          placeholder=\"Your message...\"\n        />\n        <p className=\"text-sm text-gray-500 mt-1\">\n          {formData.message.length}/500 characters\n        </p>\n        {errors.message && <p className=\"text-red-500 text-sm mt-1\">{errors.message}</p>}\n      </div>\n      \n      {/* Newsletter checkbox */}\n      <div className=\"flex items-center\">\n        <input\n          type=\"checkbox\"\n          id=\"newsletter\"\n          name=\"newsletter\"\n          checked={formData.newsletter}\n          onChange={handleChange}\n          className=\"mr-2\"\n        />\n        <label htmlFor=\"newsletter\" className=\"text-sm\">\n          Subscribe to newsletter\n        </label>\n      </div>\n      \n      {/* Submit button */}\n      <button\n        type=\"submit\"\n        disabled={isSubmitting}\n        className=\"w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed\"\n      >\n        {isSubmitting ? 'Sending...' : 'Send Message'}\n      </button>\n    </form>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Uncontrolled Components with useRef"
+        },
+        {
+          "type": "paragraph",
+          "text": "Uncontrolled components let the DOM handle the form state. Use this approach when you need simple forms or when integrating with non-React libraries."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { useRef } from 'react';\n\nfunction UncontrolledForm() {\n  const nameRef = useRef();\n  const emailRef = useRef();\n  const messageRef = useRef();\n  \n  const handleSubmit = (e) => {\n    e.preventDefault();\n    \n    // Get values from refs\n    const formData = {\n      name: nameRef.current.value,\n      email: emailRef.current.value,\n      message: messageRef.current.value\n    };\n    \n    console.log('Form data:', formData);\n    \n    // Reset form\n    e.target.reset();\n  };\n  \n  return (\n    <form onSubmit={handleSubmit}>\n      <div>\n        <label htmlFor=\"name\">Name:</label>\n        <input\n          type=\"text\"\n          id=\"name\"\n          ref={nameRef}\n          defaultValue=\"\" // Use defaultValue, not value\n          required\n        />\n      </div>\n      \n      <div>\n        <label htmlFor=\"email\">Email:</label>\n        <input\n          type=\"email\"\n          id=\"email\"\n          ref={emailRef}\n          defaultValue=\"\"\n          required\n        />\n      </div>\n      \n      <div>\n        <label htmlFor=\"message\">Message:</label>\n        <textarea\n          id=\"message\"\n          ref={messageRef}\n          defaultValue=\"\"\n          required\n        />\n      </div>\n      \n      <button type=\"submit\">Submit</button>\n    </form>\n  );\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main difference between React and a framework like Angular?",
+      "options": [
+        "React is faster than Angular",
+        "React is a library focused on UI, while Angular is a full framework",
+        "React uses TypeScript, Angular uses JavaScript",
+        "React is for mobile apps, Angular is for web apps"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React is a library that focuses specifically on building user interfaces and managing component state. Angular is a full framework that includes routing, HTTP client, forms, and other features built-in. React gives you the flexibility to choose your own tools for these features."
+    },
+    {
+      "id": 2,
+      "question": "What does the Virtual DOM do in React?",
+      "options": [
+        "It replaces the real DOM completely",
+        "It creates a virtual representation to optimize DOM updates",
+        "It makes the DOM faster by using virtual memory",
+        "It's only used for debugging purposes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Virtual DOM is React's way of optimizing DOM updates. It creates a virtual representation of the UI in memory, compares it with the previous version, and then makes only the necessary changes to the real DOM. This minimizes expensive DOM operations."
+    },
+    {
+      "id": 3,
+      "question": "What will this JSX code render?\n\nconst element = (\n  <div>\n    <h1>Hello</h1>\n    <p>World</p>\n  </div>\n);",
+      "options": [
+        "An error because JSX isn't valid JavaScript",
+        "A div containing an h1 and p element",
+        "Only the h1 element",
+        "Nothing, because it needs to be wrapped in a component"
+      ],
+      "correctAnswer": 1,
+      "explanation": "This JSX code will render a div element containing an h1 with 'Hello' and a p element with 'World'. JSX gets transpiled to React.createElement calls that create the appropriate DOM structure."
+    },
+    {
+      "id": 4,
+      "question": "What's wrong with this component?\n\nfunction MyComponent() {\n  return (\n    <h1>Title</h1>\n    <p>Content</p>\n  );\n}",
+      "options": [
+        "Nothing is wrong",
+        "Components must return only one parent element",
+        "The function name should be lowercase",
+        "It's missing the export statement"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React components must return a single parent element. This code tries to return two elements at the same level, which will cause an error. You can fix it by wrapping in a div or using React.Fragment (<> </>)."
+    },
+    {
+      "id": 5,
+      "question": "What is the correct way to update state in React?",
+      "options": [
+        "state.count = state.count + 1",
+        "this.state.count++",
+        "setCount(count + 1)",
+        "count = count + 1"
+      ],
+      "correctAnswer": 2,
+      "explanation": "In functional components with hooks, you use the setter function returned by useState (like setCount). Never mutate state directly as React won't detect the change and won't re-render the component."
+    },
+    {
+      "id": 6,
+      "question": "Why should you use a function when updating state based on the previous state?",
+      "options": [
+        "It's faster than using the current state value",
+        "React batches state updates, so the current value might be stale",
+        "It's required by React's rules",
+        "It prevents memory leaks"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React may batch multiple setState calls for performance. When you use the current state value directly, you might be using a stale value. Using a function ensures you get the most recent state value: setCount(prevCount => prevCount + 1)."
+    },
+    {
+      "id": 7,
+      "question": "What is the purpose of the 'key' prop in React lists?",
+      "options": [
+        "To make the list items clickable",
+        "To help React identify which items have changed, added, or removed",
+        "To set a unique ID for CSS styling",
+        "To pass data between list items"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The key prop helps React identify which items in a list have changed, been added, or removed. This enables React to efficiently update the DOM and maintain component state correctly when the list changes."
+    },
+    {
+      "id": 8,
+      "question": "When is it acceptable to use array index as a key?",
+      "options": [
+        "Always, it's the most efficient",
+        "Never, it always causes bugs",
+        "Only when the list is static and items don't have unique IDs",
+        "Only for performance optimization"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Using array index as key is only acceptable when the list is static (never reordered, added to, or removed from), items don't have unique IDs, and items don't contain form inputs or stateful elements."
+    },
+    {
+      "id": 9,
+      "question": "What's the difference between controlled and uncontrolled components?",
+      "options": [
+        "Controlled components are faster",
+        "Controlled components have React manage the input state, uncontrolled let the DOM manage it",
+        "Uncontrolled components are more secure",
+        "There's no difference, they're the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Controlled components have their input values controlled by React state (using value and onChange). Uncontrolled components let the DOM manage the input state and you access values using refs or form submission."
+    },
+    {
+      "id": 10,
+      "question": "What will happen if you call setState multiple times in the same function?",
+      "options": [
+        "Each call will trigger a separate re-render",
+        "Only the last setState call will take effect",
+        "React will batch the updates and trigger one re-render",
+        "It will cause an error"
+      ],
+      "correctAnswer": 2,
+      "explanation": "React batches multiple setState calls within the same function for performance optimization. This means only one re-render occurs, but if you're using the current state value, you might get unexpected results due to stale closures."
+    },
+    {
+      "id": 11,
+      "question": "What is the correct way to conditionally render a component?",
+      "options": [
+        "if (condition) { return <Component />; }",
+        "{condition && <Component />}",
+        "{condition ? <Component /> : null}",
+        "All of the above"
+      ],
+      "correctAnswer": 3,
+      "explanation": "All three approaches are valid for conditional rendering in React. Early return with if statements, logical AND (&&) operator, and ternary operator (?:) are all commonly used patterns depending on the specific use case."
+    },
+    {
+      "id": 12,
+      "question": "What is props.children in React?",
+      "options": [
+        "An array of all child components",
+        "The content passed between opening and closing tags of a component",
+        "A method to create child components",
+        "The state of child components"
+      ],
+      "correctAnswer": 1,
+      "explanation": "props.children represents the content passed between the opening and closing tags of a component. For example, in <Card>Hello World</Card>, 'Hello World' becomes props.children inside the Card component."
+    },
+    {
+      "id": 13,
+      "question": "What is the difference between className and class in JSX?",
+      "options": [
+        "They are exactly the same",
+        "className is used because 'class' is a reserved word in JavaScript",
+        "class is deprecated in React",
+        "className is only for CSS modules"
+      ],
+      "correctAnswer": 1,
+      "explanation": "In JSX, you use className instead of class because 'class' is a reserved word in JavaScript (used for ES6 classes). JSX gets transpiled to JavaScript, so it needs to use valid JavaScript property names."
+    },
+    {
+      "id": 14,
+      "question": "What is the purpose of useRef hook?",
+      "options": [
+        "To manage component state",
+        "To access DOM elements directly or store mutable values that don't trigger re-renders",
+        "To create references between components",
+        "To optimize component performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "useRef is used to access DOM elements directly (like focusing an input) or to store mutable values that persist across renders without triggering re-renders when changed."
+    },
+    {
+      "id": 15,
+      "question": "What is lazy initial state in useState?",
+      "options": [
+        "State that updates slowly",
+        "Passing a function to useState to avoid expensive calculations on every render",
+        "State that's only initialized when needed",
+        "A way to delay state updates"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Lazy initial state involves passing a function to useState instead of a value. The function only runs once during the initial render, which is useful when the initial state requires expensive computation: useState(() => expensiveCalculation())."
+    },
+    {
+      "id": 16,
+      "question": "What's the difference between inline styles and CSS classes in React?",
+      "options": [
+        "Inline styles are faster",
+        "CSS classes are more maintainable and support pseudo-classes and media queries",
+        "Inline styles have better browser support",
+        "There's no difference"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSS classes are generally more maintainable, support pseudo-classes (:hover, :focus), media queries, and can be cached by the browser. Inline styles are useful for dynamic styling but have limitations and can impact performance with many elements."
+    },
+    {
+      "id": 17,
+      "question": "What is the correct way to handle form submission in React?",
+      "options": [
+        "Let the form submit naturally",
+        "Use e.preventDefault() to prevent page refresh and handle submission manually",
+        "Use action attribute on the form",
+        "Form submission isn't possible in React"
+      ],
+      "correctAnswer": 1,
+      "explanation": "In React, you typically call e.preventDefault() in the form's onSubmit handler to prevent the default form submission (which would refresh the page) and handle the submission with JavaScript instead."
+    },
+    {
+      "id": 18,
+      "question": "What is the difference between React.Fragment and a div wrapper?",
+      "options": [
+        "Fragment is faster than div",
+        "Fragment doesn't create an extra DOM node",
+        "Fragment has better accessibility",
+        "There's no difference"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React.Fragment (or <> </>) allows you to group multiple elements without adding an extra DOM node, unlike a div wrapper. This keeps the DOM cleaner and can prevent CSS layout issues."
+    },
+    {
+      "id": 19,
+      "question": "What happens when you don't provide a key prop for list items?",
+      "options": [
+        "React throws an error",
+        "React shows a warning and uses array index as key",
+        "The list won't render",
+        "Nothing happens"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React will show a warning in the console and fall back to using the array index as the key. This can lead to performance issues and bugs, especially when the list order changes or items are added/removed."
+    },
+    {
+      "id": 20,
+      "question": "What is the recommended way to update an object in state?",
+      "options": [
+        "Directly modify the object properties",
+        "Use Object.assign to update the object",
+        "Create a new object with the spread operator",
+        "Use a mutation library"
+      ],
+      "correctAnswer": 2,
+      "explanation": "The recommended way is to create a new object using the spread operator: setUser({...user, name: 'New Name'}). This ensures React detects the state change and triggers a re-render."
+    },
+    {
+      "id": 21,
+      "question": "What is the purpose of defaultValue vs value in form inputs?",
+      "options": [
+        "They do the same thing",
+        "defaultValue is for uncontrolled components, value is for controlled components",
+        "defaultValue is deprecated",
+        "value is only for text inputs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "defaultValue is used in uncontrolled components to set the initial value, while value is used in controlled components where React manages the input state. Using value requires an onChange handler."
+    },
+    {
+      "id": 22,
+      "question": "What is synthetic events in React?",
+      "options": [
+        "Fake events for testing",
+        "React's wrapper around native browser events for cross-browser compatibility",
+        "Events created by third-party libraries",
+        "Artificially generated events"
+      ],
+      "correctAnswer": 1,
+      "explanation": "SyntheticEvents are React's wrapper around native browser events. They provide consistent behavior across different browsers and include additional features while maintaining the same interface as native events."
+    },
+    {
+      "id": 23,
+      "question": "When should you use CSS Modules vs Styled Components?",
+      "options": [
+        "Always use CSS Modules",
+        "CSS Modules for simple styling, Styled Components for dynamic styling with JavaScript logic",
+        "Styled Components are always better",
+        "It doesn't matter"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSS Modules are great for traditional CSS with scoped classes, while Styled Components excel when you need dynamic styling based on props, JavaScript logic in styles, or want to keep styles co-located with components."
+    },
+    {
+      "id": 24,
+      "question": "What is the difference between development and production builds in React?",
+      "options": [
+        "No difference",
+        "Production builds are minified, optimized, and have warnings removed",
+        "Development builds are faster",
+        "Production builds have more features"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Production builds are optimized for performance - they're minified, dead code is eliminated, warnings are removed, and various optimizations are applied. Development builds include helpful warnings and debugging tools."
+    },
+    {
+      "id": 25,
+      "question": "What is the recommended way to structure React components?",
+      "options": [
+        "All components in one file",
+        "One component per file with descriptive names",
+        "Group by functionality in large files",
+        "It doesn't matter"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The recommended practice is one component per file with descriptive names. This makes components easier to find, test, and maintain. It also enables better tree-shaking and code splitting."
+    },
+    {
+      "id": 26,
+      "question": "What is the purpose of React.StrictMode?",
+      "options": [
+        "To make React faster",
+        "To catch potential problems and deprecated features in development",
+        "To enable strict typing",
+        "To prevent runtime errors"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React.StrictMode is a development tool that helps identify potential problems by running additional checks and warnings. It intentionally double-invokes functions to help detect side effects and highlights deprecated features."
+    },
+    {
+      "id": 27,
+      "question": "What happens if you forget to include dependencies in useEffect?",
+      "options": [
+        "The effect won't run",
+        "React will show a warning and the effect might not update when it should",
+        "It will cause a memory leak",
+        "Nothing happens"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React will show an ESLint warning (with the React hooks plugin) because the effect might not re-run when it should, leading to stale closures and bugs. Always include all dependencies that the effect uses."
+    },
+    {
+      "id": 28,
+      "question": "What is the difference between props and state?",
+      "options": [
+        "Props are faster than state",
+        "Props are passed from parent to child and are immutable, state is managed within a component and can change",
+        "State is deprecated in favor of props",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Props are data passed from parent to child components and should not be modified by the child. State is data managed within a component that can change over time and triggers re-renders when updated."
+    },
+    {
+      "id": 29,
+      "question": "What is the recommended way to handle multiple input fields in a form?",
+      "options": [
+        "Create separate state for each input",
+        "Use a single state object and the input's name attribute",
+        "Use uncontrolled components only",
+        "Use global state for all forms"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The recommended approach is to use a single state object and use the input's name attribute in a generic handleChange function: setFormData({...formData, [e.target.name]: e.target.value}). This reduces code duplication."
+    },
+    {
+      "id": 30,
+      "question": "What is the purpose of the htmlFor attribute in labels?",
+      "options": [
+        "It's the same as the 'for' attribute in HTML",
+        "It associates the label with a form control for accessibility",
+        "It's used for styling purposes",
+        "It's deprecated"
+      ],
+      "correctAnswer": 1,
+      "explanation": "htmlFor is React's version of the HTML 'for' attribute (since 'for' is a reserved word in JavaScript). It associates a label with a form control, improving accessibility by allowing users to click the label to focus the input."
+    }
+  ]
+}

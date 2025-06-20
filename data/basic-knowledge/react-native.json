@@ -1,0 +1,737 @@
+{
+  "title": "React Native Development",
+  "description": "Master React Native development from fundamentals to advanced concepts. Learn core components, navigation patterns, styling approaches, state management, performance optimization, and deployment strategies for building iOS and Android apps in 2024. This comprehensive guide includes practical examples and step-by-step explanations for developers at all levels.",
+  "sections": [
+    {
+      "id": "react-native-fundamentals",
+      "title": "React Native Fundamentals & Architecture",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is React Native? (The Simple Explanation)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine you want to build both an iPhone and Android app, but you don't want to learn two completely different programming languages (Swift for iOS and Kotlin/Java for Android). React Native is like a universal translator that lets you write your app once in JavaScript and React, then automatically converts it to work on both platforms."
+        },
+        {
+          "type": "paragraph",
+          "text": "Unlike hybrid apps that basically run a website inside a mobile app wrapper (which feels slow and clunky), React Native actually creates real native components. It's like having a skilled interpreter who doesn't just translate your words, but speaks fluently in both languages and understands the cultural context of each platform."
+        },
+        {
+          "type": "heading",
+          "text": "How React Native Works: The Bridge Concept"
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of React Native as having two separate worlds that need to communicate: the JavaScript world (where your React code lives) and the Native world (where the actual iOS/Android components exist). The 'bridge' is like a messenger service that carries information between these two worlds."
+        },
+        {
+          "type": "paragraph",
+          "text": "Here's a simple analogy: imagine you're a manager (JavaScript) who needs to give instructions to workers (Native components) who speak a different language. The bridge is your translator who takes your instructions, converts them to the workers' language, and brings back their responses. This happens incredibly fast, but there's still a tiny delay for translation."
+        },
+        {
+          "type": "heading",
+          "text": "The New Architecture (2024): Making Everything Faster"
+        },
+        {
+          "type": "paragraph",
+          "text": "The new React Native architecture (Fabric and TurboModules) is like upgrading from sending letters through the mail to having instant messaging. Instead of everything going through the bridge translator, some communications can now happen directly, making apps much faster and more responsive."
+        },
+        {
+          "type": "list",
+          "items": [
+            "JavaScript Thread: This is where your React Native code runs - think of it as your app's brain where all the logic happens",
+            "Native Thread: This handles the actual UI rendering and platform-specific features - like the hands that do the work",
+            "Bridge: The communication channel between JavaScript and Native (being replaced by faster alternatives)",
+            "Fabric Renderer: The new, faster way to create and update UI components (2024 improvement)",
+            "TurboModules: A more efficient system for using native device features like camera or GPS",
+            "JSI (JavaScript Interface): Allows direct communication between JavaScript and native code, bypassing the bridge"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Do I Need to Know iOS/Android Development?"
+        },
+        {
+          "type": "paragraph",
+          "text": "The short answer is: not to get started, but it helps as you advance. React Native is designed so web developers can build mobile apps without learning Swift or Kotlin. However, understanding mobile development concepts (like how apps are structured, mobile UI patterns, and device capabilities) will make you a much more effective React Native developer."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of it like driving a car - you don't need to be a mechanic to drive, but understanding how engines work helps you drive better and troubleshoot problems when they arise."
+        },
+        {
+          "type": "heading",
+          "text": "Prerequisites: What You Need to Know Before Starting"
+        },
+        {
+          "type": "paragraph",
+          "text": "Before diving into React Native, make sure you're comfortable with these foundational concepts. It's like learning to run before you can walk - having a solid foundation makes everything else much easier."
+        },
+        {
+          "type": "list",
+          "items": [
+            "JavaScript ES6+ features: arrow functions, destructuring, async/await, modules - these are the building blocks you'll use constantly",
+            "React fundamentals: components, props, state, hooks - React Native is just React for mobile, so these concepts are identical",
+            "Understanding of mobile UI/UX principles: how mobile apps should look and feel different from websites",
+            "Basic command line usage: you'll be running commands to create projects, install packages, and build apps",
+            "Node.js and package management: React Native uses npm/yarn for managing dependencies, just like web development",
+            "Git version control: essential for any development work, especially when working with teams"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Development Environment Setup: The Easy Way vs The Hard Way"
+        },
+        {
+          "type": "paragraph",
+          "text": "Setting up React Native development can be tricky because you're essentially setting up development for three platforms: web (Node.js), iOS, and Android. The good news is that tools like Expo have made this much easier."
+        },
+        {
+          "type": "heading",
+          "text": "Expo vs React Native CLI: Which Should You Choose?"
+        },
+        {
+          "type": "paragraph",
+          "text": "This is like choosing between a fully-loaded car with automatic transmission (Expo) versus a manual transmission sports car (React Native CLI). Expo is easier to start with and handles most of the complexity for you, while React Native CLI gives you more control but requires more setup and knowledge."
+        },
+        {
+          "type": "paragraph",
+          "text": "For beginners, Expo is almost always the right choice. You can always 'eject' to React Native CLI later if you need more control. It's much harder to go the other direction."
+        },
+        {
+          "type": "heading",
+          "text": "Expo vs React Native CLI (2024 Comparison)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expo has evolved significantly and now offers more flexibility while maintaining ease of use. The choice depends on your project requirements and team expertise."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Expo CLI (Recommended for beginners)\nnpx create-expo-app MyApp\ncd MyApp\nnpx expo start\n\n# React Native CLI (More control)\nnpx react-native@latest init MyApp\ncd MyApp\nnpx react-native start\n# iOS: npx react-native run-ios\n# Android: npx react-native run-android"
+        },
+        {
+          "type": "heading",
+          "text": "Expo Advantages (2024)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Expo Dev Build: Custom native code with Expo tools",
+            "EAS (Expo Application Services): Cloud build and deployment",
+            "Over-the-air updates without app store approval",
+            "Extensive library of pre-built native modules",
+            "Simplified development workflow and testing",
+            "Web support out of the box",
+            "TypeScript support by default"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core-components-styling",
+      "title": "Core Components & Modern Styling",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Essential Core Components"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native provides a set of core components that compile to native UI elements. Unlike web development, you cannot use HTML elements - everything must be built with React Native components."
+        },
+        {
+          "type": "heading",
+          "text": "Understanding React Native Components: The Building Blocks"
+        },
+        {
+          "type": "paragraph",
+          "text": "If you're coming from web development, you need to forget about HTML elements like <div>, <p>, <span>, and <img>. React Native doesn't use HTML - instead, it provides its own set of components that compile to native mobile UI elements. Think of it like learning a new language where the concepts are the same, but the vocabulary is different."
+        },
+        {
+          "type": "paragraph",
+          "text": "Each React Native component maps to a real native component on each platform. For example, a <View> becomes a UIView on iOS and a ViewGroup on Android. This is why React Native apps feel native - they're using the same building blocks that native apps use."
+        },
+        {
+          "type": "heading",
+          "text": "View: The Foundation of Everything"
+        },
+        {
+          "type": "paragraph",
+          "text": "If HTML has <div>, React Native has <View>. The View component is like a container or box that holds other components. Every layout in React Native is built using Views nested inside other Views. Think of it as the LEGO baseplate that everything else gets built on top of."
+        },
+        {
+          "type": "paragraph",
+          "text": "Views can be styled, handle touch events, and control how their children are laid out. They're invisible by default (no background color), but you can style them to have backgrounds, borders, shadows, and more."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { View, StyleSheet } from 'react-native';\n\n// Think of this like creating nested boxes\nfunction MyComponent() {\n  return (\n    // Outer container (like a room)\n    <View style={styles.container}>\n      {/* Inner box (like furniture in the room) */}\n      <View style={styles.box}>\n        {/* Content goes here - other components like Text, Image, etc. */}\n      </View>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1, // Take up all available space\n    justifyContent: 'center', // Center content vertically\n    alignItems: 'center', // Center content horizontally\n    backgroundColor: '#f5f5f5', // Light gray background\n    padding: 20, // Add space inside the container\n  },\n  box: {\n    width: 200, // Fixed width\n    height: 100, // Fixed height\n    backgroundColor: '#007AFF', // Blue background\n    borderRadius: 8, // Rounded corners\n    padding: 16, // Space inside the box\n    // This creates a blue rounded rectangle\n  },\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Text: Every Word Needs a Home"
+        },
+        {
+          "type": "paragraph",
+          "text": "In HTML, you can put text directly inside any element. In React Native, ALL text must be wrapped in <Text> components. This isn't just a rule - it's enforced. If you try to put text directly in a View, your app will crash."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of Text components like text boxes in a design program - every piece of text needs its own container where you can control the font, size, color, and other properties."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { Text, View, StyleSheet } from 'react-native';\n\nfunction TextExample() {\n  return (\n    <View style={styles.container}>\n      {/* Basic text */}\n      <Text style={styles.title}>Welcome to React Native</Text>\n      \n      {/* Text can be nested for different styles */}\n      <Text style={styles.paragraph}>\n        This is a paragraph with \n        <Text style={styles.bold}>bold text</Text> and \n        <Text style={styles.italic}>italic text</Text> mixed in.\n      </Text>\n      \n      {/* Text inherits styles from parent Text components */}\n      <Text style={styles.baseText}>\n        I am bold\n        <Text style={styles.innerText}> and I am bold AND red</Text>\n      </Text>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    padding: 20,\n  },\n  title: {\n    fontSize: 24, // Large text\n    fontWeight: 'bold', // Make it bold\n    color: '#333', // Dark gray\n    marginBottom: 16, // Space below\n    textAlign: 'center', // Center the text\n  },\n  paragraph: {\n    fontSize: 16, // Regular size\n    lineHeight: 24, // Space between lines\n    color: '#666', // Medium gray\n    marginBottom: 12,\n  },\n  bold: {\n    fontWeight: 'bold',\n  },\n  italic: {\n    fontStyle: 'italic',\n  },\n  baseText: {\n    fontSize: 16,\n    fontWeight: 'bold',\n    color: '#333',\n  },\n  innerText: {\n    color: 'red', // This text will be bold (inherited) AND red\n  },\n});"
+        },
+        {
+          "type": "heading",
+          "text": "ScrollView vs FlatList: When to Use Which"
+        },
+        {
+          "type": "paragraph",
+          "text": "When you have more content than fits on the screen, you need scrolling. React Native gives you two main options: ScrollView and FlatList. Choosing the right one is like choosing between a small car and a bus - it depends on how many passengers (items) you need to carry."
+        },
+        {
+          "type": "paragraph",
+          "text": "ScrollView is like a small car - perfect for a small amount of content (under 100 items). It renders all its children at once, which is fine for small lists but will make your app slow and crash with large lists."
+        },
+        {
+          "type": "paragraph",
+          "text": "FlatList is like a bus with efficient seating - it only renders the items currently visible on screen, making it perfect for large lists (hundreds or thousands of items). It's more complex to set up but essential for good performance."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { FlatList, Text, View, StyleSheet } from 'react-native';\n\n// Example data - imagine this came from an API\nconst DATA = [\n  { id: '1', title: 'First Item', subtitle: 'This is the first item' },\n  { id: '2', title: 'Second Item', subtitle: 'This is the second item' },\n  { id: '3', title: 'Third Item', subtitle: 'This is the third item' },\n  // ... imagine hundreds more items\n];\n\nfunction OptimizedList() {\n  // This function defines how each item should look\n  const renderItem = ({ item, index }) => (\n    <View style={styles.listItem}>\n      <Text style={styles.title}>{item.title}</Text>\n      <Text style={styles.subtitle}>{item.subtitle}</Text>\n      <Text style={styles.index}>Item #{index + 1}</Text>\n    </View>\n  );\n\n  return (\n    <FlatList\n      data={DATA} // The array of items to display\n      renderItem={renderItem} // How to render each item\n      keyExtractor={(item) => item.id} // Unique key for each item\n      \n      // Performance optimizations (like turbo mode for your list)\n      removeClippedSubviews={true} // Remove items that aren't visible\n      maxToRenderPerBatch={10} // Only render 10 items at a time\n      initialNumToRender={10} // Start with 10 items\n      windowSize={5} // Keep 5 screens worth of items in memory\n      \n      // If all items are the same height, this makes scrolling super smooth\n      getItemLayout={(data, index) => ({\n        length: 80, // Height of each item\n        offset: 80 * index, // Position of each item\n        index,\n      })}\n      \n      // Add some style to the container\n      style={styles.list}\n    />\n  );\n}\n\nconst styles = StyleSheet.create({\n  list: {\n    flex: 1,\n    backgroundColor: '#f5f5f5',\n  },\n  listItem: {\n    backgroundColor: 'white',\n    padding: 16,\n    marginVertical: 4,\n    marginHorizontal: 16,\n    borderRadius: 8,\n    // Add shadow for iOS\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 1 },\n    shadowOpacity: 0.1,\n    shadowRadius: 2,\n    // Add shadow for Android\n    elevation: 2,\n  },\n  title: {\n    fontSize: 18,\n    fontWeight: 'bold',\n    color: '#333',\n  },\n  subtitle: {\n    fontSize: 14,\n    color: '#666',\n    marginTop: 4,\n  },\n  index: {\n    fontSize: 12,\n    color: '#999',\n    marginTop: 4,\n  },\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Input Components"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { TextInput, View, StyleSheet } from 'react-native';\nimport { useState } from 'react';\n\nfunction ModernInput() {\n  const [text, setText] = useState('');\n  const [isFocused, setIsFocused] = useState(false);\n\n  return (\n    <View style={styles.inputContainer}>\n      <TextInput\n        style={[\n          styles.input,\n          isFocused && styles.inputFocused\n        ]}\n        value={text}\n        onChangeText={setText}\n        onFocus={() => setIsFocused(true)}\n        onBlur={() => setIsFocused(false)}\n        placeholder=\"Enter text...\"\n        placeholderTextColor=\"#999\"\n        autoCapitalize=\"none\"\n        autoCorrect={false}\n        returnKeyType=\"done\"\n      />\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  inputContainer: {\n    marginVertical: 8,\n  },\n  input: {\n    borderWidth: 1,\n    borderColor: '#ddd',\n    borderRadius: 8,\n    padding: 12,\n    fontSize: 16,\n    backgroundColor: '#fff',\n  },\n  inputFocused: {\n    borderColor: '#007AFF',\n    shadowColor: '#007AFF',\n    shadowOffset: { width: 0, height: 0 },\n    shadowOpacity: 0.3,\n    shadowRadius: 4,\n    elevation: 3,\n  },\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Styling Approaches (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native styling has evolved with new approaches for better maintainability and performance. Here are the modern patterns:"
+        },
+        {
+          "type": "heading",
+          "text": "React Native Styling: Not Quite CSS, But Close"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native styling looks like CSS, but it's actually JavaScript objects with camelCase property names. Think of it as CSS that's been translated into JavaScript. Most CSS properties work the same way, but there are some important differences that can trip up web developers."
+        },
+        {
+          "type": "paragraph",
+          "text": "The biggest difference is that React Native uses Flexbox by default with a column direction (vertical), while web CSS defaults to row direction (horizontal). It's like React Native assumes you're building for a tall, narrow screen (which you are!)."
+        },
+        {
+          "type": "heading",
+          "text": "StyleSheet.create(): Why It's Better Than Inline Styles"
+        },
+        {
+          "type": "paragraph",
+          "text": "You might be tempted to use inline styles like in web development, but React Native's StyleSheet.create() is much better for performance. Think of it like the difference between writing optimized code versus quick-and-dirty code that works but runs slowly."
+        },
+        {
+          "type": "paragraph",
+          "text": "StyleSheet.create() validates your styles at build time (catching errors early), optimizes them for better performance, and prevents creating new style objects on every render (which would make your app laggy)."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ❌ Avoid: Inline styles (creates new objects every render)\nfunction BadExample() {\n  return (\n    <View style={{ flex: 1, backgroundColor: '#fff', padding: 20 }}>\n      <Text style={{ fontSize: 18, color: '#333' }}>Hello World</Text>\n    </View>\n  );\n}\n\n// ✅ Good: Using StyleSheet (optimized and validated)\nfunction GoodExample() {\n  return (\n    <View style={styles.container}>\n      <Text style={styles.text}>Hello World</Text>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1,\n    backgroundColor: '#fff',\n    padding: 20,\n  },\n  text: {\n    fontSize: 18,\n    color: '#333',\n  },\n});\n\n// ✅ Also good: Combining and conditional styles\nfunction ConditionalExample({ isActive, isPrimary }) {\n  return (\n    <View style={[\n      styles.container,\n      isActive && styles.active,\n      isPrimary && styles.primary,\n    ]}>\n      <Text style={styles.text}>Dynamic Styling</Text>\n    </View>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    padding: 16,\n    borderRadius: 8,\n    backgroundColor: '#f5f5f5',\n  },\n  active: {\n    backgroundColor: '#e3f2fd', // Light blue when active\n    borderWidth: 2,\n    borderColor: '#2196f3',\n  },\n  primary: {\n    backgroundColor: '#2196f3', // Blue when primary\n  },\n  text: {\n    fontSize: 16,\n    color: '#333',\n  },\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Flexbox in React Native: The Layout System"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native uses Flexbox for layout, but with some mobile-specific defaults. If you know CSS Flexbox, you're 90% of the way there - just remember that the default direction is column (top to bottom) instead of row (left to right)."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of Flexbox like organizing items in a box. You can choose whether to stack them vertically (column) or horizontally (row), how to distribute space between them, and how to align them within the container."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const styles = StyleSheet.create({\n  // Main container - like the main box\n  container: {\n    flex: 1, // Take up all available space (like height: 100%)\n    flexDirection: 'column', // Stack children vertically (default in RN)\n    justifyContent: 'space-between', // Distribute space between items\n    alignItems: 'center', // Center items horizontally\n    padding: 16,\n    backgroundColor: '#f5f5f5',\n  },\n  \n  // Header section\n  header: {\n    width: '100%', // Full width\n    height: 60,\n    backgroundColor: '#2196f3',\n    justifyContent: 'center',\n    alignItems: 'center',\n    borderRadius: 8,\n  },\n  \n  // Content area that grows to fill space\n  content: {\n    flex: 1, // Take up remaining space\n    width: '100%',\n    justifyContent: 'center',\n    alignItems: 'center',\n  },\n  \n  // Horizontal row of buttons\n  buttonRow: {\n    flexDirection: 'row', // Arrange buttons horizontally\n    justifyContent: 'space-around', // Distribute buttons evenly\n    width: '100%',\n    paddingVertical: 16,\n  },\n  \n  // Individual button\n  button: {\n    paddingHorizontal: 20,\n    paddingVertical: 12,\n    backgroundColor: '#4caf50',\n    borderRadius: 6,\n    minWidth: 80, // Minimum width for consistency\n  },\n  \n  // Responsive grid items\n  gridContainer: {\n    flexDirection: 'row',\n    flexWrap: 'wrap', // Allow items to wrap to next line\n    justifyContent: 'space-between',\n  },\n  \n  gridItem: {\n    width: '48%', // Almost half width (with some margin)\n    aspectRatio: 1, // Square shape (width = height)\n    backgroundColor: '#fff',\n    marginBottom: 16,\n    borderRadius: 8,\n    padding: 16,\n    // Shadow for iOS\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 2 },\n    shadowOpacity: 0.1,\n    shadowRadius: 4,\n    // Shadow for Android\n    elevation: 3,\n  },\n  \n  // Responsive spacing that adapts to screen size\n  responsiveSpacing: {\n    marginHorizontal: '5%', // 5% of screen width\n    paddingVertical: 20,\n  },\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Platform Differences: iOS vs Android Styling"
+        },
+        {
+          "type": "paragraph",
+          "text": "While React Native handles most platform differences automatically, there are some styling differences between iOS and Android that you need to know about. It's like having two different browsers that render some things slightly differently."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { Platform, StyleSheet } from 'react-native';\n\nconst styles = StyleSheet.create({\n  // Shadows work differently on each platform\n  card: {\n    backgroundColor: '#fff',\n    borderRadius: 8,\n    padding: 16,\n    margin: 16,\n    \n    // iOS shadow properties\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 2 },\n    shadowOpacity: 0.1,\n    shadowRadius: 4,\n    \n    // Android shadow property\n    elevation: 3,\n  },\n  \n  // Platform-specific styles\n  header: {\n    fontSize: 20,\n    fontWeight: 'bold',\n    // Different padding for each platform\n    ...Platform.select({\n      ios: {\n        paddingTop: 20, // Account for iOS status bar\n      },\n      android: {\n        paddingTop: 10, // Less padding on Android\n      },\n    }),\n  },\n  \n  // Font families are different\n  text: {\n    fontSize: 16,\n    fontFamily: Platform.select({\n      ios: 'System', // iOS system font\n      android: 'Roboto', // Android system font\n    }),\n  },\n  \n  // You can also use Platform.OS for conditional logic\n  button: {\n    backgroundColor: '#2196f3',\n    borderRadius: Platform.OS === 'ios' ? 8 : 4,\n    padding: Platform.OS === 'ios' ? 12 : 10,\n  },\n});"
+        }
+      ]
+    },
+    {
+      "id": "navigation-routing",
+      "title": "Navigation & Routing",
+      "content": [
+        {
+          "type": "heading",
+          "text": "React Navigation 6+ (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Navigation is the standard navigation library for React Native. Version 6+ brings improved TypeScript support, better performance, and simplified API. It provides native-like navigation patterns for both iOS and Android."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Install React Navigation 6\nnpm install @react-navigation/native\n\n# Install dependencies\nnpx expo install react-native-screens react-native-safe-area-context\n\n# Install navigators\nnpm install @react-navigation/native-stack\nnpm install @react-navigation/bottom-tabs\nnpm install @react-navigation/drawer"
+        },
+        {
+          "type": "heading",
+          "text": "Stack Navigation Setup"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { NavigationContainer } from '@react-navigation/native';\nimport { createNativeStackNavigator } from '@react-navigation/native-stack';\nimport HomeScreen from './screens/HomeScreen';\nimport DetailsScreen from './screens/DetailsScreen';\n\nconst Stack = createNativeStackNavigator();\n\nfunction App() {\n  return (\n    <NavigationContainer>\n      <Stack.Navigator\n        initialRouteName=\"Home\"\n        screenOptions={{\n          headerStyle: {\n            backgroundColor: '#007AFF',\n          },\n          headerTintColor: '#fff',\n          headerTitleStyle: {\n            fontWeight: 'bold',\n          },\n        }}\n      >\n        <Stack.Screen \n          name=\"Home\" \n          component={HomeScreen}\n          options={{ title: 'Welcome' }}\n        />\n        <Stack.Screen \n          name=\"Details\" \n          component={DetailsScreen}\n          options={({ route }) => ({ \n            title: route.params?.title || 'Details' \n          })}\n        />\n      </Stack.Navigator>\n    </NavigationContainer>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Modern Navigation Patterns"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Using hooks for navigation\nimport { useNavigation, useRoute } from '@react-navigation/native';\n\nfunction HomeScreen() {\n  const navigation = useNavigation();\n  const route = useRoute();\n\n  const handleNavigate = () => {\n    navigation.navigate('Details', {\n      itemId: 86,\n      title: 'Item Details',\n      timestamp: Date.now(),\n    });\n  };\n\n  return (\n    <View style={styles.container}>\n      <Text>Home Screen</Text>\n      <Button title=\"Go to Details\" onPress={handleNavigate} />\n    </View>\n  );\n}\n\n// Type-safe navigation with TypeScript\ntype RootStackParamList = {\n  Home: undefined;\n  Details: { itemId: number; title: string; timestamp: number };\n};\n\nconst Stack = createNativeStackNavigator<RootStackParamList>();"
+        },
+        {
+          "type": "heading",
+          "text": "Tab Navigation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';\nimport { Ionicons } from '@expo/vector-icons';\n\nconst Tab = createBottomTabNavigator();\n\nfunction TabNavigator() {\n  return (\n    <Tab.Navigator\n      screenOptions={({ route }) => ({\n        tabBarIcon: ({ focused, color, size }) => {\n          let iconName;\n          \n          if (route.name === 'Home') {\n            iconName = focused ? 'home' : 'home-outline';\n          } else if (route.name === 'Settings') {\n            iconName = focused ? 'settings' : 'settings-outline';\n          }\n          \n          return <Ionicons name={iconName} size={size} color={color} />;\n        },\n        tabBarActiveTintColor: '#007AFF',\n        tabBarInactiveTintColor: 'gray',\n        headerShown: false,\n      })}\n    >\n      <Tab.Screen name=\"Home\" component={HomeStack} />\n      <Tab.Screen name=\"Settings\" component={SettingsScreen} />\n    </Tab.Navigator>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "state-management",
+      "title": "State Management & Data Flow",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Modern State Management Options (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native apps can use the same state management solutions as React web apps. The choice depends on your app's complexity and team preferences."
+        },
+        {
+          "type": "heading",
+          "text": "Context API for Simple State"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { createContext, useContext, useReducer } from 'react';\n\n// Create context\nconst AppContext = createContext();\n\n// Reducer for complex state logic\nfunction appReducer(state, action) {\n  switch (action.type) {\n    case 'SET_USER':\n      return { ...state, user: action.payload };\n    case 'SET_THEME':\n      return { ...state, theme: action.payload };\n    case 'ADD_FAVORITE':\n      return {\n        ...state,\n        favorites: [...state.favorites, action.payload],\n      };\n    case 'REMOVE_FAVORITE':\n      return {\n        ...state,\n        favorites: state.favorites.filter(id => id !== action.payload),\n      };\n    default:\n      return state;\n  }\n}\n\n// Provider component\nexport function AppProvider({ children }) {\n  const [state, dispatch] = useReducer(appReducer, {\n    user: null,\n    theme: 'light',\n    favorites: [],\n  });\n\n  const value = {\n    ...state,\n    dispatch,\n    // Helper functions\n    setUser: (user) => dispatch({ type: 'SET_USER', payload: user }),\n    toggleTheme: () => dispatch({ \n      type: 'SET_THEME', \n      payload: state.theme === 'light' ? 'dark' : 'light' \n    }),\n    addFavorite: (id) => dispatch({ type: 'ADD_FAVORITE', payload: id }),\n    removeFavorite: (id) => dispatch({ type: 'REMOVE_FAVORITE', payload: id }),\n  };\n\n  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;\n}\n\n// Custom hook\nexport function useApp() {\n  const context = useContext(AppContext);\n  if (!context) {\n    throw new Error('useApp must be used within AppProvider');\n  }\n  return context;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Zustand for Medium Complexity"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { create } from 'zustand';\nimport { persist, createJSONStorage } from 'zustand/middleware';\nimport AsyncStorage from '@react-native-async-storage/async-storage';\n\n// Simple store\nconst useStore = create((set, get) => ({\n  // State\n  user: null,\n  favorites: [],\n  theme: 'light',\n  \n  // Actions\n  setUser: (user) => set({ user }),\n  addFavorite: (id) => set((state) => ({ \n    favorites: [...state.favorites, id] \n  })),\n  removeFavorite: (id) => set((state) => ({\n    favorites: state.favorites.filter(fav => fav !== id)\n  })),\n  toggleTheme: () => set((state) => ({\n    theme: state.theme === 'light' ? 'dark' : 'light'\n  })),\n  \n  // Computed values\n  isFavorite: (id) => get().favorites.includes(id),\n}));\n\n// Persistent store\nconst usePersistentStore = create(\n  persist(\n    (set, get) => ({\n      settings: {\n        notifications: true,\n        theme: 'light',\n      },\n      updateSettings: (newSettings) => set((state) => ({\n        settings: { ...state.settings, ...newSettings }\n      })),\n    }),\n    {\n      name: 'app-settings',\n      storage: createJSONStorage(() => AsyncStorage),\n    }\n  )\n);\n\nexport { useStore, usePersistentStore };"
+        },
+        {
+          "type": "heading",
+          "text": "Redux Toolkit for Complex Apps"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { configureStore, createSlice } from '@reduxjs/toolkit';\nimport { useSelector, useDispatch } from 'react-redux';\n\n// Slice\nconst userSlice = createSlice({\n  name: 'user',\n  initialState: {\n    profile: null,\n    preferences: {\n      theme: 'light',\n      notifications: true,\n    },\n    favorites: [],\n  },\n  reducers: {\n    setProfile: (state, action) => {\n      state.profile = action.payload;\n    },\n    updatePreferences: (state, action) => {\n      state.preferences = { ...state.preferences, ...action.payload };\n    },\n    addFavorite: (state, action) => {\n      state.favorites.push(action.payload);\n    },\n    removeFavorite: (state, action) => {\n      state.favorites = state.favorites.filter(id => id !== action.payload);\n    },\n  },\n});\n\n// Store\nexport const store = configureStore({\n  reducer: {\n    user: userSlice.reducer,\n  },\n});\n\n// Selectors\nexport const selectUser = (state) => state.user.profile;\nexport const selectTheme = (state) => state.user.preferences.theme;\nexport const selectFavorites = (state) => state.user.favorites;\n\n// Actions\nexport const { setProfile, updatePreferences, addFavorite, removeFavorite } = userSlice.actions;\n\n// Custom hooks\nexport const useAppSelector = useSelector;\nexport const useAppDispatch = () => useDispatch();"
+        }
+      ]
+    },
+    {
+      "id": "performance-optimization",
+      "title": "Performance Optimization & Best Practices",
+      "content": [
+        {
+          "type": "heading",
+          "text": "React Native Performance Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Performance optimization in React Native involves understanding the bridge between JavaScript and native code, optimizing renders, and following platform-specific best practices."
+        },
+        {
+          "type": "heading",
+          "text": "Common Performance Issues & Solutions"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Bridge Communication: Minimize data passing between JS and native threads",
+            "Unnecessary Re-renders: Use React.memo, useMemo, and useCallback appropriately",
+            "Large Lists: Use FlatList with proper optimization props",
+            "Image Loading: Implement proper image caching and lazy loading",
+            "Animation Performance: Use native animations when possible",
+            "Memory Leaks: Properly cleanup listeners and subscriptions"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Optimized FlatList implementation\nimport React, { memo, useCallback } from 'react';\n\nconst OptimizedListItem = memo(({ item, onPress }) => {\n  const handlePress = useCallback(() => {\n    onPress(item.id);\n  }, [item.id, onPress]);\n\n  return (\n    <Pressable onPress={handlePress} style={styles.item}>\n      <Text>{item.title}</Text>\n    </Pressable>\n  );\n});\n\nfunction OptimizedList({ data, onItemPress }) {\n  const renderItem = useCallback(({ item }) => (\n    <OptimizedListItem item={item} onPress={onItemPress} />\n  ), [onItemPress]);\n\n  const getItemLayout = useCallback((data, index) => ({\n    length: ITEM_HEIGHT,\n    offset: ITEM_HEIGHT * index,\n    index,\n  }), []);\n\n  return (\n    <FlatList\n      data={data}\n      renderItem={renderItem}\n      keyExtractor={keyExtractor}\n      getItemLayout={getItemLayout}\n      removeClippedSubviews={true}\n      maxToRenderPerBatch={10}\n      updateCellsBatchingPeriod={50}\n      initialNumToRender={10}\n      windowSize={5}\n    />\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Image Optimization"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Optimized image loading with caching\nimport FastImage from 'react-native-fast-image';\n\nfunction OptimizedImage({ source, style, ...props }) {\n  return (\n    <FastImage\n      style={style}\n      source={{\n        uri: source.uri,\n        priority: FastImage.priority.normal,\n        cache: FastImage.cacheControl.immutable,\n      }}\n      resizeMode={FastImage.resizeMode.cover}\n      {...props}\n    />\n  );\n}\n\n// Lazy loading for images\nfunction LazyImage({ source, placeholder, style }) {\n  const [loaded, setLoaded] = useState(false);\n\n  return (\n    <View style={style}>\n      {!loaded && (\n        <View style={[style, styles.placeholder]}>\n          {placeholder}\n        </View>\n      )}\n      <FastImage\n        style={[style, { opacity: loaded ? 1 : 0 }]}\n        source={source}\n        onLoad={() => setLoaded(true)}\n      />\n    </View>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Native Animations"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "import { Animated, useNativeDriver } from 'react-native';\n\nfunction AnimatedComponent() {\n  const fadeAnim = useRef(new Animated.Value(0)).current;\n  const scaleAnim = useRef(new Animated.Value(1)).current;\n\n  const animateIn = useCallback(() => {\n    Animated.parallel([\n      Animated.timing(fadeAnim, {\n        toValue: 1,\n        duration: 300,\n        useNativeDriver: true, // Important for performance\n      }),\n      Animated.spring(scaleAnim, {\n        toValue: 1.1,\n        tension: 100,\n        friction: 8,\n        useNativeDriver: true,\n      }),\n    ]).start();\n  }, [fadeAnim, scaleAnim]);\n\n  return (\n    <Animated.View\n      style={[\n        styles.container,\n        {\n          opacity: fadeAnim,\n          transform: [{ scale: scaleAnim }],\n        },\n      ]}\n    >\n      <Text>Animated Content</Text>\n    </Animated.View>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "deployment-distribution",
+      "title": "Deployment & App Distribution",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Modern Deployment Strategies (2024)"
+        },
+        {
+          "type": "paragraph",
+          "text": "React Native apps can be deployed through various channels. The choice depends on your development workflow, update frequency, and app store requirements."
+        },
+        {
+          "type": "heading",
+          "text": "Expo EAS (Expo Application Services)"
+        },
+        {
+          "type": "paragraph",
+          "text": "EAS is Expo's cloud-based build and deployment service, offering the most streamlined experience for React Native apps."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Install EAS CLI\nnpm install -g @expo/eas-cli\n\n# Login to Expo\neas login\n\n# Configure EAS\neas build:configure\n\n# Build for iOS\neas build --platform ios\n\n# Build for Android\neas build --platform android\n\n# Build for both platforms\neas build --platform all\n\n# Submit to app stores\neas submit --platform ios\neas submit --platform android"
+        },
+        {
+          "type": "heading",
+          "text": "EAS Configuration (eas.json)"
+        },
+        {
+          "type": "code",
+          "language": "json",
+          "text": "{\n  \"cli\": {\n    \"version\": \">= 5.9.1\"\n  },\n  \"build\": {\n    \"development\": {\n      \"developmentClient\": true,\n      \"distribution\": \"internal\"\n    },\n    \"preview\": {\n      \"distribution\": \"internal\",\n      \"ios\": {\n        \"simulator\": true\n      }\n    },\n    \"production\": {\n      \"ios\": {\n        \"bundleIdentifier\": \"com.yourcompany.yourapp\"\n      },\n      \"android\": {\n        \"buildType\": \"apk\"\n      }\n    }\n  },\n  \"submit\": {\n    \"production\": {\n      \"ios\": {\n        \"appleId\": \"your-apple-id@example.com\",\n        \"ascAppId\": \"1234567890\",\n        \"appleTeamId\": \"ABCDEFGHIJ\"\n      },\n      \"android\": {\n        \"serviceAccountKeyPath\": \"./path/to/service-account-key.json\",\n        \"track\": \"production\"\n      }\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Over-the-Air Updates"
+        },
+        {
+          "type": "paragraph",
+          "text": "OTA updates allow you to push JavaScript bundle updates without going through app store review process."
+        },
+        {
+          "type": "code",
+          "language": "bash",
+          "text": "# Install EAS Update\nnpx expo install expo-updates\n\n# Configure updates in app.json\n# {\n#   \"expo\": {\n#     \"updates\": {\n#       \"url\": \"https://u.expo.dev/[your-project-id]\"\n#     }\n#   }\n# }\n\n# Publish an update\neas update --branch production --message \"Bug fixes and improvements\"\n\n# Publish to specific channel\neas update --branch main --message \"New features\""
+        },
+        {
+          "type": "heading",
+          "text": "App Store Optimization"
+        },
+        {
+          "type": "list",
+          "items": [
+            "App Icons: Create high-quality icons for all required sizes",
+            "Screenshots: Showcase key features with compelling visuals",
+            "App Description: Write clear, keyword-rich descriptions",
+            "App Store Connect: Set up proper metadata and categories",
+            "Google Play Console: Configure store listing and distribution",
+            "Privacy Policy: Required for apps that collect user data",
+            "App Store Guidelines: Follow platform-specific guidelines"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "CI/CD Pipeline Setup"
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "text": "# GitHub Actions workflow for EAS builds\nname: EAS Build\non:\n  push:\n    branches: [main]\n  pull_request:\n    branches: [main]\n\njobs:\n  build:\n    name: Install and build\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v3\n      - uses: actions/setup-node@v3\n        with:\n          node-version: 18.x\n          cache: npm\n      - name: Setup Expo\n        uses: expo/expo-github-action@v8\n        with:\n          expo-version: latest\n          token: ${{ secrets.EXPO_TOKEN }}\n      - name: Install dependencies\n        run: npm ci\n      - name: Run tests\n        run: npm test\n      - name: EAS Build\n        run: eas build --platform all --non-interactive"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main difference between React Native and hybrid app frameworks?",
+      "options": [
+        "React Native uses WebView to render components",
+        "React Native compiles to native components for better performance",
+        "React Native only works on iOS",
+        "React Native requires separate codebases for each platform"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React Native compiles JavaScript components to native UI components, providing near-native performance, unlike hybrid frameworks that run in WebView containers."
+    },
+    {
+      "id": 2,
+      "question": "Which component should you use to display text in React Native?",
+      "options": [
+        "<p> tag like in HTML",
+        "<div> with text content",
+        "<Text> component",
+        "<span> element"
+      ],
+      "correctAnswer": 2,
+      "explanation": "All text in React Native must be wrapped in <Text> components. HTML elements like <p>, <div>, or <span> are not available in React Native."
+    },
+    {
+      "id": 3,
+      "question": "What is the default flexDirection in React Native?",
+      "options": ["row", "column", "row-reverse", "column-reverse"],
+      "correctAnswer": 1,
+      "explanation": "React Native uses 'column' as the default flexDirection, which is different from web CSS where the default is 'row'."
+    },
+    {
+      "id": 4,
+      "question": "Which is the recommended approach for styling in React Native?",
+      "options": [
+        "Inline styles for better performance",
+        "CSS files imported into components",
+        "StyleSheet.create() for optimized styles",
+        "Styled-components only"
+      ],
+      "correctAnswer": 2,
+      "explanation": "StyleSheet.create() is recommended as it validates styles, optimizes them at build time, and provides better performance than inline styles."
+    },
+    {
+      "id": 5,
+      "question": "What is the purpose of the 'keyExtractor' prop in FlatList?",
+      "options": [
+        "To extract keys from objects",
+        "To provide unique identifiers for list items",
+        "To sort the list items",
+        "To filter the list data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "keyExtractor provides unique identifiers for each list item, which React Native uses for efficient rendering and updates when the list changes."
+    },
+    {
+      "id": 6,
+      "question": "Which navigation library is the standard for React Native in 2024?",
+      "options": [
+        "React Router",
+        "React Navigation",
+        "Native Navigation",
+        "Expo Router"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React Navigation is the most widely used and recommended navigation library for React Native, providing native-like navigation patterns."
+    },
+    {
+      "id": 7,
+      "question": "What is the advantage of using createNativeStackNavigator over createStackNavigator?",
+      "options": [
+        "It supports more screen types",
+        "It uses native platform navigation elements for better performance",
+        "It has better TypeScript support",
+        "It works only with Expo"
+      ],
+      "correctAnswer": 1,
+      "explanation": "createNativeStackNavigator uses native platform navigation elements, providing better performance and more native-like animations compared to the JS-based stack navigator."
+    },
+    {
+      "id": 8,
+      "question": "How do you pass parameters to a screen in React Navigation?",
+      "options": [
+        "Using props directly",
+        "Through navigation.navigate('Screen', { param: value })",
+        "Using global variables",
+        "Through URL parameters"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parameters are passed as the second argument to navigation.navigate() and can be accessed in the target screen through route.params."
+    },
+    {
+      "id": 9,
+      "question": "What is the recommended state management solution for simple React Native apps?",
+      "options": [
+        "Redux Toolkit",
+        "MobX",
+        "Context API with useReducer",
+        "Global variables"
+      ],
+      "correctAnswer": 2,
+      "explanation": "For simple state management, React's built-in Context API combined with useReducer provides a clean solution without external dependencies."
+    },
+    {
+      "id": 10,
+      "question": "Which hook should you use to access navigation object in any component?",
+      "options": ["useNavigation", "useRouter", "useNavigate", "useHistory"],
+      "correctAnswer": 0,
+      "explanation": "useNavigation hook provides access to the navigation object from any component within the navigation tree, eliminating the need to pass navigation as props."
+    },
+    {
+      "id": 11,
+      "question": "What is the purpose of StyleSheet.create() in React Native?",
+      "options": [
+        "To create CSS files",
+        "To validate and optimize styles at build time",
+        "To enable CSS-in-JS",
+        "To support SCSS syntax"
+      ],
+      "correctAnswer": 1,
+      "explanation": "StyleSheet.create() validates styles, optimizes them at build time, and provides better performance compared to inline styles by preventing object recreation on each render."
+    },
+    {
+      "id": 12,
+      "question": "How do you handle platform-specific code in React Native?",
+      "options": [
+        "Using Platform.OS or Platform.select()",
+        "Creating separate apps for each platform",
+        "Using CSS media queries",
+        "Platform-specific code is not supported"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Platform.OS and Platform.select() allow you to write platform-specific code, and you can also create platform-specific files with .ios.js or .android.js extensions."
+    },
+    {
+      "id": 13,
+      "question": "What is the difference between Expo and React Native CLI?",
+      "options": [
+        "Expo is only for iOS development",
+        "Expo provides a managed workflow with built-in features, CLI gives more control",
+        "CLI is deprecated in favor of Expo",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Expo provides a managed workflow with many built-in features and easier setup, while React Native CLI gives you more control over native code and dependencies."
+    },
+    {
+      "id": 14,
+      "question": "Which component should you use for handling touch events in React Native?",
+      "options": [
+        "TouchableOpacity",
+        "Pressable",
+        "Button",
+        "All of the above"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Pressable is the modern, recommended component for handling touch events. It's more flexible and performant than the older Touchable components."
+    },
+    {
+      "id": 15,
+      "question": "What is the purpose of the SafeAreaView component?",
+      "options": [
+        "To prevent crashes",
+        "To handle device safe areas like notches and home indicators",
+        "To create secure layouts",
+        "To optimize performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "SafeAreaView ensures content is rendered within the safe area boundaries of a device, avoiding areas like notches, status bars, and home indicators."
+    },
+    {
+      "id": 16,
+      "question": "How do you optimize FlatList performance for large datasets?",
+      "options": [
+        "Use ScrollView instead",
+        "Set removeClippedSubviews, getItemLayout, and limit initialNumToRender",
+        "Load all data at once",
+        "Use nested FlatLists"
+      ],
+      "correctAnswer": 1,
+      "explanation": "FlatList performance can be optimized by setting removeClippedSubviews, providing getItemLayout for consistent item heights, and limiting initialNumToRender."
+    },
+    {
+      "id": 17,
+      "question": "What is the new React Native architecture introduced in 2024?",
+      "options": [
+        "Metro bundler",
+        "Fabric renderer and TurboModules",
+        "Expo SDK",
+        "React Native Web"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The new architecture includes Fabric (new renderer) and TurboModules (improved native module system) for better performance and developer experience."
+    },
+    {
+      "id": 18,
+      "question": "How do you handle responsive design in React Native?",
+      "options": [
+        "Using CSS media queries",
+        "Using Dimensions API and percentage-based widths",
+        "Creating separate layouts for each device",
+        "Responsive design is not supported"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React Native uses Dimensions API, percentage-based widths, and Flexbox for responsive design. The useWindowDimensions hook provides reactive dimension updates."
+    },
+    {
+      "id": 19,
+      "question": "What is the recommended way to handle images in React Native?",
+      "options": [
+        "Using HTML img tags",
+        "Using the Image component with source prop",
+        "Embedding images as base64 strings",
+        "Using CSS background-image"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Image component with source prop is used for displaying images. Source can be a local require() or an object with uri for remote images."
+    },
+    {
+      "id": 20,
+      "question": "Which state management library is best for complex React Native applications?",
+      "options": [
+        "Context API only",
+        "Redux Toolkit",
+        "Local component state",
+        "Global variables"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Redux Toolkit is recommended for complex applications with extensive state management needs, providing excellent DevTools, middleware support, and predictable state updates."
+    }
+  ]
+}
