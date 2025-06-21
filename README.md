@@ -181,14 +181,14 @@ Modify the theme configuration in `pages/_app.tsx`:
 
 ```tsx
 <ConfigProvider
-  theme={{
+  theme={% raw %}{{
     algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
     token: {
       colorPrimary: '#your-primary-color',
       borderRadius: 8,
       // ... other tokens
     },
-  }}
+  }}{% endraw %}
 >
 ```
 
