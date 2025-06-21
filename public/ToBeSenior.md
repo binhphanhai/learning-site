@@ -1,64 +1,85 @@
 # To Be Senior Frontend Engineer
 
-## 1. Advanced JavaScript & TypeScript
-- **Deep understanding of ES6+ features**: let/const, arrow functions, destructuring, spread/rest, template literals, default parameters, classes, modules, iterators, generators, async/await, etc.
-- **TypeScript advanced types and generics**: interfaces, type aliases, enums, union/intersection types, mapped types, conditional types, utility types (Partial, Pick, Omit, etc.), generics in functions and classes, type inference, declaration merging, type guards, discriminated unions.
-- **Asynchronous programming**: Promises, async/await, error handling, Promise.all/race, callback patterns, event loop, microtasks vs macrotasks.
-- **Functional programming concepts**: pure functions, immutability, higher-order functions, closures, currying, composition, map/filter/reduce, side effects, declarative vs imperative code.
+## 1. Advanced System Architecture & Design Patterns
+- **Scalable frontend architecture**: Micro-frontends, modular architecture, domain-driven design, separation of concerns at scale
+- **Design patterns mastery**: Observer, Factory, Strategy, Command, Decorator patterns in frontend context, architectural decision records
+- **Performance at scale**: Bundle splitting strategies, lazy loading patterns, code splitting at component/route/vendor levels, tree shaking optimization
+- **Cross-application integration**: Module federation, shared component libraries, design system governance, API contract management
+- **Legacy system modernization**: Incremental migration strategies, strangler fig pattern, feature flags, backward compatibility
 
-## 2. React Ecosystem Mastery
-- **React 19 advanced patterns**: hooks (useState, useEffect, useMemo, useCallback, useRef, custom hooks), context API, suspense and concurrent features, error boundaries, portals, forward refs, render props, compound components, controlled vs uncontrolled components.
-- **State management**: Redux Toolkit (slices, thunks, selectors, middleware), Zustand, React Query (data fetching, caching, mutations, query invalidation), context for global state, when to use which tool.
-- **Performance optimization**: memoization (React.memo, useMemo, useCallback), virtualization (react-window, react-virtualized), lazy loading, code splitting (React.lazy, Suspense), avoiding unnecessary re-renders, profiling with React DevTools.
-- **Component design and reusability**: atomic design principles, prop drilling vs context, composition over inheritance, reusable UI patterns, accessibility in components, storybook for component development.
-- **Custom hooks and context providers**: extracting logic into hooks, sharing state/context, best practices for context performance, testing custom hooks.
+## 2. Advanced React Ecosystem & State Architecture
+- **State architecture patterns**: Flux/Redux advanced patterns, state machines with XState, event sourcing, CQRS in frontend
+- **Advanced React patterns**: Render props, higher-order components, compound components, provider patterns, custom hook composition
+- **React internals mastery**: Fiber architecture, reconciliation algorithm, scheduler, concurrent features, time slicing, priority batching
+- **Performance profiling**: React DevTools Profiler, memory leak detection, render optimization, bundle analysis, Core Web Vitals optimization
+- **Server components architecture**: RSC patterns, streaming SSR, selective hydration, islands architecture, edge computing integration
 
-## 3. Next.js & SSR/SSG
-- **Next.js routing and layouts**: file-based routing, dynamic routes, nested layouts, middleware, route groups, parallel routes.
-- **Server-side rendering (SSR) and static site generation (SSG)**: getServerSideProps, getStaticProps, getStaticPaths, ISR (Incremental Static Regeneration), when to use SSR vs SSG vs CSR.
-- **API routes and middleware**: building API endpoints in Next.js, middleware for authentication, logging, rate limiting, edge functions.
-- **Incremental static regeneration (ISR)**: updating static content after deployment, revalidation strategies.
-- **Next.js 15 new features**: app directory, server components, streaming, enhanced routing, etc.
+## 3. Enterprise-Level TypeScript & Code Quality
+- **Advanced TypeScript patterns**: Conditional types, mapped types, template literal types, recursive types, type-level programming
+- **Type-safe architecture**: Branded types, phantom types, API contract validation, runtime type checking, schema validation
+- **Large codebase management**: Monorepo strategies, workspace management, dependency graphs, circular dependency detection
+- **Code quality at scale**: ESLint custom rules, AST manipulation, automated refactoring tools, technical debt measurement
+- **API design patterns**: Type-safe API clients, code generation, OpenAPI integration, GraphQL schema design
 
-## 4. UI/UX & Design Systems
-- **Ant Design customization and theming**: overriding default styles, using theme variables, custom components, integrating with Sass/LESS.
-- **Responsive and adaptive design**: CSS media queries, mobile-first design, fluid layouts, breakpoints, flexbox, grid, viewport units, device testing.
-- **Accessibility (a11y) best practices**: semantic HTML, ARIA roles/attributes, keyboard navigation, screen reader support, color contrast, focus management, testing with aXe/VoiceOver.
-- **Cross-browser and cross-device compatibility**: browser testing, polyfills, vendor prefixes, feature detection, progressive enhancement.
-- **Building and maintaining design systems**: tokens, component libraries, documentation, versioning, design handoff, Figma integration.
+## 4. Performance Engineering & Optimization
+- **Advanced performance monitoring**: Real User Monitoring (RUM), synthetic testing, performance budgets, regression detection
+- **Critical rendering path optimization**: Resource hints, preloading strategies, critical CSS extraction, above-the-fold optimization
+- **Memory management**: Memory leak debugging, heap analysis, garbage collection optimization, WeakMap/WeakSet usage patterns
+- **Network optimization**: HTTP/2 push strategies, service worker caching, offline-first architecture, progressive web app patterns
+- **Browser performance**: Main thread optimization, Web Workers utilization, OffscreenCanvas, WebAssembly integration
 
-## 5. Testing & Debugging
-- **Unit, integration, and E2E testing**: Jest, React Testing Library, Cypress, Mocha, test structure, mocking, coverage, CI integration.
-- **Test-driven development (TDD)**: writing tests before code, red-green-refactor cycle, benefits and tradeoffs.
-- **Debugging tools and techniques**: Chrome DevTools (breakpoints, network, performance, memory), React DevTools, Redux DevTools, logging, error boundaries, source maps.
+## 5. Advanced Testing & Quality Assurance
+- **Testing architecture**: Test pyramid implementation, contract testing, property-based testing, mutation testing
+- **End-to-end testing at scale**: Visual regression testing, cross-browser automation, parallel test execution, test data management
+- **Performance testing**: Load testing frontend applications, stress testing, benchmarking, regression testing automation
+- **Security testing**: OWASP compliance, automated security scanning, penetration testing, vulnerability assessment
+- **Quality metrics**: Code coverage analysis, complexity metrics, maintainability indices, technical debt tracking
 
-## 6. Modern Frontend Tooling
-- **Webpack, Vite, and build optimization**: entry/output, loaders, plugins, code splitting, tree shaking, caching, environment variables, custom configurations, migration between tools.
-- **Linting and formatting**: ESLint rules, Prettier integration, custom configs, pre-commit hooks (husky, lint-staged), fixing and enforcing code style.
-- **CI/CD pipelines for frontend**: GitHub Actions, GitLab CI, CircleCI, automated testing, linting, building, deployment, environment variables, secrets management, rollback strategies.
-- **Docker for frontend development**: writing Dockerfiles, multi-stage builds, local development with Docker, deploying containers, best practices for image size and security.
+## 6. DevOps & Infrastructure Mastery
+- **CI/CD architecture**: Multi-stage pipelines, deployment strategies (blue-green, canary, rolling), infrastructure as code
+- **Containerization strategies**: Docker optimization, multi-stage builds, security scanning, registry management
+- **Cloud architecture**: CDN optimization, edge computing, serverless functions, auto-scaling strategies
+- **Monitoring & observability**: Application Performance Monitoring (APM), distributed tracing, log aggregation, alerting strategies
+- **Security hardening**: Content Security Policy, security headers, dependency vulnerability scanning, secrets management
 
-## 7. Backend Integration & API Design
-- **RESTful API consumption and design**: HTTP methods, status codes, REST principles, API versioning, pagination, filtering, error handling, OpenAPI/Swagger.
-- **Authentication and authorization**: OAuth2, JWT, session vs token, refresh tokens, secure storage, role-based access control, integrating with backend auth flows.
-- **Error handling and data validation**: try/catch, error boundaries, user feedback, zod/yup for schema validation, handling API errors gracefully.
-- **Working with Axios and async data flows**: interceptors, cancellation, retries, global error handling, request/response transformation.
+## 7. Technical Leadership & Team Scaling
+- **Architecture decision making**: Technical RFC processes, architectural review boards, decision documentation, trade-off analysis
+- **Code review leadership**: Establishing review standards, mentoring through reviews, architectural guidance, knowledge transfer
+- **Technical debt management**: Debt identification, prioritization frameworks, refactoring strategies, migration planning
+- **Team productivity**: Developer experience optimization, tooling decisions, workflow automation, onboarding process design
+- **Cross-team collaboration**: API design coordination, shared library governance, technical standard establishment
 
-## 8. Database & Data Modeling
-- **SQL basics and query optimization**: SELECT, INSERT, UPDATE, DELETE, JOINs, indexes, normalization, query profiling, N+1 problem.
-- **Data modeling for frontend consumption**: shaping API responses, DTOs, mapping backend data to UI, caching strategies, optimistic updates.
+## 8. Advanced Security & Compliance
+- **Security architecture**: Threat modeling, security by design, zero-trust principles, defense in depth strategies
+- **Compliance frameworks**: GDPR implementation, accessibility compliance (WCAG 2.1 AA), SOC 2, PCI DSS considerations
+- **Secure development lifecycle**: Security testing integration, dependency scanning, static analysis, dynamic analysis
+- **Identity & access management**: Advanced OAuth2/OIDC flows, RBAC implementation, session management, SSO integration
+- **Data protection**: Encryption strategies, secure data handling, privacy by design, data retention policies
 
-## 9. Security Best Practices
-- **Web security principles**: XSS, CSRF, CORS, clickjacking, content security policy, HTTPS, secure cookies, input sanitization, OWASP Top 10.
-- **Secure authentication flows**: login, registration, password reset, multi-factor authentication, secure token storage, session management.
-- **Secure data handling in frontend**: avoiding sensitive data exposure, encrypting data in transit, secure local storage, handling secrets.
+## 9. Innovation & Emerging Technologies
+- **Emerging web standards**: Web Components, WebAssembly, WebRTC, WebXR, Progressive Web Apps, Web Streams API
+- **AI/ML integration**: TensorFlow.js, model deployment, edge AI, machine learning in browser, ethical AI considerations
+- **Performance APIs**: Web Vitals API, Performance Observer, Navigation Timing, Resource Timing, User Timing
+- **Modern browser features**: Service Workers, Web Workers, Shared Array Buffer, WebGL, WebGPU
+- **Experimental technologies**: WebAssembly System Interface (WASI), WebCodecs, WebTransport, File System Access API
 
-## 10. Collaboration & Leadership
-- **Code review best practices**: constructive feedback, code quality, consistency, knowledge sharing, review tools (GitHub/GitLab), handling conflicts.
-- **Technical documentation**: writing clear READMEs, API docs, architecture diagrams, inline comments, documenting decisions and tradeoffs.
-- **Mentoring and knowledge sharing**: onboarding, pair programming, brown bag sessions, code walkthroughs, fostering team growth.
-- **Agile methodologies and stakeholder communication**: Scrum/Kanban, sprint planning, retrospectives, user stories, communicating with PMs/designers, managing expectations.
+## 10. Business & Product Strategy
+- **Technical strategy alignment**: Roadmap planning, technical vision, stakeholder communication, business case development
+- **Product engineering**: Feature flag architecture, A/B testing infrastructure, analytics integration, conversion optimization
+- **Scalability planning**: Growth modeling, capacity planning, performance forecasting, infrastructure scaling strategies
+- **Risk management**: Technical risk assessment, disaster recovery planning, business continuity, incident response
+- **Cost optimization**: Resource utilization analysis, performance vs cost trade-offs, vendor evaluation, ROI measurement
 
-## 11. Open Source & Community
-- **Contributing to open source**: finding projects, submitting PRs, code of conduct, issue triage, writing good issues/PRs, maintaining a project.
-- **Staying up-to-date with frontend trends**: following blogs, newsletters, conferences, Twitter, experimenting with new tools, continuous learning. 
+## 11. Mentorship & Knowledge Leadership
+- **Senior mentorship**: Career development guidance, technical skill assessment, growth planning, opportunity creation
+- **Knowledge sharing**: Technical writing, internal documentation, conference speaking, workshop facilitation
+- **Community building**: Open source leadership, technical community engagement, industry networking, thought leadership
+- **Organizational learning**: Learning culture development, knowledge management systems, expertise mapping
+- **Succession planning**: Knowledge transfer, skill development programs, leadership pipeline, bus factor mitigation
+
+## 12. Advanced Problem Solving & Decision Making
+- **Complex debugging**: Multi-system issue analysis, performance bottleneck identification, race condition debugging
+- **System thinking**: Holistic problem analysis, unintended consequences prediction, feedback loop identification
+- **Decision frameworks**: Technology evaluation criteria, risk/benefit analysis, proof of concept methodologies
+- **Innovation processes**: Technical spike planning, research methodologies, experimentation frameworks
+- **Crisis management**: Incident response leadership, post-mortem facilitation, preventive measure implementation 

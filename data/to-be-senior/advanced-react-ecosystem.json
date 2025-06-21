@@ -1,0 +1,490 @@
+{
+  "title": "Advanced React Ecosystem & State Architecture",
+  "description": "Master advanced React patterns, state architecture, React internals, performance optimization, and server components for senior-level React development",
+  "sections": [
+    {
+      "id": "state-architecture-patterns",
+      "title": "State Architecture Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Advanced Redux Patterns"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern Redux patterns including RTK Query, entity normalization, and advanced middleware for complex state management at scale."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Redux Toolkit with Entity Adapter\nimport { createEntityAdapter, createSlice, createAsyncThunk } from '@reduxjs/toolkit';\nimport { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';\n\n// Entity Adapter for normalized state\nconst usersAdapter = createEntityAdapter({\n  selectId: (user) => user.id,\n  sortComparer: (a, b) => a.name.localeCompare(b.name),\n});\n\n// RTK Query API\nexport const api = createApi({\n  reducerPath: 'api',\n  baseQuery: fetchBaseQuery({\n    baseUrl: '/api/',\n    prepareHeaders: (headers, { getState }) => {\n      const token = getState().auth.token;\n      if (token) {\n        headers.set('authorization', `Bearer ${token}`);\n      }\n      return headers;\n    },\n  }),\n  tagTypes: ['User', 'Post', 'Comment'],\n  endpoints: (builder) => ({\n    getUsers: builder.query({\n      query: () => 'users',\n      providesTags: ['User'],\n      transformResponse: (response) => {\n        return usersAdapter.setAll(usersAdapter.getInitialState(), response);\n      },\n    }),\n    getUserById: builder.query({\n      query: (id) => `users/${id}`,\n      providesTags: (result, error, id) => [{ type: 'User', id }],\n    }),\n    updateUser: builder.mutation({\n      query: ({ id, ...patch }) => ({\n        url: `users/${id}`,\n        method: 'PATCH',\n        body: patch,\n      }),\n      invalidatesTags: (result, error, { id }) => [{ type: 'User', id }],\n      // Optimistic updates\n      onQueryStarted: async ({ id, ...patch }, { dispatch, queryFulfilled }) => {\n        const patchResult = dispatch(\n          api.util.updateQueryData('getUserById', id, (draft) => {\n            Object.assign(draft, patch);\n          })\n        );\n        try {\n          await queryFulfilled;\n        } catch {\n          patchResult.undo();\n        }\n      },\n    }),\n  }),\n});\n\n// Advanced middleware for complex side effects\nconst analyticsMiddleware = (store) => (next) => (action) => {\n  const result = next(action);\n  \n  // Track user actions\n  if (action.type.endsWith('/fulfilled')) {\n    const state = store.getState();\n    analytics.track('redux_action_success', {\n      action: action.type,\n      userId: state.auth.user?.id,\n      timestamp: Date.now(),\n    });\n  }\n  \n  return result;\n};\n\n// Custom middleware for offline support\nconst offlineMiddleware = (store) => (next) => (action) => {\n  if (!navigator.onLine && action.type.includes('api/')) {\n    // Queue action for later\n    store.dispatch(queueOfflineAction(action));\n    return;\n  }\n  \n  return next(action);\n};"
+        },
+        {
+          "type": "heading",
+          "text": "State Machines with XState"
+        },
+        {
+          "type": "paragraph",
+          "text": "XState provides a robust way to manage complex state transitions and side effects in React applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced XState machine for form handling\nimport { createMachine, assign, spawn } from 'xstate';\nimport { useMachine } from '@xstate/react';\n\n// Child machine for field validation\nconst fieldMachine = createMachine({\n  id: 'field',\n  initial: 'idle',\n  context: {\n    value: '',\n    error: null,\n    touched: false,\n  },\n  states: {\n    idle: {\n      on: {\n        CHANGE: {\n          actions: assign({\n            value: (_, event) => event.value,\n          }),\n        },\n        BLUR: {\n          target: 'validating',\n          actions: assign({ touched: true }),\n        },\n      },\n    },\n    validating: {\n      invoke: {\n        src: 'validateField',\n        onDone: {\n          target: 'valid',\n          actions: assign({ error: null }),\n        },\n        onError: {\n          target: 'invalid',\n          actions: assign({\n            error: (_, event) => event.data.message,\n          }),\n        },\n      },\n    },\n    valid: {\n      on: {\n        CHANGE: {\n          target: 'idle',\n          actions: assign({\n            value: (_, event) => event.value,\n          }),\n        },\n      },\n    },\n    invalid: {\n      on: {\n        CHANGE: {\n          target: 'idle',\n          actions: assign({\n            value: (_, event) => event.value,\n          }),\n        },\n      },\n    },\n  },\n});\n\n// Main form machine\nconst formMachine = createMachine({\n  id: 'form',\n  initial: 'editing',\n  context: {\n    fields: {},\n    submitError: null,\n  },\n  states: {\n    editing: {\n      entry: assign({\n        fields: () => ({\n          email: spawn(fieldMachine.withContext({ value: '', error: null })),\n          password: spawn(fieldMachine.withContext({ value: '', error: null })),\n          confirmPassword: spawn(fieldMachine.withContext({ value: '', error: null })),\n        }),\n      }),\n      on: {\n        SUBMIT: {\n          target: 'validating',\n          cond: 'allFieldsValid',\n        },\n      },\n    },\n    validating: {\n      invoke: {\n        src: 'validateForm',\n        onDone: 'submitting',\n        onError: {\n          target: 'editing',\n          actions: assign({\n            submitError: (_, event) => event.data.message,\n          }),\n        },\n      },\n    },\n    submitting: {\n      invoke: {\n        src: 'submitForm',\n        onDone: 'success',\n        onError: {\n          target: 'editing',\n          actions: assign({\n            submitError: (_, event) => event.data.message,\n          }),\n        },\n      },\n    },\n    success: {\n      type: 'final',\n    },\n  },\n}, {\n  guards: {\n    allFieldsValid: (context) => {\n      return Object.values(context.fields).every(\n        field => field.getSnapshot().matches('valid')\n      );\n    },\n  },\n  services: {\n    validateField: async (context) => {\n      // Simulate async validation\n      await new Promise(resolve => setTimeout(resolve, 300));\n      if (context.value.length < 3) {\n        throw new Error('Field must be at least 3 characters');\n      }\n    },\n    validateForm: async (context) => {\n      const email = context.fields.email.getSnapshot().context.value;\n      const password = context.fields.password.getSnapshot().context.value;\n      const confirmPassword = context.fields.confirmPassword.getSnapshot().context.value;\n      \n      if (password !== confirmPassword) {\n        throw new Error('Passwords do not match');\n      }\n    },\n    submitForm: async (context) => {\n      const formData = Object.entries(context.fields).reduce((acc, [key, field]) => {\n        acc[key] = field.getSnapshot().context.value;\n        return acc;\n      }, {});\n      \n      const response = await fetch('/api/register', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(formData),\n      });\n      \n      if (!response.ok) {\n        throw new Error('Registration failed');\n      }\n    },\n  },\n});\n\n// React component using the form machine\nfunction RegistrationForm() {\n  const [state, send] = useMachine(formMachine);\n  \n  const handleSubmit = (e) => {\n    e.preventDefault();\n    send('SUBMIT');\n  };\n  \n  return (\n    <form onSubmit={handleSubmit}>\n      <FormField\n        field={state.context.fields.email}\n        label=\"Email\"\n        type=\"email\"\n      />\n      <FormField\n        field={state.context.fields.password}\n        label=\"Password\"\n        type=\"password\"\n      />\n      <FormField\n        field={state.context.fields.confirmPassword}\n        label=\"Confirm Password\"\n        type=\"password\"\n      />\n      \n      {state.context.submitError && (\n        <div className=\"error\">{state.context.submitError}</div>\n      )}\n      \n      <button\n        type=\"submit\"\n        disabled={!state.matches('editing') || state.context.submitError}\n      >\n        {state.matches('submitting') ? 'Registering...' : 'Register'}\n      </button>\n    </form>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Event Sourcing in Frontend"
+        },
+        {
+          "type": "paragraph",
+          "text": "Event sourcing pattern for maintaining complete audit trails and enabling time-travel debugging in complex applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Event Sourcing Implementation\nclass EventStore {\n  constructor() {\n    this.events = [];\n    this.snapshots = new Map();\n    this.projections = new Map();\n  }\n  \n  // Append events to the store\n  append(streamId, events, expectedVersion = -1) {\n    const currentVersion = this.getStreamVersion(streamId);\n    \n    if (expectedVersion !== -1 && currentVersion !== expectedVersion) {\n      throw new Error('Concurrency conflict');\n    }\n    \n    const newEvents = events.map((event, index) => ({\n      ...event,\n      streamId,\n      version: currentVersion + index + 1,\n      timestamp: Date.now(),\n      id: crypto.randomUUID(),\n    }));\n    \n    this.events.push(...newEvents);\n    \n    // Update projections\n    this.updateProjections(streamId, newEvents);\n    \n    return currentVersion + events.length;\n  }\n  \n  // Get events for a stream\n  getEvents(streamId, fromVersion = 0) {\n    return this.events.filter(\n      event => event.streamId === streamId && event.version > fromVersion\n    );\n  }\n  \n  // Create snapshot for performance\n  createSnapshot(streamId, state, version) {\n    this.snapshots.set(streamId, { state, version, timestamp: Date.now() });\n  }\n  \n  // Rebuild state from events\n  rehydrate(streamId, reducer, initialState = {}) {\n    const snapshot = this.snapshots.get(streamId);\n    let state = snapshot ? snapshot.state : initialState;\n    let fromVersion = snapshot ? snapshot.version : 0;\n    \n    const events = this.getEvents(streamId, fromVersion);\n    \n    return events.reduce(reducer, state);\n  }\n  \n  // Register projection\n  registerProjection(name, projection) {\n    this.projections.set(name, projection);\n  }\n  \n  // Update all projections\n  updateProjections(streamId, events) {\n    this.projections.forEach(projection => {\n      projection.handle(streamId, events);\n    });\n  }\n  \n  getStreamVersion(streamId) {\n    const streamEvents = this.events.filter(e => e.streamId === streamId);\n    return streamEvents.length > 0 ? Math.max(...streamEvents.map(e => e.version)) : 0;\n  }\n}\n\n// Domain events\nconst TodoEvents = {\n  TodoAdded: (id, text) => ({ type: 'TodoAdded', payload: { id, text } }),\n  TodoCompleted: (id) => ({ type: 'TodoCompleted', payload: { id } }),\n  TodoTextChanged: (id, text) => ({ type: 'TodoTextChanged', payload: { id, text } }),\n  TodoDeleted: (id) => ({ type: 'TodoDeleted', payload: { id } }),\n};\n\n// Todo aggregate\nclass TodoAggregate {\n  constructor(id, eventStore) {\n    this.id = id;\n    this.eventStore = eventStore;\n    this.state = this.rehydrate();\n  }\n  \n  // Command handlers\n  addTodo(text) {\n    const event = TodoEvents.TodoAdded(crypto.randomUUID(), text);\n    this.eventStore.append(this.id, [event]);\n    this.state = this.applyEvent(this.state, event);\n  }\n  \n  completeTodo(todoId) {\n    const todo = this.state.todos.find(t => t.id === todoId);\n    if (!todo) throw new Error('Todo not found');\n    if (todo.completed) throw new Error('Todo already completed');\n    \n    const event = TodoEvents.TodoCompleted(todoId);\n    this.eventStore.append(this.id, [event]);\n    this.state = this.applyEvent(this.state, event);\n  }\n  \n  // Event reducer\n  applyEvent(state, event) {\n    switch (event.type) {\n      case 'TodoAdded':\n        return {\n          ...state,\n          todos: [...state.todos, {\n            id: event.payload.id,\n            text: event.payload.text,\n            completed: false,\n            createdAt: Date.now(),\n          }],\n        };\n      \n      case 'TodoCompleted':\n        return {\n          ...state,\n          todos: state.todos.map(todo =>\n            todo.id === event.payload.id\n              ? { ...todo, completed: true, completedAt: Date.now() }\n              : todo\n          ),\n        };\n      \n      case 'TodoTextChanged':\n        return {\n          ...state,\n          todos: state.todos.map(todo =>\n            todo.id === event.payload.id\n              ? { ...todo, text: event.payload.text }\n              : todo\n          ),\n        };\n      \n      case 'TodoDeleted':\n        return {\n          ...state,\n          todos: state.todos.filter(todo => todo.id !== event.payload.id),\n        };\n      \n      default:\n        return state;\n    }\n  }\n  \n  // Rehydrate from event store\n  rehydrate() {\n    return this.eventStore.rehydrate(\n      this.id,\n      this.applyEvent.bind(this),\n      { todos: [] }\n    );\n  }\n}\n\n// React Hook for event sourcing\nfunction useEventSourcedState(aggregateId, AggregateClass) {\n  const [eventStore] = useState(() => new EventStore());\n  const [aggregate, setAggregate] = useState(() => new AggregateClass(aggregateId, eventStore));\n  const [state, setState] = useState(aggregate.state);\n  \n  useEffect(() => {\n    const handleEvents = () => {\n      setState(aggregate.rehydrate());\n    };\n    \n    // Listen for new events\n    eventStore.on('eventsAppended', handleEvents);\n    \n    return () => {\n      eventStore.off('eventsAppended', handleEvents);\n    };\n  }, [aggregate, eventStore]);\n  \n  return [state, aggregate];\n}"
+        }
+      ]
+    },
+    {
+      "id": "advanced-react-patterns",
+      "title": "Advanced React Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Compound Components Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Compound components allow you to create flexible, reusable components that work together while maintaining a clean API."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Compound Components with Context\nimport React, { createContext, useContext, useState, Children, cloneElement } from 'react';\n\n// Context for sharing state between compound components\nconst AccordionContext = createContext();\n\n// Main Accordion component\nfunction Accordion({ children, allowMultiple = false, ...props }) {\n  const [openItems, setOpenItems] = useState(new Set());\n  \n  const toggleItem = (index) => {\n    setOpenItems(prev => {\n      const newSet = new Set(prev);\n      \n      if (newSet.has(index)) {\n        newSet.delete(index);\n      } else {\n        if (!allowMultiple) {\n          newSet.clear();\n        }\n        newSet.add(index);\n      }\n      \n      return newSet;\n    });\n  };\n  \n  const contextValue = {\n    openItems,\n    toggleItem,\n    allowMultiple,\n  };\n  \n  return (\n    <AccordionContext.Provider value={contextValue}>\n      <div className=\"accordion\" {...props}>\n        {Children.map(children, (child, index) =>\n          cloneElement(child, { index })\n        )}\n      </div>\n    </AccordionContext.Provider>\n  );\n}\n\n// AccordionItem component\nfunction AccordionItem({ children, index, ...props }) {\n  const { openItems } = useContext(AccordionContext);\n  const isOpen = openItems.has(index);\n  \n  return (\n    <div className={`accordion-item ${isOpen ? 'open' : ''}`} {...props}>\n      {Children.map(children, child =>\n        cloneElement(child, { index, isOpen })\n      )}\n    </div>\n  );\n}\n\n// AccordionHeader component\nfunction AccordionHeader({ children, index, isOpen, ...props }) {\n  const { toggleItem } = useContext(AccordionContext);\n  \n  return (\n    <button\n      className=\"accordion-header\"\n      onClick={() => toggleItem(index)}\n      aria-expanded={isOpen}\n      {...props}\n    >\n      {children}\n      <span className={`accordion-icon ${isOpen ? 'rotated' : ''}`}>▼</span>\n    </button>\n  );\n}\n\n// AccordionPanel component\nfunction AccordionPanel({ children, isOpen, ...props }) {\n  return (\n    <div\n      className=\"accordion-panel\"\n      style={{\n        maxHeight: isOpen ? '1000px' : '0',\n        overflow: 'hidden',\n        transition: 'max-height 0.3s ease',\n      }}\n      {...props}\n    >\n      <div className=\"accordion-content\">{children}</div>\n    </div>\n  );\n}\n\n// Attach sub-components to main component\nAccordion.Item = AccordionItem;\nAccordion.Header = AccordionHeader;\nAccordion.Panel = AccordionPanel;\n\n// Usage\nfunction App() {\n  return (\n    <Accordion allowMultiple>\n      <Accordion.Item>\n        <Accordion.Header>Section 1</Accordion.Header>\n        <Accordion.Panel>\n          Content for section 1\n        </Accordion.Panel>\n      </Accordion.Item>\n      \n      <Accordion.Item>\n        <Accordion.Header>Section 2</Accordion.Header>\n        <Accordion.Panel>\n          Content for section 2\n        </Accordion.Panel>\n      </Accordion.Item>\n    </Accordion>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Render Props Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Render props enable sharing code between components using a prop whose value is a function."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Render Props with Performance Optimization\nimport React, { useState, useEffect, useCallback, memo } from 'react';\n\n// DataFetcher component using render props\nfunction DataFetcher({ url, render, fallback, onError, cacheKey }) {\n  const [state, setState] = useState({\n    data: null,\n    loading: true,\n    error: null,\n  });\n  \n  // Memoized cache\n  const cache = useMemo(() => new Map(), []);\n  \n  const fetchData = useCallback(async () => {\n    // Check cache first\n    if (cacheKey && cache.has(cacheKey)) {\n      setState({\n        data: cache.get(cacheKey),\n        loading: false,\n        error: null,\n      });\n      return;\n    }\n    \n    setState(prev => ({ ...prev, loading: true, error: null }));\n    \n    try {\n      const response = await fetch(url);\n      if (!response.ok) {\n        throw new Error(`HTTP error! status: ${response.status}`);\n      }\n      \n      const data = await response.json();\n      \n      // Cache the result\n      if (cacheKey) {\n        cache.set(cacheKey, data);\n      }\n      \n      setState({ data, loading: false, error: null });\n    } catch (error) {\n      setState({ data: null, loading: false, error });\n      onError?.(error);\n    }\n  }, [url, cacheKey, cache, onError]);\n  \n  useEffect(() => {\n    fetchData();\n  }, [fetchData]);\n  \n  // Render loading state\n  if (state.loading) {\n    return fallback || <div>Loading...</div>;\n  }\n  \n  // Render error state\n  if (state.error) {\n    return (\n      <div className=\"error\">\n        Error: {state.error.message}\n        <button onClick={fetchData}>Retry</button>\n      </div>\n    );\n  }\n  \n  // Render data using render prop\n  return render(state.data, { refetch: fetchData });\n}\n\n// Advanced render prop with multiple render functions\nfunction MultiRenderDataFetcher({ url, children, renderLoading, renderError, renderEmpty }) {\n  const [state, setState] = useState({\n    data: null,\n    loading: true,\n    error: null,\n  });\n  \n  useEffect(() => {\n    fetch(url)\n      .then(res => res.json())\n      .then(data => setState({ data, loading: false, error: null }))\n      .catch(error => setState({ data: null, loading: false, error }));\n  }, [url]);\n  \n  if (state.loading) {\n    return renderLoading ? renderLoading() : <div>Loading...</div>;\n  }\n  \n  if (state.error) {\n    return renderError ? renderError(state.error) : <div>Error occurred</div>;\n  }\n  \n  if (!state.data || (Array.isArray(state.data) && state.data.length === 0)) {\n    return renderEmpty ? renderEmpty() : <div>No data available</div>;\n  }\n  \n  return children(state.data);\n}\n\n// Usage examples\nfunction UserProfile({ userId }) {\n  return (\n    <DataFetcher\n      url={`/api/users/${userId}`}\n      cacheKey={`user-${userId}`}\n      fallback={<UserSkeleton />}\n      onError={(error) => analytics.track('user_fetch_error', { error: error.message })}\n      render={(user, { refetch }) => (\n        <div className=\"user-profile\">\n          <img src={user.avatar} alt={user.name} />\n          <h2>{user.name}</h2>\n          <p>{user.email}</p>\n          <button onClick={refetch}>Refresh</button>\n        </div>\n      )}\n    />\n  );\n}\n\nfunction PostsList() {\n  return (\n    <MultiRenderDataFetcher\n      url=\"/api/posts\"\n      renderLoading={() => (\n        <div className=\"posts-loading\">\n          {Array.from({ length: 5 }, (_, i) => <PostSkeleton key={i} />)}\n        </div>\n      )}\n      renderError={(error) => (\n        <div className=\"posts-error\">\n          <h3>Failed to load posts</h3>\n          <p>{error.message}</p>\n          <button onClick={() => window.location.reload()}>Retry</button>\n        </div>\n      )}\n      renderEmpty={() => (\n        <div className=\"posts-empty\">\n          <h3>No posts yet</h3>\n          <p>Be the first to create a post!</p>\n          <button>Create Post</button>\n        </div>\n      )}\n    >\n      {(posts) => (\n        <div className=\"posts-list\">\n          {posts.map(post => (\n            <PostCard key={post.id} post={post} />\n          ))}\n        </div>\n      )}\n    </MultiRenderDataFetcher>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Custom Hook Composition"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced patterns for composing custom hooks to create reusable stateful logic."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Custom Hook Composition\nimport { useState, useEffect, useCallback, useRef, useMemo } from 'react';\n\n// Base hook for API calls\nfunction useApi(url, options = {}) {\n  const [state, setState] = useState({\n    data: null,\n    loading: false,\n    error: null,\n  });\n  \n  const abortControllerRef = useRef();\n  \n  const execute = useCallback(async (overrideOptions = {}) => {\n    // Cancel previous request\n    if (abortControllerRef.current) {\n      abortControllerRef.current.abort();\n    }\n    \n    abortControllerRef.current = new AbortController();\n    \n    setState(prev => ({ ...prev, loading: true, error: null }));\n    \n    try {\n      const response = await fetch(url, {\n        ...options,\n        ...overrideOptions,\n        signal: abortControllerRef.current.signal,\n      });\n      \n      if (!response.ok) {\n        throw new Error(`HTTP error! status: ${response.status}`);\n      }\n      \n      const data = await response.json();\n      setState({ data, loading: false, error: null });\n      return data;\n    } catch (error) {\n      if (error.name !== 'AbortError') {\n        setState({ data: null, loading: false, error });\n      }\n      throw error;\n    }\n  }, [url, options]);\n  \n  // Cleanup on unmount\n  useEffect(() => {\n    return () => {\n      if (abortControllerRef.current) {\n        abortControllerRef.current.abort();\n      }\n    };\n  }, []);\n  \n  return { ...state, execute };\n}\n\n// Hook for optimistic updates\nfunction useOptimisticUpdate(initialData, updateFn) {\n  const [data, setData] = useState(initialData);\n  const [pending, setPending] = useState([]);\n  \n  const addOptimisticUpdate = useCallback((update) => {\n    const id = crypto.randomUUID();\n    const optimisticData = updateFn(data, update);\n    \n    setData(optimisticData);\n    setPending(prev => [...prev, { id, update }]);\n    \n    return {\n      id,\n      confirm: () => {\n        setPending(prev => prev.filter(p => p.id !== id));\n      },\n      rollback: () => {\n        setPending(prev => prev.filter(p => p.id !== id));\n        // Recompute data without this update\n        const remainingUpdates = pending.filter(p => p.id !== id);\n        const recomputedData = remainingUpdates.reduce(\n          (acc, { update }) => updateFn(acc, update),\n          initialData\n        );\n        setData(recomputedData);\n      },\n    };\n  }, [data, updateFn, initialData, pending]);\n  \n  return {\n    data,\n    pending: pending.length > 0,\n    addOptimisticUpdate,\n    reset: () => {\n      setData(initialData);\n      setPending([]);\n    },\n  };\n}\n\n// Composed hook for CRUD operations\nfunction useCrudOperations(baseUrl, initialData = []) {\n  const { data: fetchedData, loading, error, execute: fetchData } = useApi(baseUrl);\n  const { data, addOptimisticUpdate } = useOptimisticUpdate(\n    initialData,\n    (currentData, update) => {\n      switch (update.type) {\n        case 'CREATE':\n          return [...currentData, update.item];\n        case 'UPDATE':\n          return currentData.map(item =>\n            item.id === update.item.id ? { ...item, ...update.item } : item\n          );\n        case 'DELETE':\n          return currentData.filter(item => item.id !== update.id);\n        default:\n          return currentData;\n      }\n    }\n  );\n  \n  // Sync fetched data with local state\n  useEffect(() => {\n    if (fetchedData) {\n      // Reset optimistic updates when fresh data arrives\n      setData(fetchedData);\n    }\n  }, [fetchedData]);\n  \n  const create = useCallback(async (newItem) => {\n    const tempItem = { ...newItem, id: `temp-${Date.now()}` };\n    const optimisticUpdate = addOptimisticUpdate({ type: 'CREATE', item: tempItem });\n    \n    try {\n      const response = await fetch(baseUrl, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(newItem),\n      });\n      \n      if (!response.ok) throw new Error('Create failed');\n      \n      const createdItem = await response.json();\n      optimisticUpdate.confirm();\n      \n      // Update with real item\n      addOptimisticUpdate({ type: 'UPDATE', item: createdItem });\n      \n      return createdItem;\n    } catch (error) {\n      optimisticUpdate.rollback();\n      throw error;\n    }\n  }, [baseUrl, addOptimisticUpdate]);\n  \n  const update = useCallback(async (id, updates) => {\n    const optimisticUpdate = addOptimisticUpdate({\n      type: 'UPDATE',\n      item: { id, ...updates },\n    });\n    \n    try {\n      const response = await fetch(`${baseUrl}/${id}`, {\n        method: 'PATCH',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(updates),\n      });\n      \n      if (!response.ok) throw new Error('Update failed');\n      \n      const updatedItem = await response.json();\n      optimisticUpdate.confirm();\n      \n      return updatedItem;\n    } catch (error) {\n      optimisticUpdate.rollback();\n      throw error;\n    }\n  }, [baseUrl, addOptimisticUpdate]);\n  \n  const remove = useCallback(async (id) => {\n    const optimisticUpdate = addOptimisticUpdate({ type: 'DELETE', id });\n    \n    try {\n      const response = await fetch(`${baseUrl}/${id}`, {\n        method: 'DELETE',\n      });\n      \n      if (!response.ok) throw new Error('Delete failed');\n      \n      optimisticUpdate.confirm();\n    } catch (error) {\n      optimisticUpdate.rollback();\n      throw error;\n    }\n  }, [baseUrl, addOptimisticUpdate]);\n  \n  return {\n    data,\n    loading,\n    error,\n    refetch: fetchData,\n    create,\n    update,\n    remove,\n  };\n}\n\n// Usage\nfunction TodoList() {\n  const {\n    data: todos,\n    loading,\n    error,\n    create,\n    update,\n    remove,\n    refetch,\n  } = useCrudOperations('/api/todos', []);\n  \n  const [newTodoText, setNewTodoText] = useState('');\n  \n  const handleCreate = async (e) => {\n    e.preventDefault();\n    if (!newTodoText.trim()) return;\n    \n    try {\n      await create({ text: newTodoText, completed: false });\n      setNewTodoText('');\n    } catch (error) {\n      alert('Failed to create todo');\n    }\n  };\n  \n  const handleToggle = async (todo) => {\n    try {\n      await update(todo.id, { completed: !todo.completed });\n    } catch (error) {\n      alert('Failed to update todo');\n    }\n  };\n  \n  const handleDelete = async (id) => {\n    try {\n      await remove(id);\n    } catch (error) {\n      alert('Failed to delete todo');\n    }\n  };\n  \n  if (loading) return <div>Loading todos...</div>;\n  if (error) return <div>Error: {error.message}</div>;\n  \n  return (\n    <div>\n      <form onSubmit={handleCreate}>\n        <input\n          value={newTodoText}\n          onChange={(e) => setNewTodoText(e.target.value)}\n          placeholder=\"Add new todo\"\n        />\n        <button type=\"submit\">Add</button>\n      </form>\n      \n      <ul>\n        {todos.map(todo => (\n          <li key={todo.id}>\n            <input\n              type=\"checkbox\"\n              checked={todo.completed}\n              onChange={() => handleToggle(todo)}\n            />\n            <span style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}>\n              {todo.text}\n            </span>\n            <button onClick={() => handleDelete(todo.id)}>Delete</button>\n          </li>\n        ))}\n      </ul>\n      \n      <button onClick={refetch}>Refresh</button>\n    </div>\n  );\n}"
+        }
+      ]
+    },
+    {
+      "id": "react-internals",
+      "title": "React Internals & Performance",
+      "content": [
+        {
+          "type": "heading",
+          "text": "React Fiber Architecture"
+        },
+        {
+          "type": "paragraph",
+          "text": "Understanding React Fiber's reconciliation algorithm and how it enables concurrent features for better performance."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Understanding React Fiber through practical examples\nimport React, { useState, useTransition, useDeferredValue, startTransition } from 'react';\n\n// Demonstrating time slicing with heavy computation\nfunction HeavyComputationComponent({ items }) {\n  const [filter, setFilter] = useState('');\n  const [isPending, startTransition] = useTransition();\n  \n  // Heavy computation that can be interrupted\n  const filteredItems = useMemo(() => {\n    if (!filter) return items;\n    \n    // Simulate heavy computation\n    return items.filter(item => {\n      // Expensive operation\n      let result = false;\n      for (let i = 0; i < 100000; i++) {\n        result = item.name.toLowerCase().includes(filter.toLowerCase());\n      }\n      return result;\n    });\n  }, [items, filter]);\n  \n  const handleFilterChange = (e) => {\n    const value = e.target.value;\n    \n    // Use transition for non-urgent updates\n    startTransition(() => {\n      setFilter(value);\n    });\n  };\n  \n  return (\n    <div>\n      <input\n        type=\"text\"\n        placeholder=\"Filter items...\"\n        onChange={handleFilterChange}\n        style={{ opacity: isPending ? 0.7 : 1 }}\n      />\n      \n      {isPending && <div>Filtering...</div>}\n      \n      <div className=\"items-grid\">\n        {filteredItems.map(item => (\n          <ItemCard key={item.id} item={item} />\n        ))}\n      </div>\n    </div>\n  );\n}\n\n// Advanced usage of useDeferredValue\nfunction SearchResults({ query }) {\n  const deferredQuery = useDeferredValue(query);\n  const [results, setResults] = useState([]);\n  const [isStale, setIsStale] = useState(false);\n  \n  // Track if we're showing stale results\n  useEffect(() => {\n    setIsStale(query !== deferredQuery);\n  }, [query, deferredQuery]);\n  \n  // Fetch results based on deferred query\n  useEffect(() => {\n    if (!deferredQuery) {\n      setResults([]);\n      return;\n    }\n    \n    let isCancelled = false;\n    \n    const fetchResults = async () => {\n      try {\n        const response = await fetch(`/api/search?q=${deferredQuery}`);\n        const data = await response.json();\n        \n        if (!isCancelled) {\n          setResults(data);\n        }\n      } catch (error) {\n        if (!isCancelled) {\n          console.error('Search failed:', error);\n        }\n      }\n    };\n    \n    fetchResults();\n    \n    return () => {\n      isCancelled = true;\n    };\n  }, [deferredQuery]);\n  \n  return (\n    <div className={`search-results ${isStale ? 'stale' : ''}`}>\n      {isStale && <div className=\"stale-indicator\">Updating...</div>}\n      \n      {results.map(result => (\n        <SearchResultItem key={result.id} result={result} />\n      ))}\n    </div>\n  );\n}\n\n// Custom hook for managing concurrent features\nfunction useConcurrentState(initialState) {\n  const [state, setState] = useState(initialState);\n  const [isPending, startTransition] = useTransition();\n  \n  const setConcurrentState = useCallback((newState) => {\n    startTransition(() => {\n      setState(newState);\n    });\n  }, []);\n  \n  const setUrgentState = useCallback((newState) => {\n    setState(newState);\n  }, []);\n  \n  return {\n    state,\n    isPending,\n    setConcurrentState,\n    setUrgentState,\n  };\n}\n\n// Performance monitoring with React DevTools Profiler API\nfunction ProfiledComponent({ children, id, onRender }) {\n  return (\n    <Profiler id={id} onRender={onRender}>\n      {children}\n    </Profiler>\n  );\n}\n\n// Custom profiling hook\nfunction usePerformanceMonitoring(componentName) {\n  const renderCount = useRef(0);\n  const renderTimes = useRef([]);\n  \n  const onRender = useCallback((id, phase, actualDuration, baseDuration, startTime, commitTime) => {\n    renderCount.current += 1;\n    renderTimes.current.push({\n      phase,\n      actualDuration,\n      baseDuration,\n      startTime,\n      commitTime,\n      renderCount: renderCount.current,\n    });\n    \n    // Report performance metrics\n    if (renderCount.current % 10 === 0) {\n      const avgDuration = renderTimes.current.reduce((sum, time) => sum + time.actualDuration, 0) / renderTimes.current.length;\n      \n      console.log(`${componentName} Performance:`, {\n        totalRenders: renderCount.current,\n        averageDuration: avgDuration,\n        lastRender: renderTimes.current[renderTimes.current.length - 1],\n      });\n      \n      // Send to analytics\n      if (typeof analytics !== 'undefined') {\n        analytics.track('component_performance', {\n          component: componentName,\n          totalRenders: renderCount.current,\n          averageDuration: avgDuration,\n        });\n      }\n    }\n  }, [componentName]);\n  \n  return { onRender, renderCount: renderCount.current };\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Memory Leak Detection and Prevention"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced techniques for identifying and preventing memory leaks in React applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Memory leak detection utilities\nclass MemoryLeakDetector {\n  constructor() {\n    this.components = new Map();\n    this.timers = new Set();\n    this.listeners = new Set();\n    this.subscriptions = new Set();\n  }\n  \n  // Track component lifecycle\n  trackComponent(name, id = crypto.randomUUID()) {\n    this.components.set(id, {\n      name,\n      mountTime: Date.now(),\n      timers: new Set(),\n      listeners: new Set(),\n      subscriptions: new Set(),\n    });\n    \n    return {\n      id,\n      cleanup: () => this.cleanupComponent(id),\n      addTimer: (timerId) => this.addTimer(id, timerId),\n      addListener: (target, event, handler) => this.addListener(id, target, event, handler),\n      addSubscription: (subscription) => this.addSubscription(id, subscription),\n    };\n  }\n  \n  addTimer(componentId, timerId) {\n    const component = this.components.get(componentId);\n    if (component) {\n      component.timers.add(timerId);\n    }\n  }\n  \n  addListener(componentId, target, event, handler) {\n    const component = this.components.get(componentId);\n    if (component) {\n      const listener = { target, event, handler };\n      component.listeners.add(listener);\n    }\n  }\n  \n  addSubscription(componentId, subscription) {\n    const component = this.components.get(componentId);\n    if (component) {\n      component.subscriptions.add(subscription);\n    }\n  }\n  \n  cleanupComponent(componentId) {\n    const component = this.components.get(componentId);\n    if (!component) return;\n    \n    // Clear timers\n    component.timers.forEach(timerId => {\n      clearTimeout(timerId);\n      clearInterval(timerId);\n    });\n    \n    // Remove event listeners\n    component.listeners.forEach(({ target, event, handler }) => {\n      target.removeEventListener(event, handler);\n    });\n    \n    // Unsubscribe from subscriptions\n    component.subscriptions.forEach(subscription => {\n      if (typeof subscription === 'function') {\n        subscription();\n      } else if (subscription && typeof subscription.unsubscribe === 'function') {\n        subscription.unsubscribe();\n      }\n    });\n    \n    this.components.delete(componentId);\n  }\n  \n  // Get memory usage report\n  getReport() {\n    const now = Date.now();\n    const activeComponents = Array.from(this.components.entries()).map(([id, component]) => ({\n      id,\n      name: component.name,\n      age: now - component.mountTime,\n      timers: component.timers.size,\n      listeners: component.listeners.size,\n      subscriptions: component.subscriptions.size,\n    }));\n    \n    return {\n      totalComponents: activeComponents.length,\n      components: activeComponents,\n      oldestComponent: activeComponents.reduce((oldest, current) => \n        current.age > oldest.age ? current : oldest, { age: 0 }\n      ),\n    };\n  }\n}\n\n// Global detector instance\nconst memoryLeakDetector = new MemoryLeakDetector();\n\n// Custom hook for automatic cleanup\nfunction useMemoryLeakPrevention(componentName) {\n  const componentId = useRef();\n  const tracker = useRef();\n  \n  useEffect(() => {\n    if (process.env.NODE_ENV === 'development') {\n      tracker.current = memoryLeakDetector.trackComponent(componentName);\n      componentId.current = tracker.current.id;\n    }\n    \n    return () => {\n      if (tracker.current) {\n        tracker.current.cleanup();\n      }\n    };\n  }, [componentName]);\n  \n  // Helper functions for tracking resources\n  const addTimer = useCallback((callback, delay, isInterval = false) => {\n    const timerId = isInterval ? setInterval(callback, delay) : setTimeout(callback, delay);\n    \n    if (tracker.current) {\n      tracker.current.addTimer(timerId);\n    }\n    \n    return timerId;\n  }, []);\n  \n  const addEventListener = useCallback((target, event, handler, options) => {\n    target.addEventListener(event, handler, options);\n    \n    if (tracker.current) {\n      tracker.current.addListener(target, event, handler);\n    }\n    \n    return () => target.removeEventListener(event, handler);\n  }, []);\n  \n  const addSubscription = useCallback((subscription) => {\n    if (tracker.current) {\n      tracker.current.addSubscription(subscription);\n    }\n    \n    return subscription;\n  }, []);\n  \n  return {\n    addTimer,\n    addEventListener,\n    addSubscription,\n  };\n}\n\n// Example component using memory leak prevention\nfunction DataStreamComponent({ streamUrl }) {\n  const [data, setData] = useState([]);\n  const [connectionStatus, setConnectionStatus] = useState('disconnected');\n  const { addTimer, addEventListener, addSubscription } = useMemoryLeakPrevention('DataStreamComponent');\n  \n  useEffect(() => {\n    let eventSource;\n    \n    const connect = () => {\n      eventSource = new EventSource(streamUrl);\n      \n      const onOpen = () => setConnectionStatus('connected');\n      const onMessage = (event) => {\n        const newData = JSON.parse(event.data);\n        setData(prev => [...prev.slice(-99), newData]); // Keep last 100 items\n      };\n      const onError = () => {\n        setConnectionStatus('error');\n        // Retry connection after 5 seconds\n        addTimer(() => {\n          if (eventSource.readyState === EventSource.CLOSED) {\n            connect();\n          }\n        }, 5000);\n      };\n      \n      // Track event listeners\n      addEventListener(eventSource, 'open', onOpen);\n      addEventListener(eventSource, 'message', onMessage);\n      addEventListener(eventSource, 'error', onError);\n    };\n    \n    connect();\n    \n    // Track the EventSource for cleanup\n    addSubscription(() => {\n      if (eventSource) {\n        eventSource.close();\n      }\n    });\n    \n    // Heartbeat to keep connection alive\n    const heartbeatId = addTimer(() => {\n      if (eventSource && eventSource.readyState === EventSource.OPEN) {\n        // Send heartbeat if your API supports it\n        console.log('Heartbeat');\n      }\n    }, 30000, true);\n    \n    return () => {\n      if (eventSource) {\n        eventSource.close();\n      }\n    };\n  }, [streamUrl, addTimer, addEventListener, addSubscription]);\n  \n  return (\n    <div>\n      <div className={`status ${connectionStatus}`}>\n        Status: {connectionStatus}\n      </div>\n      \n      <div className=\"data-stream\">\n        {data.map((item, index) => (\n          <div key={`${item.id}-${index}`} className=\"data-item\">\n            {JSON.stringify(item)}\n          </div>\n        ))}\n      </div>\n    </div>\n  );\n}\n\n// Development-only memory monitoring component\nfunction MemoryMonitor() {\n  const [report, setReport] = useState(null);\n  \n  useEffect(() => {\n    if (process.env.NODE_ENV !== 'development') return;\n    \n    const interval = setInterval(() => {\n      setReport(memoryLeakDetector.getReport());\n    }, 5000);\n    \n    return () => clearInterval(interval);\n  }, []);\n  \n  if (process.env.NODE_ENV !== 'development' || !report) {\n    return null;\n  }\n  \n  return (\n    <div className=\"memory-monitor\">\n      <h3>Memory Monitor</h3>\n      <p>Active Components: {report.totalComponents}</p>\n      <p>Oldest Component: {report.oldestComponent.name} ({Math.round(report.oldestComponent.age / 1000)}s)</p>\n      \n      <details>\n        <summary>Component Details</summary>\n        <ul>\n          {report.components.map(component => (\n            <li key={component.id}>\n              {component.name} - Age: {Math.round(component.age / 1000)}s,\n              Timers: {component.timers}, Listeners: {component.listeners}\n            </li>\n          ))}\n        </ul>\n      </details>\n    </div>\n  );\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main advantage of using RTK Query over traditional Redux async actions?",
+      "options": [
+        "Smaller bundle size",
+        "Built-in caching, background refetching, and optimistic updates",
+        "Better TypeScript support",
+        "Faster performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "RTK Query provides built-in caching, automatic background refetching, optimistic updates, and request deduplication, eliminating much of the boilerplate code needed for async data fetching in traditional Redux."
+    },
+    {
+      "id": 2,
+      "question": "In XState, what is the purpose of 'guards' in state transitions?",
+      "options": [
+        "To prevent state changes",
+        "To conditionally allow or block transitions based on context or events",
+        "To validate input data",
+        "To handle errors"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Guards in XState are conditional functions that determine whether a transition should occur. They evaluate the current context and event to decide if the state machine should transition to the target state."
+    },
+    {
+      "id": 3,
+      "question": "What is the main benefit of event sourcing in frontend applications?",
+      "options": [
+        "Faster rendering",
+        "Complete audit trail and ability to replay state changes",
+        "Smaller memory usage",
+        "Better SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event sourcing provides a complete audit trail by storing all state changes as events, enabling features like time-travel debugging, state replay, and comprehensive analytics of user interactions."
+    },
+    {
+      "id": 4,
+      "question": "What is the main advantage of compound components over regular prop-based components?",
+      "options": [
+        "Better performance",
+        "Flexible composition while maintaining encapsulation and shared state",
+        "Smaller bundle size",
+        "Better TypeScript support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Compound components provide flexible composition by allowing child components to share state through context while maintaining clean APIs and encapsulation of related functionality."
+    },
+    {
+      "id": 5,
+      "question": "In React Fiber, what is the purpose of time slicing?",
+      "options": [
+        "To improve memory usage",
+        "To break rendering work into chunks and yield control to the browser",
+        "To reduce bundle size",
+        "To improve SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Time slicing allows React to break rendering work into small chunks and yield control back to the browser, preventing blocking of user interactions and maintaining smooth performance."
+    },
+    {
+      "id": 6,
+      "question": "What is the difference between useTransition and useDeferredValue?",
+      "options": [
+        "No difference, they're the same",
+        "useTransition marks updates as non-urgent, useDeferredValue defers a value update",
+        "useTransition is faster",
+        "useDeferredValue is deprecated"
+      ],
+      "correctAnswer": 1,
+      "explanation": "useTransition marks state updates as non-urgent transitions, while useDeferredValue defers updating a value until more urgent updates have finished, allowing you to keep showing stale data during transitions."
+    },
+    {
+      "id": 7,
+      "question": "In render props pattern, what is the main benefit over higher-order components?",
+      "options": [
+        "Better performance",
+        "More explicit data flow and easier composition",
+        "Smaller code size",
+        "Better browser support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Render props provide more explicit data flow since you can see exactly what data is being passed and how it's used, and they compose more naturally than HOCs which can create wrapper hell."
+    },
+    {
+      "id": 8,
+      "question": "What is optimistic updating in the context of React applications?",
+      "options": [
+        "Updating components before props change",
+        "Immediately updating UI assuming the operation will succeed, then rolling back if it fails",
+        "Using setTimeout for updates",
+        "Updating multiple components at once"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Optimistic updating immediately updates the UI assuming an operation (like API call) will succeed, providing instant feedback to users, then rolls back the changes if the operation actually fails."
+    },
+    {
+      "id": 9,
+      "question": "In XState, what is the purpose of 'invoke' in state definitions?",
+      "options": [
+        "To call functions",
+        "To handle side effects like API calls or spawn child machines",
+        "To validate state",
+        "To update context"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'invoke' property in XState is used to handle side effects like API calls, spawn child machines, or run other asynchronous operations when entering a state."
+    },
+    {
+      "id": 10,
+      "question": "What is the main advantage of RTK Query's 'providesTags' and 'invalidatesTags'?",
+      "options": [
+        "Better performance",
+        "Automatic cache invalidation and refetching based on data relationships",
+        "Smaller bundle size",
+        "Better error handling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "providesTags and invalidatesTags create a relationship system where mutations can automatically invalidate and refetch related queries, keeping data fresh without manual cache management."
+    },
+    {
+      "id": 11,
+      "question": "In event sourcing, what is the purpose of snapshots?",
+      "options": [
+        "To backup data",
+        "To improve performance by avoiding replaying all events from the beginning",
+        "To compress events",
+        "To validate events"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Snapshots store the application state at a specific point in time, allowing you to rebuild state from the snapshot plus subsequent events instead of replaying all events from the beginning."
+    },
+    {
+      "id": 12,
+      "question": "What is the main benefit of using custom hook composition?",
+      "options": [
+        "Faster rendering",
+        "Reusable stateful logic that can be combined and composed",
+        "Smaller components",
+        "Better SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Custom hook composition allows you to create reusable pieces of stateful logic that can be combined together, promoting code reuse and separation of concerns."
+    },
+    {
+      "id": 13,
+      "question": "In React concurrent features, what happens to pending transitions when a new urgent update occurs?",
+      "options": [
+        "They are queued",
+        "Pending transitions are interrupted and urgent updates take priority",
+        "They run in parallel",
+        "The urgent update is ignored"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React's concurrent features allow urgent updates (like user input) to interrupt pending transitions, ensuring the UI remains responsive to user interactions."
+    },
+    {
+      "id": 14,
+      "question": "What is the purpose of entity adapters in Redux Toolkit?",
+      "options": [
+        "To handle API calls",
+        "To manage normalized state with built-in CRUD operations",
+        "To improve performance",
+        "To handle routing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Entity adapters provide a standardized way to manage normalized state collections with built-in CRUD operations, selectors, and utilities for common data management patterns."
+    },
+    {
+      "id": 15,
+      "question": "In memory leak detection, which resources are most commonly forgotten in React components?",
+      "options": [
+        "State variables",
+        "Event listeners, timers, and subscriptions",
+        "Props",
+        "Component references"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event listeners, timers (setTimeout/setInterval), and subscriptions (WebSocket, EventSource, observables) are the most common sources of memory leaks because they maintain references that prevent garbage collection."
+    },
+    {
+      "id": 16,
+      "question": "What is the main advantage of using React.Profiler API?",
+      "options": [
+        "Debugging state",
+        "Measuring component render performance in production",
+        "Managing props",
+        "Handling errors"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React.Profiler API allows you to measure component render performance in both development and production, providing insights into actual rendering costs and helping identify performance bottlenecks."
+    },
+    {
+      "id": 17,
+      "question": "In XState, what is the difference between 'actions' and 'services'?",
+      "options": [
+        "No difference",
+        "Actions are synchronous side effects, services handle asynchronous operations",
+        "Actions are faster",
+        "Services are deprecated"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Actions in XState are synchronous side effects (like updating context), while services handle asynchronous operations like API calls, timers, or spawning other machines."
+    },
+    {
+      "id": 18,
+      "question": "What is the main benefit of using AbortController in React hooks?",
+      "options": [
+        "Better error handling",
+        "Canceling in-flight requests when components unmount or dependencies change",
+        "Faster requests",
+        "Better caching"
+      ],
+      "correctAnswer": 1,
+      "explanation": "AbortController allows you to cancel in-flight HTTP requests when components unmount or when dependencies change, preventing memory leaks and avoiding setting state on unmounted components."
+    },
+    {
+      "id": 19,
+      "question": "In render props, what is the purpose of using multiple render functions?",
+      "options": [
+        "Better performance",
+        "Handling different states (loading, error, empty, success) with specific UI",
+        "Smaller code",
+        "Better TypeScript support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Multiple render functions allow you to handle different states (loading, error, empty data, success) with specific UI for each state, providing more flexibility than a single render function."
+    },
+    {
+      "id": 20,
+      "question": "What is the main advantage of using React.memo with compound components?",
+      "options": [
+        "Smaller bundle size",
+        "Preventing unnecessary re-renders of child components when parent state changes",
+        "Better error handling",
+        "Improved accessibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React.memo prevents unnecessary re-renders of compound component children when only the parent's unrelated state changes, optimizing performance in complex component hierarchies."
+    },
+    {
+      "id": 21,
+      "question": "In event sourcing, what is the purpose of event versioning?",
+      "options": [
+        "Performance optimization",
+        "Handling schema evolution and backward compatibility",
+        "Reducing storage size",
+        "Improving security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event versioning allows you to evolve event schemas over time while maintaining backward compatibility, enabling you to add new fields or change event structure without breaking existing event replay."
+    },
+    {
+      "id": 22,
+      "question": "What is the main benefit of using React's startTransition API directly?",
+      "options": [
+        "Better error handling",
+        "More control over which updates are marked as non-urgent",
+        "Faster rendering",
+        "Better browser support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "startTransition gives you fine-grained control over which specific updates should be treated as non-urgent, allowing you to optimize user experience by prioritizing urgent updates like user input."
+    },
+    {
+      "id": 23,
+      "question": "In RTK Query, what is the purpose of 'transformResponse'?",
+      "options": [
+        "Error handling",
+        "Modifying API response data before storing in cache",
+        "Request validation",
+        "Performance optimization"
+      ],
+      "correctAnswer": 1,
+      "explanation": "transformResponse allows you to modify or normalize API response data before it's stored in the cache, enabling you to adapt external API formats to your application's data structures."
+    },
+    {
+      "id": 24,
+      "question": "What is the main challenge with implementing optimistic updates?",
+      "options": [
+        "Performance overhead",
+        "Handling rollback scenarios and maintaining data consistency",
+        "Browser compatibility",
+        "Bundle size increase"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The main challenge with optimistic updates is properly handling rollback scenarios when operations fail and maintaining data consistency, especially with complex state relationships."
+    },
+    {
+      "id": 25,
+      "question": "In custom hooks, what is the benefit of returning an object vs. an array?",
+      "options": [
+        "Better performance",
+        "Named destructuring and clearer API when returning many values",
+        "Smaller memory usage",
+        "Better browser support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Returning an object allows named destructuring, making the API clearer when returning many values, and allows consumers to only destructure the values they need without positional dependencies."
+    },
+    {
+      "id": 26,
+      "question": "What is the purpose of React's concurrent mode's 'priority' system?",
+      "options": [
+        "Managing component order",
+        "Determining which updates should be processed first",
+        "Optimizing bundle size",
+        "Improving SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React's priority system determines which updates should be processed first, ensuring user interactions (high priority) are not blocked by less important updates like data fetching (lower priority)."
+    },
+    {
+      "id": 27,
+      "question": "In compound components, what is the advantage of using React.Children.map over direct props passing?",
+      "options": [
+        "Better performance",
+        "Automatic prop injection and more flexible composition",
+        "Smaller code size",
+        "Better error handling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React.Children.map allows automatic prop injection into child components and provides more flexible composition patterns, enabling the parent to enhance children without requiring explicit prop passing."
+    },
+    {
+      "id": 28,
+      "question": "What is the main benefit of using projections in event sourcing?",
+      "options": [
+        "Faster event storage",
+        "Creating read-optimized views of data for different use cases",
+        "Reducing memory usage",
+        "Better error handling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Projections create read-optimized views of data by processing events into different formats suited for specific use cases, like creating denormalized views for reporting or search indexes."
+    },
+    {
+      "id": 29,
+      "question": "In React Fiber, what enables the 'interruptible' nature of rendering?",
+      "options": [
+        "Faster JavaScript engine",
+        "Breaking work into units and using scheduler to yield control",
+        "Better memory management",
+        "Optimized algorithms"
+      ],
+      "correctAnswer": 1,
+      "explanation": "React Fiber breaks rendering work into small units of work and uses a scheduler to yield control back to the browser periodically, allowing interruption for higher priority work like user interactions."
+    },
+    {
+      "id": 30,
+      "question": "What is the main advantage of using XState over simple state management?",
+      "options": [
+        "Smaller bundle size",
+        "Explicit state transitions, impossible states prevention, and visual state charts",
+        "Better performance",
+        "Easier debugging"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XState provides explicit state transitions, prevents impossible states through its finite state machine model, and offers visual state charts that make complex state logic easier to understand and maintain."
+    }
+  ]
+} 

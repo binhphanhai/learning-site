@@ -1,0 +1,681 @@
+{
+  "title": "Advanced System Architecture & Design Patterns",
+  "description": "Master scalable frontend architecture, design patterns, performance optimization at scale, micro-frontends, and legacy system modernization for senior-level development",
+  "sections": [
+    {
+      "id": "scalable-frontend-architecture",
+      "title": "Scalable Frontend Architecture",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Micro-frontends Architecture"
+        },
+        {
+          "type": "paragraph",
+          "text": "Micro-frontends extend the microservices concept to frontend development, allowing teams to work independently on different parts of an application while maintaining a cohesive user experience."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Independent deployment: Each micro-frontend can be deployed separately",
+            "Technology agnostic: Different frameworks can coexist (React, Vue, Angular)",
+            "Team autonomy: Teams own entire features from UI to backend",
+            "Incremental upgrades: Modernize applications piece by piece",
+            "Fault isolation: Issues in one micro-frontend don't crash others"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Module Federation with Webpack 5\nconst ModuleFederationPlugin = require('@module-federation/webpack');\n\nmodule.exports = {\n  mode: 'development',\n  devServer: {\n    port: 3001,\n  },\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'shell',\n      remotes: {\n        productCatalog: 'productCatalog@http://localhost:3002/remoteEntry.js',\n        shoppingCart: 'shoppingCart@http://localhost:3003/remoteEntry.js',\n      },\n    }),\n  ],\n};\n\n// Consuming remote components\nimport React, { Suspense } from 'react';\nconst ProductCatalog = React.lazy(() => import('productCatalog/ProductList'));\nconst ShoppingCart = React.lazy(() => import('shoppingCart/Cart'));\n\nfunction App() {\n  return (\n    <div>\n      <Suspense fallback={<div>Loading...</div>}>\n        <ProductCatalog />\n        <ShoppingCart />\n      </Suspense>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Domain-Driven Design in Frontend"
+        },
+        {
+          "type": "paragraph",
+          "text": "Organizing frontend code around business domains rather than technical layers improves maintainability and team understanding."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "text": "// Domain-based folder structure\nsrc/\n├── domains/\n│   ├── user-management/\n│   │   ├── components/\n│   │   ├── services/\n│   │   ├── stores/\n│   │   ├── types/\n│   │   └── index.ts\n│   ├── product-catalog/\n│   │   ├── components/\n│   │   ├── services/\n│   │   └── stores/\n│   └── order-processing/\n├── shared/\n│   ├── components/\n│   ├── utils/\n│   └── types/\n└── app/"
+        },
+        {
+          "type": "heading",
+          "text": "Modular Architecture Principles"
+        },
+        {
+          "type": "list",
+          "items": [
+            "High cohesion: Related functionality grouped together",
+            "Loose coupling: Minimal dependencies between modules",
+            "Clear interfaces: Well-defined APIs between modules",
+            "Single responsibility: Each module has one clear purpose",
+            "Dependency inversion: Depend on abstractions, not implementations"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Event-Driven Architecture"
+        },
+        {
+          "type": "paragraph",
+          "text": "Event-driven architecture enables loose coupling between components by using events as the primary means of communication. This pattern is crucial for scalable frontend applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Event-Driven Architecture\nclass EventStore {\n  constructor() {\n    this.events = [];\n    this.subscribers = new Map();\n    this.middleware = [];\n  }\n\n  // Add middleware for event processing\n  use(middleware) {\n    this.middleware.push(middleware);\n  }\n\n  // Publish event with middleware processing\n  async publish(event) {\n    let processedEvent = { ...event, timestamp: Date.now(), id: crypto.randomUUID() };\n    \n    // Process through middleware\n    for (const middleware of this.middleware) {\n      processedEvent = await middleware(processedEvent);\n    }\n    \n    // Store event\n    this.events.push(processedEvent);\n    \n    // Notify subscribers\n    const subscribers = this.subscribers.get(event.type) || [];\n    await Promise.all(\n      subscribers.map(subscriber => \n        this.safeExecute(subscriber, processedEvent)\n      )\n    );\n  }\n\n  subscribe(eventType, handler) {\n    if (!this.subscribers.has(eventType)) {\n      this.subscribers.set(eventType, []);\n    }\n    this.subscribers.get(eventType).push(handler);\n    \n    // Return unsubscribe function\n    return () => {\n      const handlers = this.subscribers.get(eventType);\n      const index = handlers.indexOf(handler);\n      if (index > -1) handlers.splice(index, 1);\n    };\n  }\n\n  async safeExecute(handler, event) {\n    try {\n      await handler(event);\n    } catch (error) {\n      console.error('Event handler error:', error);\n      this.publish({\n        type: 'HANDLER_ERROR',\n        payload: { error: error.message, event }\n      });\n    }\n  }\n\n  // Query events for debugging/analytics\n  getEvents(filter = {}) {\n    return this.events.filter(event => {\n      return Object.keys(filter).every(key => event[key] === filter[key]);\n    });\n  }\n}\n\n// Event middleware examples\nconst loggingMiddleware = (event) => {\n  console.log('Event:', event.type, event.payload);\n  return event;\n};\n\nconst validationMiddleware = (event) => {\n  if (!event.type || !event.payload) {\n    throw new Error('Invalid event structure');\n  }\n  return event;\n};\n\nconst analyticsMiddleware = async (event) => {\n  if (event.type.startsWith('USER_')) {\n    await fetch('/api/analytics', {\n      method: 'POST',\n      body: JSON.stringify({ event: event.type, timestamp: event.timestamp })\n    });\n  }\n  return event;\n};\n\n// Usage\nconst eventStore = new EventStore();\neventStore.use(validationMiddleware);\neventStore.use(loggingMiddleware);\neventStore.use(analyticsMiddleware);\n\n// Domain events\neventStore.subscribe('USER_REGISTERED', async (event) => {\n  await sendWelcomeEmail(event.payload.user);\n});\n\neventStore.subscribe('ORDER_PLACED', async (event) => {\n  await updateInventory(event.payload.order);\n  await sendOrderConfirmation(event.payload.order);\n});\n\n// Publishing events\neventStore.publish({\n  type: 'USER_REGISTERED',\n  payload: { user: { id: 1, email: 'user@example.com' } }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Hexagonal Architecture (Ports and Adapters)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Hexagonal architecture isolates the core business logic from external concerns, making applications more testable and maintainable."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Core Domain (Business Logic)\nclass User {\n  constructor(id, email, name) {\n    this.id = id;\n    this.email = email;\n    this.name = name;\n    this.isActive = true;\n  }\n\n  deactivate() {\n    this.isActive = false;\n  }\n\n  updateProfile(name, email) {\n    if (!email.includes('@')) {\n      throw new Error('Invalid email format');\n    }\n    this.name = name;\n    this.email = email;\n  }\n}\n\n// Ports (Interfaces)\nclass UserRepository {\n  async save(user) {\n    throw new Error('Method must be implemented');\n  }\n\n  async findById(id) {\n    throw new Error('Method must be implemented');\n  }\n\n  async findByEmail(email) {\n    throw new Error('Method must be implemented');\n  }\n}\n\nclass EmailService {\n  async sendWelcomeEmail(user) {\n    throw new Error('Method must be implemented');\n  }\n}\n\n// Application Services (Use Cases)\nclass UserService {\n  constructor(userRepository, emailService) {\n    this.userRepository = userRepository;\n    this.emailService = emailService;\n  }\n\n  async registerUser(userData) {\n    // Check if user exists\n    const existingUser = await this.userRepository.findByEmail(userData.email);\n    if (existingUser) {\n      throw new Error('User already exists');\n    }\n\n    // Create user\n    const user = new User(\n      crypto.randomUUID(),\n      userData.email,\n      userData.name\n    );\n\n    // Save user\n    await this.userRepository.save(user);\n\n    // Send welcome email\n    await this.emailService.sendWelcomeEmail(user);\n\n    return user;\n  }\n\n  async updateUserProfile(userId, profileData) {\n    const user = await this.userRepository.findById(userId);\n    if (!user) {\n      throw new Error('User not found');\n    }\n\n    user.updateProfile(profileData.name, profileData.email);\n    await this.userRepository.save(user);\n\n    return user;\n  }\n}\n\n// Adapters (Infrastructure)\nclass ApiUserRepository extends UserRepository {\n  constructor(apiClient) {\n    super();\n    this.apiClient = apiClient;\n  }\n\n  async save(user) {\n    const response = await this.apiClient.post('/users', user);\n    return response.data;\n  }\n\n  async findById(id) {\n    const response = await this.apiClient.get(`/users/${id}`);\n    return response.data ? new User(response.data.id, response.data.email, response.data.name) : null;\n  }\n\n  async findByEmail(email) {\n    const response = await this.apiClient.get(`/users?email=${email}`);\n    return response.data ? new User(response.data.id, response.data.email, response.data.name) : null;\n  }\n}\n\nclass LocalStorageUserRepository extends UserRepository {\n  async save(user) {\n    const users = JSON.parse(localStorage.getItem('users') || '[]');\n    const index = users.findIndex(u => u.id === user.id);\n    if (index >= 0) {\n      users[index] = user;\n    } else {\n      users.push(user);\n    }\n    localStorage.setItem('users', JSON.stringify(users));\n    return user;\n  }\n\n  async findById(id) {\n    const users = JSON.parse(localStorage.getItem('users') || '[]');\n    const userData = users.find(u => u.id === id);\n    return userData ? new User(userData.id, userData.email, userData.name) : null;\n  }\n\n  async findByEmail(email) {\n    const users = JSON.parse(localStorage.getItem('users') || '[]');\n    const userData = users.find(u => u.email === email);\n    return userData ? new User(userData.id, userData.email, userData.name) : null;\n  }\n}\n\nclass EmailServiceAdapter extends EmailService {\n  constructor(emailProvider) {\n    super();\n    this.emailProvider = emailProvider;\n  }\n\n  async sendWelcomeEmail(user) {\n    await this.emailProvider.send({\n      to: user.email,\n      subject: 'Welcome!',\n      template: 'welcome',\n      data: { name: user.name }\n    });\n  }\n}\n\n// Dependency Injection Container\nclass DIContainer {\n  constructor() {\n    this.services = new Map();\n  }\n\n  register(name, factory) {\n    this.services.set(name, factory);\n  }\n\n  resolve(name) {\n    const factory = this.services.get(name);\n    if (!factory) {\n      throw new Error(`Service ${name} not found`);\n    }\n    return factory();\n  }\n}\n\n// Setup\nconst container = new DIContainer();\n\ncontainer.register('userRepository', () => new ApiUserRepository(apiClient));\ncontainer.register('emailService', () => new EmailServiceAdapter(emailProvider));\ncontainer.register('userService', () => new UserService(\n  container.resolve('userRepository'),\n  container.resolve('emailService')\n));\n\n// Usage\nconst userService = container.resolve('userService');\nconst newUser = await userService.registerUser({\n  email: 'john@example.com',\n  name: 'John Doe'\n});"
+        }
+      ]
+    },
+    {
+      "id": "design-patterns-mastery",
+      "title": "Design Patterns in Frontend Context",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Observer Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "The Observer pattern enables loose coupling between objects by allowing subjects to notify observers of state changes without knowing who the observers are."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Modern Observer Pattern with EventTarget\nclass EventBus extends EventTarget {\n  emit(eventType, data) {\n    this.dispatchEvent(new CustomEvent(eventType, { detail: data }));\n  }\n\n  on(eventType, callback) {\n    this.addEventListener(eventType, callback);\n  }\n\n  off(eventType, callback) {\n    this.removeEventListener(eventType, callback);\n  }\n}\n\n// Usage\nconst eventBus = new EventBus();\n\n// Observer\neventBus.on('userLoggedIn', (event) => {\n  console.log('User logged in:', event.detail);\n  updateNavigation(event.detail.user);\n});\n\n// Subject\nclass AuthService {\n  constructor(eventBus) {\n    this.eventBus = eventBus;\n  }\n\n  login(credentials) {\n    // Login logic\n    const user = { id: 1, name: 'John' };\n    this.eventBus.emit('userLoggedIn', { user });\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Strategy Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Strategy pattern allows selecting algorithms at runtime, perfect for payment processing, authentication methods, or data validation."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Payment Strategy Pattern\nclass PaymentStrategy {\n  processPayment(amount) {\n    throw new Error('processPayment must be implemented');\n  }\n}\n\nclass CreditCardStrategy extends PaymentStrategy {\n  processPayment(amount, cardDetails) {\n    return fetch('/api/payments/credit-card', {\n      method: 'POST',\n      body: JSON.stringify({ amount, cardDetails })\n    });\n  }\n}\n\nclass PayPalStrategy extends PaymentStrategy {\n  processPayment(amount, paypalToken) {\n    return fetch('/api/payments/paypal', {\n      method: 'POST',\n      body: JSON.stringify({ amount, token: paypalToken })\n    });\n  }\n}\n\nclass CryptoStrategy extends PaymentStrategy {\n  processPayment(amount, walletAddress) {\n    return fetch('/api/payments/crypto', {\n      method: 'POST',\n      body: JSON.stringify({ amount, walletAddress })\n    });\n  }\n}\n\n// Context\nclass PaymentProcessor {\n  constructor(strategy) {\n    this.strategy = strategy;\n  }\n\n  setStrategy(strategy) {\n    this.strategy = strategy;\n  }\n\n  processPayment(amount, paymentData) {\n    return this.strategy.processPayment(amount, paymentData);\n  }\n}\n\n// Usage\nconst processor = new PaymentProcessor(new CreditCardStrategy());\nprocessor.processPayment(100, creditCardData);\n\n// Switch strategy at runtime\nprocessor.setStrategy(new PayPalStrategy());\nprocessor.processPayment(100, paypalToken);"
+        },
+        {
+          "type": "heading",
+          "text": "Command Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Command pattern encapsulates requests as objects, enabling undo/redo functionality, queuing, and logging operations."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Command Pattern for Undo/Redo\nclass Command {\n  execute() {\n    throw new Error('execute must be implemented');\n  }\n\n  undo() {\n    throw new Error('undo must be implemented');\n  }\n}\n\nclass AddTaskCommand extends Command {\n  constructor(taskList, task) {\n    super();\n    this.taskList = taskList;\n    this.task = task;\n  }\n\n  execute() {\n    this.taskList.push(this.task);\n  }\n\n  undo() {\n    const index = this.taskList.indexOf(this.task);\n    if (index > -1) {\n      this.taskList.splice(index, 1);\n    }\n  }\n}\n\nclass DeleteTaskCommand extends Command {\n  constructor(taskList, taskIndex) {\n    super();\n    this.taskList = taskList;\n    this.taskIndex = taskIndex;\n    this.deletedTask = null;\n  }\n\n  execute() {\n    this.deletedTask = this.taskList.splice(this.taskIndex, 1)[0];\n  }\n\n  undo() {\n    this.taskList.splice(this.taskIndex, 0, this.deletedTask);\n  }\n}\n\n// Command Manager\nclass CommandManager {\n  constructor() {\n    this.history = [];\n    this.currentIndex = -1;\n  }\n\n  executeCommand(command) {\n    // Remove any commands after current index\n    this.history = this.history.slice(0, this.currentIndex + 1);\n    \n    command.execute();\n    this.history.push(command);\n    this.currentIndex++;\n  }\n\n  undo() {\n    if (this.currentIndex >= 0) {\n      const command = this.history[this.currentIndex];\n      command.undo();\n      this.currentIndex--;\n    }\n  }\n\n  redo() {\n    if (this.currentIndex < this.history.length - 1) {\n      this.currentIndex++;\n      const command = this.history[this.currentIndex];\n      command.execute();\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Architectural Decision Records (ADRs)"
+        },
+        {
+          "type": "paragraph",
+          "text": "Document important architectural decisions to maintain context and rationale for future developers."
+        },
+        {
+          "type": "code",
+          "language": "markdown",
+          "text": "# ADR-001: Use Micro-frontends Architecture\n\n## Status\nAccepted\n\n## Context\n- Multiple teams working on different product areas\n- Need to scale development across 20+ developers\n- Desire to experiment with new technologies\n- Current monolithic frontend is becoming difficult to maintain\n\n## Decision\nWe will adopt a micro-frontends architecture using Module Federation.\n\n## Consequences\n### Positive\n- Teams can work independently\n- Technology diversity enabled\n- Independent deployments\n- Better fault isolation\n\n### Negative\n- Increased complexity in deployment\n- Potential for UI inconsistencies\n- Network overhead from multiple bundles\n- Learning curve for developers\n\n## Compliance\n- All new features must be developed as micro-frontends\n- Shared design system must be used for consistency\n- Integration tests required for inter-app communication"
+        }
+      ]
+    },
+    {
+      "id": "performance-at-scale",
+      "title": "Performance Optimization at Scale",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Advanced Bundle Splitting Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Strategic code splitting ensures optimal loading performance by dividing code into logical chunks that load when needed."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Webpack Bundle Splitting Configuration\nmodule.exports = {\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      cacheGroups: {\n        // Vendor libraries\n        vendor: {\n          test: /[\\\\\/]node_modules[\\\\\/]/,\n          name: 'vendors',\n          chunks: 'all',\n          priority: 10\n        },\n        // Common components used across routes\n        common: {\n          name: 'common',\n          minChunks: 2,\n          chunks: 'all',\n          priority: 5,\n          reuseExistingChunk: true\n        },\n        // Large libraries split separately\n        lodash: {\n          test: /[\\\\\/]node_modules[\\\\\/]lodash[\\\\\/]/,\n          name: 'lodash',\n          chunks: 'all',\n          priority: 15\n        },\n        // React ecosystem\n        react: {\n          test: /[\\\\\/]node_modules[\\\\\/](react|react-dom)[\\\\\/]/,\n          name: 'react',\n          chunks: 'all',\n          priority: 20\n        }\n      }\n    }\n  }\n};\n\n// Route-based code splitting with React\nimport { lazy, Suspense } from 'react';\nimport { BrowserRouter, Routes, Route } from 'react-router-dom';\n\n// Lazy load route components\nconst Dashboard = lazy(() => import('./pages/Dashboard'));\nconst Analytics = lazy(() => import('./pages/Analytics'));\nconst Settings = lazy(() => import('./pages/Settings'));\n\n// Component-level splitting for heavy components\nconst DataVisualization = lazy(() => \n  import('./components/DataVisualization')\n);\n\nfunction App() {\n  return (\n    <BrowserRouter>\n      <Suspense fallback={<div>Loading...</div>}>\n        <Routes>\n          <Route path=\"/dashboard\" element={<Dashboard />} />\n          <Route path=\"/analytics\" element={<Analytics />} />\n          <Route path=\"/settings\" element={<Settings />} />\n        </Routes>\n      </Suspense>\n    </BrowserRouter>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Advanced Lazy Loading Patterns"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Intersection Observer for lazy loading\nclass LazyLoader {\n  constructor(options = {}) {\n    this.options = {\n      rootMargin: '50px',\n      threshold: 0.1,\n      ...options\n    };\n    this.observer = new IntersectionObserver(\n      this.handleIntersection.bind(this),\n      this.options\n    );\n  }\n\n  observe(element, callback) {\n    element._lazyCallback = callback;\n    this.observer.observe(element);\n  }\n\n  handleIntersection(entries) {\n    entries.forEach(entry => {\n      if (entry.isIntersecting) {\n        const callback = entry.target._lazyCallback;\n        if (callback) {\n          callback();\n          this.observer.unobserve(entry.target);\n        }\n      }\n    });\n  }\n}\n\n// React Hook for lazy loading\nfunction useLazyLoad(callback, threshold = 0.1) {\n  const elementRef = useRef();\n  const [hasLoaded, setHasLoaded] = useState(false);\n\n  useEffect(() => {\n    const observer = new IntersectionObserver(\n      ([entry]) => {\n        if (entry.isIntersecting && !hasLoaded) {\n          setHasLoaded(true);\n          callback();\n          observer.disconnect();\n        }\n      },\n      { threshold }\n    );\n\n    if (elementRef.current) {\n      observer.observe(elementRef.current);\n    }\n\n    return () => observer.disconnect();\n  }, [callback, hasLoaded, threshold]);\n\n  return [elementRef, hasLoaded];\n}\n\n// Usage\nfunction ExpensiveComponent() {\n  const [ref, hasLoaded] = useLazyLoad(() => {\n    // Load expensive resources\n    import('./ExpensiveChart').then(module => {\n      // Initialize chart\n    });\n  });\n\n  return (\n    <div ref={ref}>\n      {hasLoaded ? <Chart /> : <Skeleton />}\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Tree Shaking Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced tree shaking techniques to eliminate dead code and reduce bundle sizes."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Package.json sideEffects configuration\n{\n  \"sideEffects\": [\n    \"*.css\",\n    \"*.scss\",\n    \"./src/polyfills.js\",\n    \"./src/analytics.js\"\n  ]\n}\n\n// Library with tree-shakeable exports\n// utils/index.js - BAD (imports everything)\nexport * from './validation';\nexport * from './formatting';\nexport * from './api';\n\n// utils/index.js - GOOD (selective exports)\nexport { validateEmail, validatePassword } from './validation';\nexport { formatCurrency, formatDate } from './formatting';\nexport { apiClient, createApiClient } from './api';\n\n// Conditional imports for development tools\nif (process.env.NODE_ENV === 'development') {\n  // These will be tree-shaken in production\n  import('./devtools').then(devtools => {\n    devtools.initializeReduxDevTools();\n  });\n}\n\n// Dynamic imports for feature flags\nconst loadFeature = async (featureName) => {\n  const isEnabled = await checkFeatureFlag(featureName);\n  \n  if (isEnabled) {\n    const feature = await import(`./features/${featureName}`);\n    return feature.default;\n  }\n  \n  return null;\n};\n\n// Usage\nconst AdvancedAnalytics = await loadFeature('advanced-analytics');\nif (AdvancedAnalytics) {\n  // Feature is enabled and loaded\n}"
+        }
+      ]
+    },
+    {
+      "id": "cross-application-integration",
+      "title": "Cross-Application Integration",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Module Federation Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced module federation patterns for sharing components and services across applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Host Application Configuration\nconst ModuleFederationPlugin = require('@module-federation/webpack');\n\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'shell',\n      filename: 'remoteEntry.js',\n      remotes: {\n        designSystem: 'designSystem@http://localhost:3001/remoteEntry.js',\n        userService: 'userService@http://localhost:3002/remoteEntry.js',\n        analytics: 'analytics@http://localhost:3003/remoteEntry.js',\n      },\n      shared: {\n        react: {\n          singleton: true,\n          requiredVersion: '^18.0.0',\n        },\n        'react-dom': {\n          singleton: true,\n          requiredVersion: '^18.0.0',\n        },\n        '@emotion/react': {\n          singleton: true,\n        },\n      },\n    }),\n  ],\n};\n\n// Remote Application (Design System)\nmodule.exports = {\n  plugins: [\n    new ModuleFederationPlugin({\n      name: 'designSystem',\n      filename: 'remoteEntry.js',\n      exposes: {\n        './Button': './src/components/Button',\n        './Modal': './src/components/Modal',\n        './DataTable': './src/components/DataTable',\n        './theme': './src/theme',\n      },\n      shared: {\n        react: { singleton: true },\n        'react-dom': { singleton: true },\n      },\n    }),\n  ],\n};\n\n// Type-safe federation with TypeScript\n// types/federation.d.ts\ndeclare module 'designSystem/Button' {\n  interface ButtonProps {\n    variant: 'primary' | 'secondary' | 'danger';\n    size: 'small' | 'medium' | 'large';\n    children: React.ReactNode;\n    onClick?: () => void;\n  }\n  \n  const Button: React.FC<ButtonProps>;\n  export default Button;\n}\n\n// Usage with error boundaries\nimport React, { Suspense } from 'react';\nimport { ErrorBoundary } from 'react-error-boundary'; \n\nconst RemoteButton = React.lazy(() => import('designSystem/Button'));\n\nfunction FederatedComponent() {\n  return (\n    <ErrorBoundary\n      fallback={<LocalButton>Fallback Button</LocalButton>}\n      onError={(error) => {\n        console.error('Federation error:', error);\n        // Report to analytics\n      }}\n    >\n      <Suspense fallback={<ButtonSkeleton />}>\n        <RemoteButton variant=\"primary\">Federated Button</RemoteButton>\n      </Suspense>\n    </ErrorBoundary>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Design System Governance"
+        },
+        {
+          "type": "paragraph",
+          "text": "Establishing governance processes for maintaining consistency across distributed teams and applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Design System Configuration\n// design-system.config.js\nmodule.exports = {\n  tokens: {\n    colors: {\n      primary: {\n        50: '#f0f9ff',\n        500: '#3b82f6',\n        900: '#1e3a8a',\n      },\n      semantic: {\n        success: '#10b981',\n        warning: '#f59e0b',\n        error: '#ef4444',\n      },\n    },\n    spacing: {\n      xs: '0.25rem',\n      sm: '0.5rem',\n      md: '1rem',\n      lg: '1.5rem',\n      xl: '2rem',\n    },\n    typography: {\n      fontFamily: {\n        sans: ['Inter', 'system-ui', 'sans-serif'],\n        mono: ['JetBrains Mono', 'monospace'],\n      },\n      fontSize: {\n        xs: ['0.75rem', { lineHeight: '1rem' }],\n        sm: ['0.875rem', { lineHeight: '1.25rem' }],\n        base: ['1rem', { lineHeight: '1.5rem' }],\n        lg: ['1.125rem', { lineHeight: '1.75rem' }],\n      },\n    },\n  },\n  components: {\n    Button: {\n      variants: ['primary', 'secondary', 'ghost', 'danger'],\n      sizes: ['sm', 'md', 'lg'],\n      required: ['children'],\n      optional: ['variant', 'size', 'disabled', 'loading'],\n    },\n  },\n};\n\n// Automated design token validation\nfunction validateDesignTokens(component, props) {\n  const config = designSystemConfig.components[component.name];\n  \n  if (!config) {\n    throw new Error(`Component ${component.name} not found in design system`);\n  }\n  \n  // Validate required props\n  config.required.forEach(prop => {\n    if (!(prop in props)) {\n      throw new Error(`Required prop '${prop}' missing in ${component.name}`);\n    }\n  });\n  \n  // Validate variant values\n  if ('variant' in props && config.variants) {\n    if (!config.variants.includes(props.variant)) {\n      throw new Error(\n        `Invalid variant '${props.variant}' for ${component.name}. ` +\n        `Valid options: ${config.variants.join(', ')}`\n      );\n    }\n  }\n}\n\n// Design system compliance checking\nclass DesignSystemLinter {\n  constructor(config) {\n    this.config = config;\n    this.violations = [];\n  }\n  \n  checkComponent(component) {\n    // Check if using approved design tokens\n    this.checkColorUsage(component);\n    this.checkSpacingUsage(component);\n    this.checkTypographyUsage(component);\n    \n    return this.violations;\n  }\n  \n  checkColorUsage(component) {\n    const approvedColors = Object.values(this.config.tokens.colors).flat();\n    \n    // Check CSS-in-JS or styled-components for unapproved colors\n    const colorRegex = /#[0-9A-Fa-f]{6}|rgb\\(|rgba\\(/g;\n    const matches = component.toString().match(colorRegex);\n    \n    if (matches) {\n      matches.forEach(color => {\n        if (!approvedColors.includes(color)) {\n          this.violations.push({\n            type: 'unapproved-color',\n            message: `Unapproved color '${color}' used. Use design tokens instead.`,\n            component: component.name\n          });\n        }\n      });\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "legacy-modernization",
+      "title": "Legacy System Modernization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Incremental Migration Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Systematic approaches to modernizing legacy applications without complete rewrites, minimizing risk and maintaining business continuity."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Strangler Fig Pattern Implementation\nclass StranglerFigProxy {\n  constructor() {\n    this.routes = new Map();\n    this.fallbackHandler = null;\n  }\n  \n  // Register new React components for specific routes\n  register(pattern, newHandler) {\n    this.routes.set(pattern, newHandler);\n  }\n  \n  // Set fallback to legacy system\n  setFallback(handler) {\n    this.fallbackHandler = handler;\n  }\n  \n  async handleRequest(req, res) {\n    const url = req.url;\n    \n    // Check if we have a modern handler for this route\n    for (const [pattern, handler] of this.routes) {\n      if (this.matchesPattern(url, pattern)) {\n        return await handler(req, res);\n      }\n    }\n    \n    // Fall back to legacy system\n    if (this.fallbackHandler) {\n      return await this.fallbackHandler(req, res);\n    }\n    \n    throw new Error('No handler found');\n  }\n  \n  matchesPattern(url, pattern) {\n    const regex = new RegExp(pattern.replace('*', '.*'));\n    return regex.test(url);\n  }\n}\n\n// Usage\nconst proxy = new StranglerFigProxy();\n\n// Gradually replace legacy routes\nproxy.register('/dashboard/*', modernDashboardHandler);\nproxy.register('/user/profile', modernProfileHandler);\nproxy.register('/api/v2/*', modernApiHandler);\n\n// Everything else goes to legacy system\nproxy.setFallback(legacySystemHandler);\n\n// Migration progress tracking\nclass MigrationTracker {\n  constructor() {\n    this.routes = {\n      migrated: new Set(),\n      total: new Set(),\n    };\n  }\n  \n  addRoute(path, isMigrated = false) {\n    this.routes.total.add(path);\n    if (isMigrated) {\n      this.routes.migrated.add(path);\n    }\n  }\n  \n  markAsMigrated(path) {\n    if (this.routes.total.has(path)) {\n      this.routes.migrated.add(path);\n    }\n  }\n  \n  getProgress() {\n    const total = this.routes.total.size;\n    const migrated = this.routes.migrated.size;\n    return {\n      total,\n      migrated,\n      percentage: total > 0 ? (migrated / total) * 100 : 0,\n      remaining: total - migrated,\n    };\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Feature Flags for Gradual Rollout"
+        },
+        {
+          "type": "paragraph",
+          "text": "Feature flags enable safe deployment of new features alongside legacy code, allowing gradual migration and quick rollbacks."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Feature Flag System\nclass FeatureFlagManager {\n  constructor() {\n    this.flags = new Map();\n    this.evaluationContext = {};\n    this.listeners = new Map();\n  }\n  \n  // Define feature flag with conditions\n  defineFlag(name, config) {\n    this.flags.set(name, {\n      enabled: config.enabled || false,\n      conditions: config.conditions || [],\n      rolloutPercentage: config.rolloutPercentage || 0,\n      userGroups: config.userGroups || [],\n      ...config\n    });\n  }\n  \n  // Evaluate flag with context\n  isEnabled(flagName, context = {}) {\n    const flag = this.flags.get(flagName);\n    if (!flag) return false;\n    \n    // Check if explicitly disabled\n    if (!flag.enabled) return false;\n    \n    // Check user groups\n    if (flag.userGroups.length > 0 && context.user) {\n      const userGroups = context.user.groups || [];\n      const hasAccess = flag.userGroups.some(group => userGroups.includes(group));\n      if (!hasAccess) return false;\n    }\n    \n    // Check rollout percentage\n    if (flag.rolloutPercentage < 100) {\n      const userId = context.user?.id || 'anonymous';\n      const hash = this.hashUserId(userId, flagName);\n      const bucket = hash % 100;\n      if (bucket >= flag.rolloutPercentage) return false;\n    }\n    \n    // Evaluate conditions\n    return flag.conditions.every(condition => \n      this.evaluateCondition(condition, context)\n    );\n  }\n  \n  hashUserId(userId, flagName) {\n    let hash = 0;\n    const str = `${userId}-${flagName}`;\n    for (let i = 0; i < str.length; i++) {\n      const char = str.charCodeAt(i);\n      hash = ((hash << 5) - hash) + char;\n      hash = hash & hash; // Convert to 32-bit integer\n    }\n    return Math.abs(hash);\n  }\n  \n  evaluateCondition(condition, context) {\n    switch (condition.type) {\n      case 'browser':\n        return context.browser?.name === condition.value;\n      case 'device':\n        return context.device?.type === condition.value;\n      case 'location':\n        return context.location?.country === condition.value;\n      case 'dateRange':\n        const now = new Date();\n        return now >= new Date(condition.start) && now <= new Date(condition.end);\n      default:\n        return true;\n    }\n  }\n  \n  // React Hook for feature flags\n  useFeatureFlag(flagName) {\n    const [isEnabled, setIsEnabled] = useState(\n      this.isEnabled(flagName, this.evaluationContext)\n    );\n    \n    useEffect(() => {\n      const listener = () => {\n        setIsEnabled(this.isEnabled(flagName, this.evaluationContext));\n      };\n      \n      this.listeners.set(flagName, listener);\n      \n      return () => {\n        this.listeners.delete(flagName);\n      };\n    }, [flagName]);\n    \n    return isEnabled;\n  }\n}\n\n// Usage in React components\nfunction UserDashboard() {\n  const featureFlags = useContext(FeatureFlagContext);\n  const newDashboard = featureFlags.useFeatureFlag('new-dashboard-ui');\n  const advancedAnalytics = featureFlags.useFeatureFlag('advanced-analytics');\n  \n  if (newDashboard) {\n    return <NewDashboardComponent />;\n  }\n  \n  return (\n    <LegacyDashboard>\n      {advancedAnalytics && <AdvancedAnalyticsPanel />}\n    </LegacyDashboard>\n  );\n}\n\n// Feature flag configuration\nconst flagConfig = {\n  'new-dashboard-ui': {\n    enabled: true,\n    rolloutPercentage: 25,\n    userGroups: ['beta-users', 'employees'],\n    conditions: [\n      { type: 'browser', value: 'chrome' },\n      { type: 'dateRange', start: '2024-01-01', end: '2024-12-31' }\n    ]\n  },\n  'legacy-system-migration': {\n    enabled: true,\n    rolloutPercentage: 10,\n    conditions: [\n      { type: 'device', value: 'desktop' }\n    ]\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Backward Compatibility Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Maintaining compatibility with existing systems while introducing modern architecture patterns."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// API Versioning Strategy\nclass ApiAdapter {\n  constructor(version) {\n    this.version = version;\n    this.transformers = new Map();\n  }\n  \n  // Register transformation functions\n  registerTransformer(fromVersion, toVersion, transformer) {\n    const key = `${fromVersion}->${toVersion}`;\n    this.transformers.set(key, transformer);\n  }\n  \n  // Transform data between API versions\n  transform(data, targetVersion) {\n    if (this.version === targetVersion) {\n      return data;\n    }\n    \n    const key = `${this.version}->${targetVersion}`;\n    const transformer = this.transformers.get(key);\n    \n    if (transformer) {\n      return transformer(data);\n    }\n    \n    throw new Error(`No transformer found for ${key}`);\n  }\n}\n\n// Legacy data transformers\nconst apiAdapter = new ApiAdapter('v1');\n\n// Transform v1 user data to v2 format\napiAdapter.registerTransformer('v1', 'v2', (userData) => {\n  return {\n    id: userData.user_id,\n    profile: {\n      firstName: userData.first_name,\n      lastName: userData.last_name,\n      email: userData.email_address,\n    },\n    preferences: {\n      theme: userData.theme || 'light',\n      language: userData.lang || 'en',\n    },\n    metadata: {\n      createdAt: userData.created_at,\n      updatedAt: userData.updated_at,\n    }\n  };\n});\n\n// Polyfill for legacy browser support\nclass LegacySupport {\n  static init() {\n    // Polyfill for modern features\n    if (!Array.prototype.includes) {\n      Array.prototype.includes = function(searchElement) {\n        return this.indexOf(searchElement) !== -1;\n      };\n    }\n    \n    if (!String.prototype.startsWith) {\n      String.prototype.startsWith = function(searchString, position) {\n        position = position || 0;\n        return this.substr(position, searchString.length) === searchString;\n      };\n    }\n    \n    // Custom event polyfill\n    if (typeof window.CustomEvent !== 'function') {\n      function CustomEvent(event, params) {\n        params = params || { bubbles: false, cancelable: false, detail: undefined };\n        const evt = document.createEvent('CustomEvent');\n        evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);\n        return evt;\n      }\n      CustomEvent.prototype = window.Event.prototype;\n      window.CustomEvent = CustomEvent;\n    }\n  }\n  \n  static detectFeatures() {\n    return {\n      modules: 'noModule' in HTMLScriptElement.prototype,\n      customElements: 'customElements' in window,\n      shadowDOM: 'attachShadow' in Element.prototype,\n      fetch: 'fetch' in window,\n      promises: 'Promise' in window,\n      intersectionObserver: 'IntersectionObserver' in window,\n    };\n  }\n}\n\n// Progressive enhancement based on capabilities\nfunction initializeApp() {\n  const features = LegacySupport.detectFeatures();\n  \n  if (features.modules) {\n    // Load modern ES modules\n    import('./modern-app.js').then(app => app.init());\n  } else {\n    // Load legacy bundle\n    const script = document.createElement('script');\n    script.src = '/legacy-app.js';\n    document.head.appendChild(script);\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main benefit of micro-frontends architecture?",
+      "options": [
+        "Faster loading times",
+        "Independent development and deployment by teams",
+        "Smaller bundle sizes",
+        "Better SEO performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Micro-frontends enable teams to work independently on different parts of an application, allowing for autonomous development, deployment, and technology choices while maintaining a cohesive user experience."
+    },
+    {
+      "id": 2,
+      "question": "Which design pattern is best for implementing undo/redo functionality?",
+      "options": ["Observer", "Strategy", "Command", "Factory"],
+      "correctAnswer": 2,
+      "explanation": "The Command pattern encapsulates requests as objects, making it perfect for implementing undo/redo functionality by storing executed commands and their reverse operations."
+    },
+    {
+      "id": 3,
+      "question": "What is the primary purpose of the Strangler Fig pattern?",
+      "options": [
+        "Performance optimization",
+        "Incremental legacy system migration",
+        "Security enhancement",
+        "Bundle size reduction"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Strangler Fig pattern allows gradual migration from legacy systems by incrementally replacing functionality while maintaining the existing system as a fallback."
+    },
+    {
+      "id": 4,
+      "question": "In Module Federation, what is the purpose of 'shared' configuration?",
+      "options": [
+        "Share code between teams",
+        "Prevent library duplication across micro-frontends",
+        "Enable communication between apps",
+        "Improve security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'shared' configuration in Module Federation prevents library duplication by ensuring that common dependencies like React are loaded once and shared across all micro-frontends."
+    },
+    {
+      "id": 5,
+      "question": "What is domain-driven design in frontend architecture?",
+      "options": [
+        "Organizing code by technical layers",
+        "Organizing code around business domains",
+        "Using domain names for routing",
+        "Implementing domain-specific languages"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Domain-driven design organizes frontend code around business domains rather than technical layers, improving maintainability and team understanding of the business logic."
+    },
+    {
+      "id": 6,
+      "question": "In event-driven architecture, what is the main advantage of using middleware in event processing?",
+      "options": [
+        "Faster event processing",
+        "Cross-cutting concerns like logging, validation, and analytics",
+        "Smaller memory footprint",
+        "Better browser compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Middleware in event-driven architecture allows you to handle cross-cutting concerns like logging, validation, analytics, and error handling in a centralized, reusable way across all events."
+    },
+    {
+      "id": 7,
+      "question": "What is the primary benefit of Hexagonal Architecture (Ports and Adapters)?",
+      "options": [
+        "Faster application performance",
+        "Isolation of business logic from external dependencies",
+        "Smaller bundle sizes",
+        "Better UI rendering"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Hexagonal Architecture isolates the core business logic from external concerns (databases, APIs, UI) through ports and adapters, making the application more testable and maintainable."
+    },
+    {
+      "id": 8,
+      "question": "In the Strategy pattern, when should you switch strategies at runtime?",
+      "options": [
+        "Never, strategies should be fixed at compile time",
+        "Based on user preferences, feature flags, or environmental conditions",
+        "Only during application startup",
+        "Only when errors occur"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Strategy pattern's power lies in its ability to switch algorithms at runtime based on conditions like user preferences, feature flags, A/B tests, or environmental factors."
+    },
+    {
+      "id": 9,
+      "question": "What is the difference between cacheFirst and networkFirst strategies in Service Workers?",
+      "options": [
+        "No difference, they're the same",
+        "cacheFirst serves cached content first, networkFirst tries network first",
+        "cacheFirst is faster, networkFirst is more secure",
+        "cacheFirst works offline, networkFirst doesn't"
+      ],
+      "correctAnswer": 1,
+      "explanation": "cacheFirst strategy serves cached content immediately if available, falling back to network. networkFirst tries the network first, falling back to cache if network fails. Choose based on content freshness requirements."
+    },
+    {
+      "id": 10,
+      "question": "In advanced bundle splitting, what is the purpose of the 'priority' setting in cache groups?",
+      "options": [
+        "Determines loading order",
+        "Controls which cache group a module belongs to when it matches multiple groups",
+        "Sets compression level",
+        "Defines execution priority"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Priority determines which cache group a module belongs to when it matches multiple groups. Higher priority groups take precedence, allowing fine-grained control over bundle organization."
+    },
+    {
+      "id": 11,
+      "question": "What is tree shaking and how does the 'sideEffects' field help?",
+      "options": [
+        "Tree shaking removes unused code; sideEffects marks files that can be safely removed",
+        "Tree shaking optimizes images; sideEffects compresses files",
+        "Tree shaking minifies code; sideEffects removes comments",
+        "Tree shaking splits bundles; sideEffects manages dependencies"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Tree shaking eliminates dead code from bundles. The sideEffects field in package.json tells bundlers which files have side effects and cannot be safely removed, enabling more aggressive optimization."
+    },
+    {
+      "id": 12,
+      "question": "In Module Federation, what happens if a remote module fails to load?",
+      "options": [
+        "The entire application crashes",
+        "Error boundaries can catch the error and show fallback UI",
+        "The page automatically refreshes",
+        "Nothing, it silently fails"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Module Federation should be wrapped in Error Boundaries to gracefully handle remote module failures. This allows showing fallback UI or local alternatives when remote modules are unavailable."
+    },
+    {
+      "id": 13,
+      "question": "What is the main purpose of Architectural Decision Records (ADRs)?",
+      "options": [
+        "To document API endpoints",
+        "To capture the context, decision, and consequences of important architectural choices",
+        "To track bug fixes",
+        "To manage user requirements"
+      ],
+      "correctAnswer": 1,
+      "explanation": "ADRs document the context (why a decision was needed), the decision made, and the consequences (positive and negative). This preserves architectural knowledge for future developers."
+    },
+    {
+      "id": 14,
+      "question": "In feature flag systems, what is the purpose of rollout percentage?",
+      "options": [
+        "To control server load",
+        "To gradually expose features to a percentage of users for safe rollouts",
+        "To measure performance impact",
+        "To track user engagement"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Rollout percentage enables gradual feature rollouts by exposing new features to only a percentage of users initially, allowing monitoring for issues before full deployment."
+    },
+    {
+      "id": 15,
+      "question": "What is the Observer pattern's main advantage over direct method calls?",
+      "options": [
+        "Better performance",
+        "Loose coupling between subject and observers",
+        "Smaller memory usage",
+        "Faster execution"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Observer pattern enables loose coupling because subjects don't need to know about their observers. Observers can be added or removed without changing the subject's code."
+    },
+    {
+      "id": 16,
+      "question": "In lazy loading with Intersection Observer, what does the 'rootMargin' option do?",
+      "options": [
+        "Sets the element's margin",
+        "Defines how far from the viewport edge to trigger loading",
+        "Controls animation duration",
+        "Sets the loading priority"
+      ],
+      "correctAnswer": 1,
+      "explanation": "rootMargin extends the root's bounding box for intersection calculations. A positive value like '50px' triggers loading before the element enters the viewport, improving user experience."
+    },
+    {
+      "id": 17,
+      "question": "What is the primary challenge with micro-frontends architecture?",
+      "options": [
+        "Slower performance",
+        "Coordination and consistency across teams and applications",
+        "Limited technology choices",
+        "Poor SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "While micro-frontends enable team autonomy, they create challenges in maintaining consistency in UI/UX, shared dependencies, deployment coordination, and cross-team communication."
+    },
+    {
+      "id": 18,
+      "question": "In the Command pattern, what enables undo functionality?",
+      "options": [
+        "Storing the original state",
+        "Each command implements both execute() and undo() methods",
+        "Using a database to track changes",
+        "Automatic state snapshots"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Command pattern enables undo by requiring each command to implement both execute() and undo() methods. The undo() method reverses the changes made by execute()."
+    },
+    {
+      "id": 19,
+      "question": "What is the main benefit of using a Dependency Injection container?",
+      "options": [
+        "Faster code execution",
+        "Manages object creation and dependencies, enabling easier testing and configuration",
+        "Smaller bundle sizes",
+        "Better error handling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Dependency Injection containers manage object creation and wire dependencies automatically, making it easier to swap implementations for testing, configure different environments, and maintain loose coupling."
+    },
+    {
+      "id": 20,
+      "question": "In performance optimization, what is the difference between 'chunks: all' and 'chunks: async' in splitChunks?",
+      "options": [
+        "No difference",
+        "'all' splits both sync and async imports, 'async' only splits dynamic imports",
+        "'all' is faster, 'async' is smaller",
+        "'all' works in all browsers, 'async' only in modern browsers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'chunks: all' creates chunks from both synchronous and asynchronous imports, while 'chunks: async' only creates chunks from dynamic imports (import() statements)."
+    },
+    {
+      "id": 21,
+      "question": "What is stale-while-revalidate caching strategy?",
+      "options": [
+        "Always serves fresh data",
+        "Serves cached data immediately while fetching fresh data in background",
+        "Only serves cached data",
+        "Serves random data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Stale-while-revalidate serves cached data immediately for fast response, while simultaneously fetching fresh data in the background to update the cache for the next request."
+    },
+    {
+      "id": 22,
+      "question": "In design system governance, what is the purpose of design token validation?",
+      "options": [
+        "To improve performance",
+        "To ensure consistent use of approved colors, spacing, and typography across applications",
+        "To reduce bundle size",
+        "To enable dark mode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Design token validation enforces consistency by checking that components use only approved design tokens (colors, spacing, typography) rather than hard-coded values."
+    },
+    {
+      "id": 23,
+      "question": "What is the main advantage of using event sourcing in frontend architecture?",
+      "options": [
+        "Faster rendering",
+        "Complete audit trail and ability to replay state changes",
+        "Smaller memory usage",
+        "Better SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event sourcing stores all state changes as events, providing a complete audit trail, ability to replay events to rebuild state, and easier debugging of complex state transitions."
+    },
+    {
+      "id": 24,
+      "question": "In API versioning strategies, when should you create a new version?",
+      "options": [
+        "For every bug fix",
+        "For breaking changes that affect existing clients",
+        "Monthly releases",
+        "When adding any new feature"
+      ],
+      "correctAnswer": 1,
+      "explanation": "New API versions should be created for breaking changes that would affect existing clients. Non-breaking additions can usually be added to existing versions."
+    },
+    {
+      "id": 25,
+      "question": "What is the primary purpose of background sync in Service Workers?",
+      "options": [
+        "To improve performance",
+        "To retry failed network requests when connectivity is restored",
+        "To prefetch resources",
+        "To manage cache storage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Background sync allows Service Workers to retry failed network requests (like form submissions) when the user regains connectivity, ensuring data isn't lost due to network issues."
+    },
+    {
+      "id": 26,
+      "question": "In micro-frontend architecture, what is the shell application responsible for?",
+      "options": [
+        "All business logic",
+        "Orchestrating and hosting other micro-frontends, shared navigation",
+        "Data processing only",
+        "User authentication only"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The shell application acts as the host that orchestrates other micro-frontends, typically handling shared concerns like navigation, authentication, and layout while delegating feature-specific functionality to micro-frontends."
+    },
+    {
+      "id": 27,
+      "question": "What is the main benefit of using Web Streams API for large data processing?",
+      "options": [
+        "Faster processing",
+        "Process data in chunks without loading everything into memory",
+        "Better error handling",
+        "Improved security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Web Streams API allows processing large amounts of data in chunks as they arrive, rather than waiting for the entire dataset. This reduces memory usage and improves perceived performance."
+    },
+    {
+      "id": 28,
+      "question": "In legacy system modernization, what is the key principle of the Strangler Fig pattern?",
+      "options": [
+        "Replace everything at once",
+        "Gradually replace legacy functionality while keeping the old system as fallback",
+        "Only fix bugs in legacy code",
+        "Create a completely separate new system"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Strangler Fig pattern gradually replaces legacy functionality piece by piece, routing some requests to new implementations while falling back to the legacy system for unreplaced functionality."
+    },
+    {
+      "id": 29,
+      "question": "What is the main advantage of using TypeScript with Module Federation?",
+      "options": [
+        "Faster runtime performance",
+        "Type safety across micro-frontend boundaries",
+        "Smaller bundle sizes",
+        "Better browser compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "TypeScript with Module Federation provides type safety across micro-frontend boundaries through declaration files, catching integration errors at compile time rather than runtime."
+    },
+    {
+      "id": 30,
+      "question": "In advanced caching strategies, when should you use the 'networkFirst' strategy?",
+      "options": [
+        "For static assets that never change",
+        "For dynamic content that needs to be fresh, with cache as fallback",
+        "For images and media files",
+        "For CSS and JavaScript files"
+      ],
+      "correctAnswer": 1,
+      "explanation": "networkFirst strategy is ideal for dynamic content like API responses where freshness is important, but you want cache as a fallback when the network is unavailable."
+    },
+    {
+      "id": 31,
+      "question": "What is the purpose of the 'reuseExistingChunk' option in Webpack splitChunks?",
+      "options": [
+        "Creates new chunks",
+        "Reuses existing chunks instead of creating duplicates when modules are already split",
+        "Improves performance",
+        "Reduces memory usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "reuseExistingChunk prevents creating duplicate chunks by reusing existing chunks when the same modules have already been split into a chunk, optimizing bundle structure."
+    },
+    {
+      "id": 32,
+      "question": "In event-driven architecture, what is the main benefit of event replay capability?",
+      "options": [
+        "Better performance",
+        "Ability to debug issues by replaying events and rebuild application state",
+        "Smaller memory usage",
+        "Faster network requests"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event replay allows you to debug complex issues by replaying the sequence of events that led to a problem, and can rebuild application state from the event history."
+    },
+    {
+      "id": 33,
+      "question": "What is the main challenge when implementing feature flags at scale?",
+      "options": [
+        "Performance overhead",
+        "Managing flag complexity, dependencies, and technical debt from old flags",
+        "Security concerns",
+        "Browser compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "At scale, feature flags create complexity through flag dependencies, combinatorial testing challenges, and technical debt from accumulating old flags that need cleanup."
+    },
+    {
+      "id": 34,
+      "question": "In hexagonal architecture, what is the difference between ports and adapters?",
+      "options": [
+        "No difference, they're the same thing",
+        "Ports define interfaces, adapters implement those interfaces for specific technologies",
+        "Ports are for input, adapters are for output",
+        "Ports are faster than adapters"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Ports define the interfaces (contracts) that the core business logic uses, while adapters are concrete implementations of those interfaces for specific technologies (databases, APIs, etc.)."
+    },
+    {
+      "id": 35,
+      "question": "What is the primary consideration when choosing between client-side and server-side rendering for micro-frontends?",
+      "options": [
+        "Development speed only",
+        "SEO requirements, performance characteristics, and team capabilities",
+        "Cost only",
+        "Technology preferences only"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The choice between CSR and SSR for micro-frontends depends on SEO needs, performance requirements (initial load vs. navigation), infrastructure complexity, and team expertise with different rendering strategies."
+    }
+  ]
+} 

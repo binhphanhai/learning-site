@@ -1,0 +1,524 @@
+{
+  "title": "Enterprise-Level TypeScript & Code Quality",
+  "description": "Master advanced TypeScript patterns, type-safe architecture, large codebase management, code quality at scale, and API design patterns for enterprise-level development",
+  "sections": [
+    {
+      "id": "advanced-typescript-patterns",
+      "title": "Advanced TypeScript Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Conditional Types and Type-Level Programming"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced conditional types enable powerful type transformations and compile-time logic for building robust type-safe APIs."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Advanced Conditional Types\ntype IsArray<T> = T extends any[] ? true : false;\ntype ArrayElement<T> = T extends (infer U)[] ? U : never;\ntype NonNullable<T> = T extends null | undefined ? never : T;\n\n// Deep readonly utility\ntype DeepReadonly<T> = {\n  readonly [P in keyof T]: T[P] extends object\n    ? T[P] extends Function\n      ? T[P]\n      : DeepReadonly<T[P]>\n    : T[P];\n};\n\n// Advanced mapped types with template literals\ntype EventMap<T> = {\n  [K in keyof T as `on${Capitalize<string & K>}`]: (value: T[K]) => void;\n};\n\ninterface User {\n  name: string;\n  age: number;\n  email: string;\n}\n\ntype UserEvents = EventMap<User>;\n// Result: {\n//   onName: (value: string) => void;\n//   onAge: (value: number) => void;\n//   onEmail: (value: string) => void;\n// }\n\n// Recursive type for nested object paths\ntype PathsToStringProps<T> = T extends string\n  ? []\n  : {\n      [K in Extract<keyof T, string>]: T[K] extends string\n        ? [K]\n        : T[K] extends object\n        ? [K, ...PathsToStringProps<T[K]>]\n        : never;\n    }[Extract<keyof T, string>];\n\ntype Join<T extends string[], D extends string> = T extends readonly [infer F, ...infer R]\n  ? F extends string\n    ? R extends readonly string[]\n      ? R['length'] extends 0\n        ? F\n        : `${F}${D}${Join<R, D>}`\n      : never\n    : never\n  : '';\n\ntype DotNotation<T> = Join<PathsToStringProps<T>, '.'>;\n\n// Usage\ninterface Config {\n  database: {\n    host: string;\n    port: number;\n    credentials: {\n      username: string;\n      password: string;\n    };\n  };\n  api: {\n    baseUrl: string;\n    timeout: number;\n  };\n}\n\ntype ConfigPaths = DotNotation<Config>;\n// Result: \"database.host\" | \"database.credentials.username\" | \"database.credentials.password\" | \"api.baseUrl\"\n\n// Advanced function overloading with conditional types\ninterface QueryBuilder<T = any> {\n  select<K extends keyof T>(fields: K[]): QueryBuilder<Pick<T, K>>;\n  where<K extends keyof T>(field: K, value: T[K]): QueryBuilder<T>;\n  orderBy<K extends keyof T>(field: K, direction?: 'asc' | 'desc'): QueryBuilder<T>;\n  execute(): Promise<T[]>;\n}\n\nfunction createQueryBuilder<T>(): QueryBuilder<T> {\n  const query = {\n    _select: [] as string[],\n    _where: [] as Array<{ field: string; value: any }>,\n    _orderBy: [] as Array<{ field: string; direction: 'asc' | 'desc' }>,\n  };\n\n  return {\n    select<K extends keyof T>(fields: K[]) {\n      query._select = fields as string[];\n      return this as QueryBuilder<Pick<T, K>>;\n    },\n    where<K extends keyof T>(field: K, value: T[K]) {\n      query._where.push({ field: field as string, value });\n      return this;\n    },\n    orderBy<K extends keyof T>(field: K, direction: 'asc' | 'desc' = 'asc') {\n      query._orderBy.push({ field: field as string, direction });\n      return this;\n    },\n    async execute() {\n      // Implementation would build and execute SQL query\n      return [] as T[];\n    },\n  };\n}\n\n// Usage with full type safety\ninterface Product {\n  id: number;\n  name: string;\n  price: number;\n  category: string;\n  inStock: boolean;\n}\n\nconst products = await createQueryBuilder<Product>()\n  .select(['name', 'price']) // Type: Pick<Product, 'name' | 'price'>\n  .where('inStock', true)\n  .orderBy('price', 'desc')\n  .execute();\n\n// Advanced utility types for API responses\ntype ApiResponse<T> = {\n  data: T;\n  meta: {\n    timestamp: string;\n    requestId: string;\n  };\n};\n\ntype ApiError = {\n  error: {\n    code: string;\n    message: string;\n    details?: Record<string, any>;\n  };\n  meta: {\n    timestamp: string;\n    requestId: string;\n  };\n};\n\ntype ApiResult<T> = ApiResponse<T> | ApiError;\n\n// Type guard for API responses\nfunction isApiError(response: ApiResult<any>): response is ApiError {\n  return 'error' in response;\n}\n\nfunction isApiResponse<T>(response: ApiResult<T>): response is ApiResponse<T> {\n  return 'data' in response;\n}\n\n// Advanced generic constraints\ninterface Identifiable {\n  id: string | number;\n}\n\ninterface Timestamped {\n  createdAt: Date;\n  updatedAt: Date;\n}\n\ntype Entity<T extends Identifiable & Timestamped> = T & {\n  version: number;\n  isDeleted: boolean;\n};\n\n// Repository pattern with advanced types\ninterface Repository<T extends Identifiable> {\n  findById(id: T['id']): Promise<T | null>;\n  findMany(criteria: Partial<T>): Promise<T[]>;\n  create(data: Omit<T, 'id'>): Promise<T>;\n  update(id: T['id'], data: Partial<Omit<T, 'id'>>): Promise<T>;\n  delete(id: T['id']): Promise<void>;\n}\n\nclass BaseRepository<T extends Identifiable> implements Repository<T> {\n  constructor(private tableName: string) {}\n\n  async findById(id: T['id']): Promise<T | null> {\n    // Database implementation\n    return null;\n  }\n\n  async findMany(criteria: Partial<T>): Promise<T[]> {\n    // Database implementation\n    return [];\n  }\n\n  async create(data: Omit<T, 'id'>): Promise<T> {\n    // Database implementation\n    return {} as T;\n  }\n\n  async update(id: T['id'], data: Partial<Omit<T, 'id'>>): Promise<T> {\n    // Database implementation\n    return {} as T;\n  }\n\n  async delete(id: T['id']): Promise<void> {\n    // Database implementation\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Template Literal Types and String Manipulation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Template literal types enable powerful string manipulation at the type level for creating type-safe APIs and configurations."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Advanced Template Literal Types\ntype HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';\ntype ApiVersion = 'v1' | 'v2' | 'v3';\ntype ResourceType = 'users' | 'products' | 'orders' | 'categories';\n\n// Generate API endpoint types\ntype ApiEndpoint<V extends ApiVersion, M extends HttpMethod, R extends ResourceType> = \n  `/${V}/${R}${M extends 'GET' | 'DELETE' ? '' : ''}${M extends 'PUT' | 'PATCH' | 'DELETE' ? '/:id' : ''}`;\n\ntype UserEndpoints = \n  | ApiEndpoint<'v1', 'GET', 'users'>     // \"/v1/users\"\n  | ApiEndpoint<'v1', 'POST', 'users'>    // \"/v1/users\"\n  | ApiEndpoint<'v1', 'PUT', 'users'>     // \"/v1/users/:id\"\n  | ApiEndpoint<'v1', 'DELETE', 'users'>; // \"/v1/users/:id\"\n\n// CSS-in-JS type safety\ntype CSSUnit = 'px' | 'em' | 'rem' | '%' | 'vh' | 'vw';\ntype CSSValue<T extends string> = `${number}${T}` | 'auto' | 'inherit';\n\ntype Spacing = CSSValue<'px' | 'em' | 'rem'>;\ntype Color = `#${string}` | `rgb(${number}, ${number}, ${number})` | `rgba(${number}, ${number}, ${number}, ${number})`;\n\ninterface StyledProps {\n  margin?: Spacing;\n  padding?: Spacing;\n  backgroundColor?: Color;\n  color?: Color;\n}\n\n// SQL query builder with template literals\ntype SQLOperator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'IN';\ntype WhereClause<T> = {\n  [K in keyof T]: `${string & K} ${SQLOperator} ${string}`;\n}[keyof T];\n\ntype SelectQuery<T> = `SELECT ${string} FROM ${string}${string extends WhereClause<T> ? ` WHERE ${WhereClause<T>}` : ''}`;\n\n// Environment configuration with template literals\ntype Environment = 'development' | 'staging' | 'production';\ntype ServiceName = 'api' | 'database' | 'cache' | 'queue';\ntype ConfigKey<E extends Environment, S extends ServiceName> = `${E}_${Uppercase<S>}_URL`;\n\ntype ConfigKeys = \n  | ConfigKey<'development', 'api'>     // \"development_API_URL\"\n  | ConfigKey<'production', 'database'> // \"production_DATABASE_URL\"\n  | ConfigKey<'staging', 'cache'>;      // \"staging_CACHE_URL\"\n\n// Advanced string parsing\ntype ParseRoute<T extends string> = T extends `/${infer Segment}/${infer Rest}`\n  ? Segment extends `:${infer Param}`\n    ? { [K in Param]: string } & ParseRoute<`/${Rest}`>\n    : ParseRoute<`/${Rest}`>\n  : T extends `/${infer Segment}`\n  ? Segment extends `:${infer Param}`\n    ? { [K in Param]: string }\n    : {}\n  : {};\n\ntype UserRouteParams = ParseRoute<'/users/:userId/posts/:postId'>;\n// Result: { userId: string; postId: string; }\n\n// Type-safe event system\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype EventHandler<T> = (event: T) => void;\n\ntype EventMap<T extends Record<string, any>> = {\n  [K in keyof T as EventName<string & K>]: EventHandler<T[K]>;\n};\n\ninterface ComponentEvents {\n  click: MouseEvent;\n  hover: MouseEvent;\n  focus: FocusEvent;\n  change: { value: string; name: string };\n}\n\ntype ComponentEventHandlers = EventMap<ComponentEvents>;\n// Result: {\n//   onClick: (event: MouseEvent) => void;\n//   onHover: (event: MouseEvent) => void;\n//   onFocus: (event: FocusEvent) => void;\n//   onChange: (event: { value: string; name: string }) => void;\n// }\n\n// Advanced form validation types\ntype ValidationRule = \n  | { type: 'required'; message: string }\n  | { type: 'minLength'; value: number; message: string }\n  | { type: 'maxLength'; value: number; message: string }\n  | { type: 'pattern'; value: RegExp; message: string }\n  | { type: 'custom'; validator: (value: any) => boolean; message: string };\n\ntype FieldConfig<T> = {\n  [K in keyof T]: {\n    label: string;\n    type: 'text' | 'email' | 'password' | 'number' | 'select' | 'checkbox';\n    rules?: ValidationRule[];\n    options?: T[K] extends string ? string[] : never;\n  };\n};\n\ninterface RegistrationForm {\n  email: string;\n  password: string;\n  confirmPassword: string;\n  age: number;\n  country: string;\n  acceptTerms: boolean;\n}\n\nconst registrationConfig: FieldConfig<RegistrationForm> = {\n  email: {\n    label: 'Email Address',\n    type: 'email',\n    rules: [\n      { type: 'required', message: 'Email is required' },\n      { type: 'pattern', value: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/, message: 'Invalid email format' }\n    ]\n  },\n  password: {\n    label: 'Password',\n    type: 'password',\n    rules: [\n      { type: 'required', message: 'Password is required' },\n      { type: 'minLength', value: 8, message: 'Password must be at least 8 characters' }\n    ]\n  },\n  confirmPassword: {\n    label: 'Confirm Password',\n    type: 'password',\n    rules: [\n      { type: 'required', message: 'Please confirm your password' },\n      { type: 'custom', validator: (value) => value === 'password_value', message: 'Passwords must match' }\n    ]\n  },\n  age: {\n    label: 'Age',\n    type: 'number',\n    rules: [\n      { type: 'required', message: 'Age is required' }\n    ]\n  },\n  country: {\n    label: 'Country',\n    type: 'select',\n    options: ['USA', 'Canada', 'UK', 'Germany', 'France'],\n    rules: [\n      { type: 'required', message: 'Please select a country' }\n    ]\n  },\n  acceptTerms: {\n    label: 'Accept Terms and Conditions',\n    type: 'checkbox',\n    rules: [\n      { type: 'custom', validator: (value) => value === true, message: 'You must accept the terms' }\n    ]\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Recursive Types and Complex Data Structures"
+        },
+        {
+          "type": "paragraph",
+          "text": "Recursive types enable modeling of complex nested data structures with full type safety."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Advanced Recursive Types\ntype JSONValue = \n  | string\n  | number\n  | boolean\n  | null\n  | JSONObject\n  | JSONArray;\n\ninterface JSONObject {\n  [key: string]: JSONValue;\n}\n\ninterface JSONArray extends Array<JSONValue> {}\n\n// Tree data structure with type safety\ninterface TreeNode<T> {\n  value: T;\n  children: TreeNode<T>[];\n  parent?: TreeNode<T>;\n}\n\nclass Tree<T> {\n  constructor(public root: TreeNode<T>) {}\n\n  // Type-safe tree traversal\n  traverse<R>(fn: (node: TreeNode<T>) => R): R[] {\n    const results: R[] = [];\n    const stack: TreeNode<T>[] = [this.root];\n\n    while (stack.length > 0) {\n      const node = stack.pop()!;\n      results.push(fn(node));\n      stack.push(...node.children);\n    }\n\n    return results;\n  }\n\n  // Find nodes matching predicate\n  find(predicate: (node: TreeNode<T>) => boolean): TreeNode<T>[] {\n    return this.traverse(node => node).filter(predicate);\n  }\n\n  // Type-safe path finding\n  getPath(target: TreeNode<T>): TreeNode<T>[] {\n    const path: TreeNode<T>[] = [];\n    let current: TreeNode<T> | undefined = target;\n\n    while (current) {\n      path.unshift(current);\n      current = current.parent;\n    }\n\n    return path;\n  }\n}\n\n// Advanced menu system with recursive types\ntype MenuItem<T extends string = string> = {\n  id: T;\n  label: string;\n  icon?: string;\n  disabled?: boolean;\n} & (\n  | { type: 'action'; action: () => void }\n  | { type: 'link'; href: string }\n  | { type: 'submenu'; children: MenuItem[] }\n  | { type: 'separator' }\n);\n\ntype MenuConfig = MenuItem[];\n\nconst menuConfig: MenuConfig = [\n  {\n    id: 'file',\n    label: 'File',\n    type: 'submenu',\n    children: [\n      { id: 'new', label: 'New', type: 'action', action: () => console.log('New file') },\n      { id: 'open', label: 'Open', type: 'action', action: () => console.log('Open file') },\n      { type: 'separator', id: 'sep1', label: '' },\n      { id: 'exit', label: 'Exit', type: 'action', action: () => console.log('Exit') }\n    ]\n  },\n  {\n    id: 'edit',\n    label: 'Edit',\n    type: 'submenu',\n    children: [\n      { id: 'copy', label: 'Copy', type: 'action', action: () => console.log('Copy') },\n      { id: 'paste', label: 'Paste', type: 'action', action: () => console.log('Paste') }\n    ]\n  }\n];\n\n// Recursive form schema\ntype FormFieldType = 'text' | 'email' | 'password' | 'number' | 'select' | 'checkbox' | 'group';\n\ntype FormField = {\n  name: string;\n  label: string;\n  required?: boolean;\n  validation?: ValidationRule[];\n} & (\n  | { type: 'text' | 'email' | 'password'; placeholder?: string }\n  | { type: 'number'; min?: number; max?: number; step?: number }\n  | { type: 'select'; options: Array<{ value: string; label: string }> }\n  | { type: 'checkbox'; defaultChecked?: boolean }\n  | { type: 'group'; fields: FormField[] }\n);\n\ntype FormSchema = {\n  title: string;\n  description?: string;\n  fields: FormField[];\n};\n\nconst userProfileSchema: FormSchema = {\n  title: 'User Profile',\n  description: 'Update your profile information',\n  fields: [\n    {\n      name: 'personalInfo',\n      label: 'Personal Information',\n      type: 'group',\n      fields: [\n        {\n          name: 'firstName',\n          label: 'First Name',\n          type: 'text',\n          required: true,\n          placeholder: 'Enter your first name'\n        },\n        {\n          name: 'lastName',\n          label: 'Last Name',\n          type: 'text',\n          required: true,\n          placeholder: 'Enter your last name'\n        },\n        {\n          name: 'email',\n          label: 'Email',\n          type: 'email',\n          required: true,\n          validation: [\n            { type: 'pattern', value: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/, message: 'Invalid email' }\n          ]\n        }\n      ]\n    },\n    {\n      name: 'preferences',\n      label: 'Preferences',\n      type: 'group',\n      fields: [\n        {\n          name: 'theme',\n          label: 'Theme',\n          type: 'select',\n          options: [\n            { value: 'light', label: 'Light' },\n            { value: 'dark', label: 'Dark' },\n            { value: 'auto', label: 'Auto' }\n          ]\n        },\n        {\n          name: 'notifications',\n          label: 'Enable Notifications',\n          type: 'checkbox',\n          defaultChecked: true\n        }\n      ]\n    }\n  ]\n};\n\n// Advanced state machine types\ntype StateValue = string | Record<string, StateValue>;\n\ntype StateNode<T extends StateValue> = {\n  value: T;\n  context?: Record<string, any>;\n  actions?: string[];\n  activities?: string[];\n};\n\ntype Transition<T extends StateValue> = {\n  target: T;\n  actions?: string[];\n  guard?: string;\n};\n\ntype StateMachine<T extends StateValue> = {\n  id: string;\n  initial: T;\n  context?: Record<string, any>;\n  states: Record<string, {\n    on?: Record<string, Transition<T> | T>;\n    entry?: string[];\n    exit?: string[];\n    invoke?: {\n      src: string;\n      onDone?: Transition<T>;\n      onError?: Transition<T>;\n    };\n  }>;\n};\n\n// Type-safe configuration system\ntype ConfigValue = string | number | boolean | ConfigObject | ConfigArray;\ninterface ConfigObject { [key: string]: ConfigValue; }\ninterface ConfigArray extends Array<ConfigValue> {}\n\ntype DeepPartial<T> = {\n  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];\n};\n\ntype ConfigMerger<T> = (base: T, override: DeepPartial<T>) => T;\n\nfunction createConfigMerger<T extends ConfigObject>(): ConfigMerger<T> {\n  return (base: T, override: DeepPartial<T>): T => {\n    const result = { ...base };\n    \n    for (const key in override) {\n      const overrideValue = override[key];\n      if (overrideValue !== undefined) {\n        if (typeof overrideValue === 'object' && !Array.isArray(overrideValue)) {\n          result[key] = createConfigMerger()(result[key] as any, overrideValue as any);\n        } else {\n          result[key] = overrideValue as any;\n        }\n      }\n    }\n    \n    return result;\n  };\n}"
+        }
+      ]
+    },
+    {
+      "id": "type-safe-architecture",
+      "title": "Type-Safe Architecture",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Branded Types and Phantom Types"
+        },
+        {
+          "type": "paragraph",
+          "text": "Branded types and phantom types provide additional type safety by creating distinct types that prevent mixing of semantically different values."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Branded Types for Type Safety\ndeclare const __brand: unique symbol;\ntype Brand<T, TBrand> = T & { [__brand]: TBrand };\n\n// Create branded types for different ID types\ntype UserId = Brand<string, 'UserId'>;\ntype ProductId = Brand<string, 'ProductId'>;\ntype OrderId = Brand<string, 'OrderId'>;\n\n// Helper functions to create branded types\nfunction createUserId(id: string): UserId {\n  // Validation logic here\n  if (!id.startsWith('user_')) {\n    throw new Error('Invalid user ID format');\n  }\n  return id as UserId;\n}\n\nfunction createProductId(id: string): ProductId {\n  if (!id.startsWith('prod_')) {\n    throw new Error('Invalid product ID format');\n  }\n  return id as ProductId;\n}\n\nfunction createOrderId(id: string): OrderId {\n  if (!id.startsWith('order_')) {\n    throw new Error('Invalid order ID format');\n  }\n  return id as OrderId;\n}\n\n// Functions that only accept specific branded types\nfunction getUserById(id: UserId): Promise<User> {\n  // TypeScript ensures only UserId can be passed\n  return fetch(`/api/users/${id}`).then(r => r.json());\n}\n\nfunction getProductById(id: ProductId): Promise<Product> {\n  return fetch(`/api/products/${id}`).then(r => r.json());\n}\n\n// Usage - prevents mixing of different ID types\nconst userId = createUserId('user_123');\nconst productId = createProductId('prod_456');\n\n// This works\ngetUserById(userId);\ngetProductById(productId);\n\n// This would cause TypeScript error\n// getUserById(productId); // Error!\n\n// Advanced phantom types for units\ntype Unit<T, TUnit> = T & { __unit: TUnit };\n\ntype Meters = Unit<number, 'meters'>;\ntype Feet = Unit<number, 'feet'>;\ntype Seconds = Unit<number, 'seconds'>;\ntype Milliseconds = Unit<number, 'milliseconds'>;\n\nfunction meters(value: number): Meters {\n  return value as Meters;\n}\n\nfunction feet(value: number): Feet {\n  return value as Feet;\n}\n\nfunction seconds(value: number): Seconds {\n  return value as Seconds;\n}\n\nfunction milliseconds(value: number): Milliseconds {\n  return value as Milliseconds;\n}\n\n// Conversion functions\nfunction metersToFeet(m: Meters): Feet {\n  return feet(m * 3.28084);\n}\n\nfunction feetToMeters(f: Feet): Meters {\n  return meters(f / 3.28084);\n}\n\nfunction secondsToMilliseconds(s: Seconds): Milliseconds {\n  return milliseconds(s * 1000);\n}\n\n// Type-safe calculations\nfunction calculateSpeed(distance: Meters, time: Seconds): Unit<number, 'meters/second'> {\n  return (distance / time) as Unit<number, 'meters/second'>;\n}\n\n// Usage\nconst distance = meters(100);\nconst time = seconds(10);\nconst speed = calculateSpeed(distance, time);\n\n// Advanced branded types for financial calculations\ntype Currency = 'USD' | 'EUR' | 'GBP' | 'JPY';\ntype Money<TCurrency extends Currency> = Brand<number, `Money<${TCurrency}>`>;\n\ntype USD = Money<'USD'>;\ntype EUR = Money<'EUR'>;\ntype GBP = Money<'GBP'>;\n\nfunction usd(amount: number): USD {\n  return amount as USD;\n}\n\nfunction eur(amount: number): EUR {\n  return amount as EUR;\n}\n\nfunction gbp(amount: number): GBP {\n  return amount as GBP;\n}\n\n// Exchange rate system\ninterface ExchangeRates {\n  'USD->EUR': number;\n  'USD->GBP': number;\n  'EUR->USD': number;\n  'EUR->GBP': number;\n  'GBP->USD': number;\n  'GBP->EUR': number;\n}\n\ntype ExchangeKey<From extends Currency, To extends Currency> = `${From}->${To}`;\n\nfunction convertCurrency<From extends Currency, To extends Currency>(\n  amount: Money<From>,\n  rates: ExchangeRates,\n  from: From,\n  to: To\n): Money<To> {\n  const key = `${from}->${to}` as ExchangeKey<From, To>;\n  const rate = rates[key];\n  return (amount * rate) as Money<To>;\n}\n\n// Type-safe email validation\ntype Email = Brand<string, 'Email'>;\n\nfunction createEmail(email: string): Email {\n  const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n  if (!emailRegex.test(email)) {\n    throw new Error('Invalid email format');\n  }\n  return email as Email;\n}\n\nfunction sendEmail(to: Email, subject: string, body: string): Promise<void> {\n  // TypeScript ensures only validated emails can be passed\n  return fetch('/api/send-email', {\n    method: 'POST',\n    body: JSON.stringify({ to, subject, body })\n  }).then(() => {});\n}\n\n// Type-safe URL handling\ntype AbsoluteURL = Brand<string, 'AbsoluteURL'>;\ntype RelativeURL = Brand<string, 'RelativeURL'>;\n\nfunction createAbsoluteURL(url: string): AbsoluteURL {\n  try {\n    new URL(url);\n    return url as AbsoluteURL;\n  } catch {\n    throw new Error('Invalid absolute URL');\n  }\n}\n\nfunction createRelativeURL(url: string): RelativeURL {\n  if (url.startsWith('/')) {\n    return url as RelativeURL;\n  }\n  throw new Error('Relative URL must start with /');\n}\n\nfunction navigate(url: AbsoluteURL | RelativeURL): void {\n  window.location.href = url;\n}\n\n// Advanced validation with branded types\ntype ValidatedData<T, TValidator extends string> = Brand<T, `Validated<${TValidator}>`>;\n\ntype SanitizedHTML = ValidatedData<string, 'SanitizedHTML'>;\ntype ValidatedPhoneNumber = ValidatedData<string, 'PhoneNumber'>;\ntype ValidatedCreditCard = ValidatedData<string, 'CreditCard'>;\n\nfunction sanitizeHTML(html: string): SanitizedHTML {\n  // Implement HTML sanitization\n  const sanitized = html.replace(/<script[^>]*>.*?<\\/script>/gi, '');\n  return sanitized as SanitizedHTML;\n}\n\nfunction validatePhoneNumber(phone: string): ValidatedPhoneNumber {\n  const phoneRegex = /^\\+?[1-9]\\d{1,14}$/;\n  if (!phoneRegex.test(phone.replace(/[\\s-()]/g, ''))) {\n    throw new Error('Invalid phone number');\n  }\n  return phone as ValidatedPhoneNumber;\n}\n\nfunction validateCreditCard(card: string): ValidatedCreditCard {\n  // Implement Luhn algorithm\n  const digits = card.replace(/\\D/g, '');\n  let sum = 0;\n  let isEven = false;\n  \n  for (let i = digits.length - 1; i >= 0; i--) {\n    let digit = parseInt(digits[i]);\n    \n    if (isEven) {\n      digit *= 2;\n      if (digit > 9) {\n        digit -= 9;\n      }\n    }\n    \n    sum += digit;\n    isEven = !isEven;\n  }\n  \n  if (sum % 10 !== 0) {\n    throw new Error('Invalid credit card number');\n  }\n  \n  return card as ValidatedCreditCard;\n}\n\n// Type-safe database operations\ntype DatabaseRow<T> = T & { id: number; createdAt: Date; updatedAt: Date };\ntype NewRecord<T> = Omit<T, 'id' | 'createdAt' | 'updatedAt'>;\ntype UpdateRecord<T> = Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>;\n\ninterface TypedDatabase {\n  users: DatabaseRow<{\n    email: Email;\n    name: string;\n    phone?: ValidatedPhoneNumber;\n  }>;\n  products: DatabaseRow<{\n    name: string;\n    price: USD;\n    category: string;\n  }>;\n  orders: DatabaseRow<{\n    userId: UserId;\n    productIds: ProductId[];\n    total: USD;\n    status: 'pending' | 'completed' | 'cancelled';\n  }>;\n}\n\nclass TypeSafeDatabase {\n  async findById<T extends keyof TypedDatabase>(\n    table: T,\n    id: number\n  ): Promise<TypedDatabase[T] | null> {\n    // Database implementation\n    return null;\n  }\n  \n  async create<T extends keyof TypedDatabase>(\n    table: T,\n    data: NewRecord<TypedDatabase[T]>\n  ): Promise<TypedDatabase[T]> {\n    // Database implementation\n    return {} as TypedDatabase[T];\n  }\n  \n  async update<T extends keyof TypedDatabase>(\n    table: T,\n    id: number,\n    data: UpdateRecord<TypedDatabase[T]>\n  ): Promise<TypedDatabase[T]> {\n    // Database implementation\n    return {} as TypedDatabase[T];\n  }\n  \n  async delete<T extends keyof TypedDatabase>(\n    table: T,\n    id: number\n  ): Promise<void> {\n    // Database implementation\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Runtime Type Checking and Schema Validation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Combining compile-time types with runtime validation for robust type safety throughout the application lifecycle."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Advanced Runtime Type Checking\ntype TypeCheck<T> = (value: unknown) => value is T;\ntype TypeValidator<T> = (value: unknown) => T;\n\n// Base type guards\nfunction isString(value: unknown): value is string {\n  return typeof value === 'string';\n}\n\nfunction isNumber(value: unknown): value is number {\n  return typeof value === 'number' && !isNaN(value);\n}\n\nfunction isBoolean(value: unknown): value is boolean {\n  return typeof value === 'boolean';\n}\n\nfunction isArray<T>(check: TypeCheck<T>) {\n  return (value: unknown): value is T[] => {\n    return Array.isArray(value) && value.every(check);\n  };\n}\n\nfunction isObject<T extends Record<string, any>>(\n  shape: { [K in keyof T]: TypeCheck<T[K]> }\n) {\n  return (value: unknown): value is T => {\n    if (typeof value !== 'object' || value === null) {\n      return false;\n    }\n    \n    const obj = value as Record<string, unknown>;\n    \n    for (const key in shape) {\n      if (!(key in obj) || !shape[key](obj[key])) {\n        return false;\n      }\n    }\n    \n    return true;\n  };\n}\n\n// Advanced schema validation\ninterface ValidationResult<T> {\n  success: true;\n  data: T;\n  errors: never;\n}\n\ninterface ValidationError {\n  success: false;\n  data: never;\n  errors: Array<{\n    path: string;\n    message: string;\n    value: unknown;\n  }>;\n}\n\ntype ValidationOutcome<T> = ValidationResult<T> | ValidationError;\n\nclass SchemaValidator {\n  static string(options?: {\n    minLength?: number;\n    maxLength?: number;\n    pattern?: RegExp;\n    enum?: string[];\n  }): TypeValidator<string> {\n    return (value: unknown): string => {\n      if (!isString(value)) {\n        throw new Error('Expected string');\n      }\n      \n      if (options?.minLength && value.length < options.minLength) {\n        throw new Error(`String must be at least ${options.minLength} characters`);\n      }\n      \n      if (options?.maxLength && value.length > options.maxLength) {\n        throw new Error(`String must be at most ${options.maxLength} characters`);\n      }\n      \n      if (options?.pattern && !options.pattern.test(value)) {\n        throw new Error('String does not match required pattern');\n      }\n      \n      if (options?.enum && !options.enum.includes(value)) {\n        throw new Error(`String must be one of: ${options.enum.join(', ')}`);\n      }\n      \n      return value;\n    };\n  }\n  \n  static number(options?: {\n    min?: number;\n    max?: number;\n    integer?: boolean;\n  }): TypeValidator<number> {\n    return (value: unknown): number => {\n      if (!isNumber(value)) {\n        throw new Error('Expected number');\n      }\n      \n      if (options?.min !== undefined && value < options.min) {\n        throw new Error(`Number must be at least ${options.min}`);\n      }\n      \n      if (options?.max !== undefined && value > options.max) {\n        throw new Error(`Number must be at most ${options.max}`);\n      }\n      \n      if (options?.integer && !Number.isInteger(value)) {\n        throw new Error('Number must be an integer');\n      }\n      \n      return value;\n    };\n  }\n  \n  static boolean(): TypeValidator<boolean> {\n    return (value: unknown): boolean => {\n      if (!isBoolean(value)) {\n        throw new Error('Expected boolean');\n      }\n      return value;\n    };\n  }\n  \n  static array<T>(itemValidator: TypeValidator<T>): TypeValidator<T[]> {\n    return (value: unknown): T[] => {\n      if (!Array.isArray(value)) {\n        throw new Error('Expected array');\n      }\n      \n      return value.map((item, index) => {\n        try {\n          return itemValidator(item);\n        } catch (error) {\n          throw new Error(`Array item at index ${index}: ${error.message}`);\n        }\n      });\n    };\n  }\n  \n  static object<T extends Record<string, any>>(\n    shape: { [K in keyof T]: TypeValidator<T[K]> }\n  ): TypeValidator<T> {\n    return (value: unknown): T => {\n      if (typeof value !== 'object' || value === null) {\n        throw new Error('Expected object');\n      }\n      \n      const obj = value as Record<string, unknown>;\n      const result = {} as T;\n      \n      for (const key in shape) {\n        try {\n          result[key] = shape[key](obj[key]);\n        } catch (error) {\n          throw new Error(`Property '${key}': ${error.message}`);\n        }\n      }\n      \n      return result;\n    };\n  }\n  \n  static optional<T>(validator: TypeValidator<T>): TypeValidator<T | undefined> {\n    return (value: unknown): T | undefined => {\n      if (value === undefined) {\n        return undefined;\n      }\n      return validator(value);\n    };\n  }\n  \n  static union<T extends readonly unknown[]>(\n    ...validators: { [K in keyof T]: TypeValidator<T[K]> }\n  ): TypeValidator<T[number]> {\n    return (value: unknown): T[number] => {\n      const errors: string[] = [];\n      \n      for (const validator of validators) {\n        try {\n          return validator(value);\n        } catch (error) {\n          errors.push(error.message);\n        }\n      }\n      \n      throw new Error(`Value did not match any union type: ${errors.join(', ')}`);\n    };\n  }\n}\n\n// Usage examples\ninterface User {\n  id: number;\n  email: string;\n  name: string;\n  age: number;\n  role: 'admin' | 'user' | 'moderator';\n  preferences?: {\n    theme: 'light' | 'dark';\n    notifications: boolean;\n  };\n  tags: string[];\n}\n\nconst userValidator = SchemaValidator.object<User>({\n  id: SchemaValidator.number({ integer: true, min: 1 }),\n  email: SchemaValidator.string({ \n    pattern: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/,\n    maxLength: 255 \n  }),\n  name: SchemaValidator.string({ minLength: 1, maxLength: 100 }),\n  age: SchemaValidator.number({ integer: true, min: 0, max: 150 }),\n  role: SchemaValidator.string({ enum: ['admin', 'user', 'moderator'] }),\n  preferences: SchemaValidator.optional(\n    SchemaValidator.object({\n      theme: SchemaValidator.string({ enum: ['light', 'dark'] }),\n      notifications: SchemaValidator.boolean()\n    })\n  ),\n  tags: SchemaValidator.array(SchemaValidator.string())\n});\n\n// API endpoint with runtime validation\nfunction createUser(userData: unknown): User {\n  try {\n    const validatedUser = userValidator(userData);\n    // At this point, validatedUser is guaranteed to be of type User\n    return validatedUser;\n  } catch (error) {\n    throw new Error(`Invalid user data: ${error.message}`);\n  }\n}\n\n// Advanced validation with custom validators\nclass AdvancedValidator {\n  static email(): TypeValidator<Email> {\n    return (value: unknown): Email => {\n      const email = SchemaValidator.string({ \n        pattern: /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/ \n      })(value);\n      return createEmail(email);\n    };\n  }\n  \n  static userId(): TypeValidator<UserId> {\n    return (value: unknown): UserId => {\n      const id = SchemaValidator.string({ \n        pattern: /^user_[a-zA-Z0-9]+$/ \n      })(value);\n      return createUserId(id);\n    };\n  }\n  \n  static money(currency: Currency): TypeValidator<Money<typeof currency>> {\n    return (value: unknown): Money<typeof currency> => {\n      const amount = SchemaValidator.number({ min: 0 })(value);\n      return amount as Money<typeof currency>;\n    };\n  }\n}\n\n// Type-safe API client with runtime validation\nclass TypeSafeApiClient {\n  async get<T>(url: string, validator: TypeValidator<T>): Promise<T> {\n    const response = await fetch(url);\n    const data = await response.json();\n    return validator(data);\n  }\n  \n  async post<TRequest, TResponse>(\n    url: string,\n    data: TRequest,\n    responseValidator: TypeValidator<TResponse>\n  ): Promise<TResponse> {\n    const response = await fetch(url, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify(data)\n    });\n    const responseData = await response.json();\n    return responseValidator(responseData);\n  }\n}\n\nconst apiClient = new TypeSafeApiClient();\n\n// Usage with guaranteed type safety\nconst user = await apiClient.get('/api/users/123', userValidator);\nconst newUser = await apiClient.post(\n  '/api/users',\n  { name: 'John', email: 'john@example.com' },\n  userValidator\n);"
+        }
+      ]
+    },
+    {
+      "id": "large-codebase-management",
+      "title": "Large Codebase Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Monorepo Strategies and Workspace Management"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced strategies for managing large TypeScript codebases using monorepos, workspaces, and dependency management."
+        },
+        {
+          "type": "code",
+          "language": "typescript",
+          "text": "// Advanced Monorepo Configuration\n// packages/shared/types/src/index.ts\nexport interface BaseEntity {\n  id: string;\n  createdAt: Date;\n  updatedAt: Date;\n  version: number;\n}\n\nexport interface User extends BaseEntity {\n  email: string;\n  name: string;\n  role: UserRole;\n}\n\nexport type UserRole = 'admin' | 'user' | 'moderator';\n\nexport interface Product extends BaseEntity {\n  name: string;\n  price: number;\n  category: string;\n  inStock: boolean;\n}\n\n// packages/shared/utils/src/index.ts\nexport function createId(): string {\n  return crypto.randomUUID();\n}\n\nexport function formatCurrency(amount: number, currency: string = 'USD'): string {\n  return new Intl.NumberFormat('en-US', {\n    style: 'currency',\n    currency,\n  }).format(amount);\n}\n\nexport function debounce<T extends (...args: any[]) => any>(\n  fn: T,\n  delay: number\n): (...args: Parameters<T>) => void {\n  let timeoutId: NodeJS.Timeout;\n  return (...args: Parameters<T>) => {\n    clearTimeout(timeoutId);\n    timeoutId = setTimeout(() => fn(...args), delay);\n  };\n}\n\n// packages/shared/api-client/src/index.ts\nimport { User, Product } from '@company/types';\n\nexport class ApiClient {\n  constructor(private baseUrl: string, private apiKey: string) {}\n  \n  async getUsers(): Promise<User[]> {\n    const response = await fetch(`${this.baseUrl}/users`, {\n      headers: { 'Authorization': `Bearer ${this.apiKey}` }\n    });\n    return response.json();\n  }\n  \n  async getProducts(): Promise<Product[]> {\n    const response = await fetch(`${this.baseUrl}/products`, {\n      headers: { 'Authorization': `Bearer ${this.apiKey}` }\n    });\n    return response.json();\n  }\n  \n  async createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt' | 'version'>): Promise<User> {\n    const response = await fetch(`${this.baseUrl}/users`, {\n      method: 'POST',\n      headers: {\n        'Authorization': `Bearer ${this.apiKey}`,\n        'Content-Type': 'application/json'\n      },\n      body: JSON.stringify(userData)\n    });\n    return response.json();\n  }\n}\n\n// packages/web-app/src/hooks/useUsers.ts\nimport { useState, useEffect } from 'react';\nimport { User } from '@company/types';\nimport { ApiClient } from '@company/api-client';\nimport { debounce } from '@company/utils';\n\nconst apiClient = new ApiClient(process.env.REACT_APP_API_URL!, process.env.REACT_APP_API_KEY!);\n\nexport function useUsers() {\n  const [users, setUsers] = useState<User[]>([]);\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState<string | null>(null);\n  \n  const loadUsers = debounce(async () => {\n    setLoading(true);\n    setError(null);\n    \n    try {\n      const userData = await apiClient.getUsers();\n      setUsers(userData);\n    } catch (err) {\n      setError(err instanceof Error ? err.message : 'Failed to load users');\n    } finally {\n      setLoading(false);\n    }\n  }, 300);\n  \n  useEffect(() => {\n    loadUsers();\n  }, []);\n  \n  return { users, loading, error, refetch: loadUsers };\n}\n\n// Advanced dependency graph analysis\ninterface DependencyNode {\n  name: string;\n  version: string;\n  dependencies: string[];\n  devDependencies: string[];\n  peerDependencies: string[];\n}\n\ninterface DependencyGraph {\n  nodes: Map<string, DependencyNode>;\n  edges: Map<string, Set<string>>;\n}\n\nclass DependencyAnalyzer {\n  private graph: DependencyGraph = {\n    nodes: new Map(),\n    edges: new Map()\n  };\n  \n  addPackage(packageJson: {\n    name: string;\n    version: string;\n    dependencies?: Record<string, string>;\n    devDependencies?: Record<string, string>;\n    peerDependencies?: Record<string, string>;\n  }): void {\n    const node: DependencyNode = {\n      name: packageJson.name,\n      version: packageJson.version,\n      dependencies: Object.keys(packageJson.dependencies || {}),\n      devDependencies: Object.keys(packageJson.devDependencies || {}),\n      peerDependencies: Object.keys(packageJson.peerDependencies || {})\n    };\n    \n    this.graph.nodes.set(packageJson.name, node);\n    \n    // Add edges for dependencies\n    const allDeps = [\n      ...node.dependencies,\n      ...node.devDependencies,\n      ...node.peerDependencies\n    ];\n    \n    allDeps.forEach(dep => {\n      if (!this.graph.edges.has(packageJson.name)) {\n        this.graph.edges.set(packageJson.name, new Set());\n      }\n      this.graph.edges.get(packageJson.name)!.add(dep);\n    });\n  }\n  \n  findCircularDependencies(): string[][] {\n    const visited = new Set<string>();\n    const recursionStack = new Set<string>();\n    const cycles: string[][] = [];\n    \n    const dfs = (node: string, path: string[]): void => {\n      if (recursionStack.has(node)) {\n        // Found a cycle\n        const cycleStart = path.indexOf(node);\n        cycles.push(path.slice(cycleStart).concat(node));\n        return;\n      }\n      \n      if (visited.has(node)) {\n        return;\n      }\n      \n      visited.add(node);\n      recursionStack.add(node);\n      \n      const dependencies = this.graph.edges.get(node) || new Set();\n      dependencies.forEach(dep => {\n        dfs(dep, [...path, node]);\n      });\n      \n      recursionStack.delete(node);\n    };\n    \n    this.graph.nodes.forEach((_, nodeName) => {\n      if (!visited.has(nodeName)) {\n        dfs(nodeName, []);\n      }\n    });\n    \n    return cycles;\n  }\n  \n  getDependencyTree(packageName: string): any {\n    const buildTree = (name: string, visited = new Set<string>()): any => {\n      if (visited.has(name)) {\n        return { name, circular: true };\n      }\n      \n      visited.add(name);\n      const node = this.graph.nodes.get(name);\n      \n      if (!node) {\n        return { name, external: true };\n      }\n      \n      return {\n        name,\n        version: node.version,\n        dependencies: node.dependencies.map(dep => \n          buildTree(dep, new Set(visited))\n        )\n      };\n    };\n    \n    return buildTree(packageName);\n  }\n  \n  findUnusedDependencies(packageName: string, sourceFiles: string[]): string[] {\n    const node = this.graph.nodes.get(packageName);\n    if (!node) return [];\n    \n    const usedDependencies = new Set<string>();\n    \n    // Simple analysis - look for import statements\n    sourceFiles.forEach(fileContent => {\n      const importRegex = /import.*from\\s+['\"]([^'\"]+)['\"]/g;\n      let match;\n      \n      while ((match = importRegex.exec(fileContent)) !== null) {\n        const importPath = match[1];\n        \n        // Extract package name from import path\n        const packageName = importPath.startsWith('@') \n          ? importPath.split('/').slice(0, 2).join('/')\n          : importPath.split('/')[0];\n          \n        usedDependencies.add(packageName);\n      }\n    });\n    \n    return node.dependencies.filter(dep => !usedDependencies.has(dep));\n  }\n  \n  generateReport(): {\n    totalPackages: number;\n    circularDependencies: string[][];\n    duplicatedDependencies: Record<string, string[]>;\n    outdatedDependencies: string[];\n  } {\n    const circularDependencies = this.findCircularDependencies();\n    const duplicatedDependencies: Record<string, string[]> = {};\n    const versionMap = new Map<string, Set<string>>();\n    \n    // Find duplicated dependencies with different versions\n    this.graph.nodes.forEach(node => {\n      [...node.dependencies, ...node.devDependencies].forEach(dep => {\n        if (!versionMap.has(dep)) {\n          versionMap.set(dep, new Set());\n        }\n        versionMap.get(dep)!.add(node.version);\n      });\n    });\n    \n    versionMap.forEach((versions, packageName) => {\n      if (versions.size > 1) {\n        duplicatedDependencies[packageName] = Array.from(versions);\n      }\n    });\n    \n    return {\n      totalPackages: this.graph.nodes.size,\n      circularDependencies,\n      duplicatedDependencies,\n      outdatedDependencies: [] // Would need external API to check\n    };\n  }\n}\n\n// Workspace configuration management\ninterface WorkspaceConfig {\n  name: string;\n  packages: string[];\n  scripts: Record<string, string>;\n  devDependencies: Record<string, string>;\n}\n\nclass WorkspaceManager {\n  constructor(private config: WorkspaceConfig) {}\n  \n  async runScript(scriptName: string, packageName?: string): Promise<void> {\n    if (packageName) {\n      // Run script in specific package\n      const { spawn } = await import('child_process');\n      spawn('npm', ['run', scriptName, '--workspace', packageName], {\n        stdio: 'inherit'\n      });\n    } else {\n      // Run script in all packages\n      const { spawn } = await import('child_process');\n      spawn('npm', ['run', scriptName, '--workspaces'], {\n        stdio: 'inherit'\n      });\n    }\n  }\n  \n  async installDependencies(): Promise<void> {\n    const { spawn } = await import('child_process');\n    spawn('npm', ['install'], { stdio: 'inherit' });\n  }\n  \n  async buildAll(): Promise<void> {\n    await this.runScript('build');\n  }\n  \n  async testAll(): Promise<void> {\n    await this.runScript('test');\n  }\n  \n  async lintAll(): Promise<void> {\n    await this.runScript('lint');\n  }\n}\n\n// TypeScript project references configuration\ninterface TSConfig {\n  extends?: string;\n  compilerOptions: {\n    composite?: boolean;\n    declaration?: boolean;\n    declarationMap?: boolean;\n    outDir?: string;\n    rootDir?: string;\n    [key: string]: any;\n  };\n  references?: Array<{ path: string }>;\n  include?: string[];\n  exclude?: string[];\n}\n\nclass TypeScriptProjectManager {\n  generateProjectReferences(packages: string[]): TSConfig {\n    return {\n      files: [],\n      references: packages.map(pkg => ({ path: pkg }))\n    };\n  }\n  \n  generatePackageConfig(packageName: string, dependencies: string[]): TSConfig {\n    return {\n      extends: '../../tsconfig.base.json',\n      compilerOptions: {\n        composite: true,\n        declaration: true,\n        declarationMap: true,\n        outDir: './dist',\n        rootDir: './src'\n      },\n      references: dependencies.map(dep => ({ path: `../${dep}` })),\n      include: ['src/**/*'],\n      exclude: ['dist', 'node_modules', '**/*.test.ts']\n    };\n  }\n  \n  async buildProject(projectPath: string): Promise<void> {\n    const { spawn } = await import('child_process');\n    spawn('tsc', ['--build', projectPath], { stdio: 'inherit' });\n  }\n  \n  async watchProject(projectPath: string): Promise<void> {\n    const { spawn } = await import('child_process');\n    spawn('tsc', ['--build', projectPath, '--watch'], { stdio: 'inherit' });\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main advantage of conditional types in TypeScript?",
+      "options": [
+        "Better runtime performance",
+        "Enabling type transformations and compile-time logic based on type conditions",
+        "Smaller bundle sizes",
+        "Better IDE support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Conditional types allow you to create types that depend on a condition, enabling powerful type transformations and compile-time logic that can adapt based on the input types."
+    },
+    {
+      "id": 2,
+      "question": "What do template literal types enable in TypeScript?",
+      "options": [
+        "Runtime string manipulation",
+        "Type-level string manipulation and pattern matching",
+        "Better performance",
+        "Automatic code generation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Template literal types enable string manipulation at the type level, allowing you to create types based on string patterns, concatenation, and transformations that are checked at compile time."
+    },
+    {
+      "id": 3,
+      "question": "What is the purpose of the 'infer' keyword in conditional types?",
+      "options": [
+        "To improve performance",
+        "To extract and capture types from within conditional type expressions",
+        "To create generic types",
+        "To validate runtime values"
+      ],
+      "correctAnswer": 1,
+             "explanation": "The 'infer' keyword allows you to extract and capture types from within conditional type expressions, enabling you to work with parts of complex types in type-level programming."
+     },
+     {
+       "id": 4,
+       "question": "What is the main benefit of branded types in TypeScript?",
+       "options": [
+         "Better performance at runtime",
+         "Preventing mixing of semantically different values that have the same underlying type",
+         "Smaller bundle sizes",
+         "Better IDE autocomplete"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Branded types create distinct types from the same underlying type, preventing accidental mixing of values that are semantically different (like UserId vs ProductId, both strings)."
+     },
+     {
+       "id": 5,
+       "question": "What is the difference between branded types and phantom types?",
+       "options": [
+         "No difference, they're the same concept",
+         "Branded types use unique symbols, phantom types use type parameters that don't exist at runtime",
+         "Branded types are faster than phantom types",
+         "Phantom types only work with primitives"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Branded types typically use unique symbols or intersection with marker types, while phantom types use type parameters that carry semantic information but don't exist at runtime."
+     },
+     {
+       "id": 6,
+       "question": "What is the purpose of runtime type validation in TypeScript applications?",
+       "options": [
+         "To improve compile-time performance",
+         "To ensure data from external sources matches expected types at runtime",
+         "To reduce bundle size",
+         "To enable better tree shaking"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Runtime type validation ensures that data from external sources (APIs, user input, etc.) actually matches the expected TypeScript types, providing safety beyond compile-time checks."
+     },
+     {
+       "id": 7,
+       "question": "In advanced TypeScript patterns, what does 'type-level programming' refer to?",
+       "options": [
+         "Writing code that runs at the type level",
+         "Using types to perform computations and transformations during compilation",
+         "Programming with better type annotations",
+         "Using more generic types"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Type-level programming uses TypeScript's type system to perform computations, transformations, and logic during compilation, creating types that adapt based on input types."
+     },
+     {
+       "id": 8,
+       "question": "What is the main advantage of using mapped types with template literals?",
+       "options": [
+         "Better runtime performance",
+         "Creating type-safe string-based APIs and transformations",
+         "Smaller TypeScript compilation time",
+         "Better error messages"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Mapped types with template literals enable creating type-safe APIs based on string patterns, like generating event handler types from property names or creating type-safe routing."
+     },
+     {
+       "id": 9,
+       "question": "In monorepo management, what is the primary benefit of TypeScript project references?",
+       "options": [
+         "Faster runtime execution",
+         "Incremental compilation and proper dependency management between packages",
+         "Smaller bundle sizes",
+         "Better IDE performance"
+       ],
+       "correctAnswer": 1,
+       "explanation": "TypeScript project references enable incremental compilation, where only changed packages and their dependents are recompiled, and ensure proper type checking across package boundaries."
+     },
+     {
+       "id": 10,
+       "question": "What is the main purpose of circular dependency detection in large codebases?",
+       "options": [
+         "To improve performance",
+         "To identify and prevent problematic dependency cycles that can cause issues",
+         "To reduce bundle size",
+         "To improve type checking speed"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Circular dependencies can cause runtime issues, make code harder to understand and test, and can lead to problems with module loading and tree shaking."
+     },
+     {
+       "id": 11,
+       "question": "What is the advantage of using recursive types for complex data structures?",
+       "options": [
+         "Better performance",
+         "Type safety for nested structures of unknown depth",
+         "Smaller memory usage",
+         "Faster compilation"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Recursive types provide type safety for data structures that can be nested to arbitrary depths, like trees, menus, or form schemas, ensuring type correctness at all levels."
+     },
+     {
+       "id": 12,
+       "question": "In schema validation, what is the benefit of combining TypeScript types with runtime validators?",
+       "options": [
+         "Faster execution",
+         "Compile-time type safety and runtime data validation from external sources",
+         "Smaller bundle size",
+         "Better debugging"
+       ],
+       "correctAnswer": 1,
+       "explanation": "This combination provides compile-time type safety within your code and runtime validation of external data, ensuring end-to-end type safety throughout the application."
+     },
+     {
+       "id": 13,
+       "question": "What is the purpose of the 'infer' keyword in extracting array element types?",
+       "options": [
+         "To improve performance",
+         "To extract the element type from an array type using pattern matching",
+         "To create generic arrays",
+         "To validate array contents"
+       ],
+       "correctAnswer": 1,
+       "explanation": "The 'infer' keyword in conditional types like 'T extends (infer U)[] ? U : never' extracts the element type U from an array type T through pattern matching."
+     },
+     {
+       "id": 14,
+       "question": "What is the main challenge when implementing type-safe database operations?",
+       "options": [
+         "Performance overhead",
+         "Ensuring compile-time types match runtime database schema and operations",
+         "Memory usage",
+         "Browser compatibility"
+       ],
+       "correctAnswer": 1,
+       "explanation": "The challenge is maintaining consistency between TypeScript types and actual database schema, ensuring that type-safe operations actually correspond to valid database operations."
+     },
+     {
+       "id": 15,
+       "question": "In advanced TypeScript, what does 'variance' refer to?",
+       "options": [
+         "Type performance variations",
+         "How generic types behave with subtyping relationships (covariant, contravariant, invariant)",
+         "Different ways to declare types",
+         "Type checking speed variations"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Variance describes how generic types relate to each other based on their type parameters - covariant (preserves subtyping), contravariant (reverses it), or invariant (no relationship)."
+     },
+     {
+       "id": 16,
+       "question": "What is the benefit of using union types with discriminated unions?",
+       "options": [
+         "Better performance",
+         "Type-safe handling of different cases with exhaustive checking",
+         "Smaller bundle size",
+         "Faster compilation"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Discriminated unions allow TypeScript to narrow types based on discriminant properties, enabling exhaustive checking and type-safe handling of all possible cases."
+     },
+     {
+       "id": 17,
+       "question": "In monorepo dependency analysis, what indicates a potential architecture problem?",
+       "options": [
+         "Having many dependencies",
+         "Circular dependencies between packages",
+         "Using external dependencies",
+         "Having TypeScript in devDependencies"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Circular dependencies between packages indicate architectural problems, making the codebase harder to understand, test, and can cause runtime issues with module loading."
+     },
+     {
+       "id": 18,
+       "question": "What is the main advantage of using conditional types for API response handling?",
+       "options": [
+         "Faster network requests",
+         "Type-safe handling of success and error responses based on response structure",
+         "Smaller payload sizes",
+         "Better caching"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Conditional types can create type-safe APIs that handle different response types (success/error) based on the response structure, ensuring proper handling of all cases."
+     },
+     {
+       "id": 19,
+       "question": "What is the purpose of using 'const assertions' in TypeScript?",
+       "options": [
+         "To improve performance",
+         "To create more specific literal types instead of general types",
+         "To make variables immutable at runtime",
+         "To reduce memory usage"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Const assertions (as const) tell TypeScript to infer the most specific literal types possible, rather than widening to general types like string or number."
+     },
+     {
+       "id": 20,
+       "question": "In large TypeScript codebases, what is the benefit of using path mapping?",
+       "options": [
+         "Faster compilation",
+         "Cleaner imports and better organization without relative path complexity",
+         "Smaller bundle sizes",
+         "Better runtime performance"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Path mapping allows you to use clean, absolute-style imports (like '@/components/Button') instead of complex relative paths, improving code organization and maintainability."
+     },
+     {
+       "id": 21,
+       "question": "What is the main benefit of using generic constraints in TypeScript?",
+       "options": [
+         "Better performance",
+         "Limiting generic types to specific shapes while maintaining flexibility",
+         "Smaller bundle sizes",
+         "Faster type checking"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Generic constraints (T extends SomeType) allow you to limit what types can be used as generic parameters while still maintaining flexibility and type safety."
+     },
+     {
+       "id": 22,
+       "question": "What is the purpose of utility types like 'Partial', 'Required', and 'Pick'?",
+       "options": [
+         "To improve runtime performance",
+         "To transform existing types into new types with modified properties",
+         "To reduce bundle size",
+         "To enable better tree shaking"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Utility types provide common type transformations, like making all properties optional (Partial), required (Required), or selecting specific properties (Pick) from existing types."
+     },
+     {
+       "id": 23,
+       "question": "In advanced TypeScript patterns, what is 'higher-kinded types' and why are they useful?",
+       "options": [
+         "Types that run faster",
+         "Types that abstract over type constructors, enabling more generic abstractions",
+         "Types with better IDE support",
+         "Types that compile faster"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Higher-kinded types (not directly supported in TypeScript but can be simulated) allow abstracting over type constructors like Array, Promise, etc., enabling more generic and reusable code patterns."
+     },
+     {
+       "id": 24,
+       "question": "What is the main challenge with type-safe form handling in TypeScript?",
+       "options": [
+         "Performance issues",
+         "Maintaining type safety between form schema, validation, and submission handling",
+         "Bundle size concerns",
+         "Browser compatibility"
+       ],
+       "correctAnswer": 1,
+       "explanation": "The challenge is ensuring that form schema types, validation rules, and form handling code all stay in sync and maintain type safety throughout the form lifecycle."
+     },
+     {
+       "id": 25,
+       "question": "What is the benefit of using namespace merging in TypeScript?",
+       "options": [
+         "Better performance",
+         "Extending existing types and modules from different sources",
+         "Smaller bundle sizes",
+         "Faster compilation"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Namespace merging allows you to extend existing types, interfaces, or modules from different files or libraries, enabling modular type definitions and library extensions."
+     },
+     {
+       "id": 26,
+       "question": "In dependency graph analysis, what does 'tree shaking effectiveness' depend on?",
+       "options": [
+         "Runtime performance",
+         "Module structure and side-effects declarations",
+         "TypeScript version",
+         "IDE configuration"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Tree shaking effectiveness depends on how modules are structured (ES modules), whether side effects are properly declared, and how imports/exports are organized."
+     },
+     {
+       "id": 27,
+       "question": "What is the main purpose of using 'never' type in TypeScript?",
+       "options": [
+         "To improve performance",
+         "To represent impossible states and enable exhaustive checking",
+         "To reduce memory usage",
+         "To enable better autocomplete"
+       ],
+       "correctAnswer": 1,
+       "explanation": "The 'never' type represents values that never occur, useful for exhaustive checking in switch statements and representing impossible states in type-level programming."
+     },
+     {
+       "id": 28,
+       "question": "What is the advantage of using branded types for units of measurement?",
+       "options": [
+         "Faster calculations",
+         "Preventing accidental mixing of different units (meters vs feet) at compile time",
+         "Smaller memory usage",
+         "Better performance"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Branded types for units prevent accidental mixing of different measurement units, ensuring that functions receive the correct unit types and conversions are explicit."
+     },
+     {
+       "id": 29,
+       "question": "In TypeScript monorepos, what is the purpose of composite projects?",
+       "options": [
+         "Faster runtime execution",
+         "Enabling incremental builds and proper cross-project type checking",
+         "Smaller bundle sizes",
+         "Better IDE performance"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Composite projects enable incremental compilation where TypeScript can build only changed projects and their dependents, and ensure proper type checking across project boundaries."
+     },
+     {
+       "id": 30,
+       "question": "What is the main benefit of using template literal types for API endpoints?",
+       "options": [
+         "Faster API calls",
+         "Type-safe URL construction and parameter extraction",
+         "Smaller request payloads",
+         "Better caching"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Template literal types can create type-safe API endpoint definitions, ensuring URLs are constructed correctly and parameters are properly typed based on the endpoint pattern."
+     },
+     {
+       "id": 31,
+       "question": "What is the purpose of using 'keyof' operator in advanced TypeScript patterns?",
+       "options": [
+         "To improve performance",
+         "To extract property names as a union type for type-safe property access",
+         "To reduce bundle size",
+         "To enable better tree shaking"
+       ],
+       "correctAnswer": 1,
+       "explanation": "The 'keyof' operator extracts property names from a type as a union of string literals, enabling type-safe property access and dynamic property operations."
+     },
+     {
+       "id": 32,
+       "question": "In runtime type validation, what is the advantage of using a schema-first approach?",
+       "options": [
+         "Better performance",
+         "Single source of truth for both runtime validation and compile-time types",
+         "Smaller bundle size",
+         "Faster development"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Schema-first approaches define validation rules once and generate both runtime validators and TypeScript types, ensuring consistency between runtime validation and compile-time types."
+     },
+     {
+       "id": 33,
+       "question": "What is the main challenge with type-safe event systems in TypeScript?",
+       "options": [
+         "Performance overhead",
+         "Maintaining type safety between event producers, consumers, and payload types",
+         "Memory usage",
+         "Browser compatibility"
+       ],
+       "correctAnswer": 1,
+       "explanation": "The challenge is ensuring that event names, payload types, and handler signatures all remain consistent and type-safe across the entire event system."
+     },
+     {
+       "id": 34,
+       "question": "What is the benefit of using conditional types for function overloading?",
+       "options": [
+         "Better runtime performance",
+         "Creating flexible APIs that return different types based on input parameters",
+         "Smaller bundle sizes",
+         "Faster compilation"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Conditional types enable creating flexible function signatures that return different types based on input parameters, providing better type inference than traditional overloads."
+     },
+     {
+       "id": 35,
+       "question": "In large TypeScript codebases, what is the most important factor for maintaining type safety?",
+       "options": [
+         "Using the latest TypeScript version",
+         "Consistent architecture patterns and comprehensive type coverage",
+         "Having more senior developers",
+         "Using more advanced TypeScript features"
+       ],
+       "correctAnswer": 1,
+       "explanation": "Maintaining type safety at scale requires consistent architectural patterns, comprehensive type coverage, proper validation at boundaries, and disciplined adherence to type-safe practices across the team."
+     }
+   ]
+ } 

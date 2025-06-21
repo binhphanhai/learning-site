@@ -1,0 +1,509 @@
+{
+  "title": "Advanced Testing & Quality Assurance",
+  "description": "Master testing architecture, end-to-end testing at scale, performance testing, security testing, and quality metrics for enterprise-level applications",
+  "sections": [
+    {
+      "id": "testing-architecture",
+      "title": "Testing Architecture & Test Pyramid",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Test Pyramid Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "The test pyramid ensures optimal testing strategy with fast, reliable tests at the base and comprehensive but slower tests at the top, balancing speed, cost, and confidence."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Unit tests (70%): Fast, isolated, testing individual functions/components",
+            "Integration tests (20%): Testing component interactions and API contracts",
+            "End-to-end tests (10%): Full user journey testing through UI",
+            "Contract testing: Ensuring API compatibility between services",
+            "Property-based testing: Testing with generated inputs for edge cases"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Test Architecture Framework\nclass TestOrchestrator {\n  constructor(config) {\n    this.config = {\n      unitTestRatio: 0.7,\n      integrationTestRatio: 0.2,\n      e2eTestRatio: 0.1,\n      parallelism: 4,\n      retryAttempts: 3,\n      ...config\n    };\n    \n    this.testSuites = new Map();\n    this.testResults = new Map();\n    this.testMetrics = {\n      coverage: 0,\n      duration: 0,\n      flakiness: 0,\n      reliability: 0\n    };\n  }\n\n  registerTestSuite(name, suite) {\n    this.testSuites.set(name, {\n      ...suite,\n      registeredAt: Date.now(),\n      lastRun: null,\n      metrics: {\n        passRate: 0,\n        avgDuration: 0,\n        flakeRate: 0\n      }\n    });\n  }\n\n  async runTestPyramid() {\n    const startTime = Date.now();\n    const results = {\n      unit: await this.runUnitTests(),\n      integration: await this.runIntegrationTests(),\n      e2e: await this.runE2ETests(),\n      contract: await this.runContractTests()\n    };\n    \n    const duration = Date.now() - startTime;\n    this.updateMetrics(results, duration);\n    \n    return this.generateReport(results);\n  }\n\n  async runUnitTests() {\n    const unitSuites = Array.from(this.testSuites.entries())\n      .filter(([name, suite]) => suite.type === 'unit');\n    \n    return this.executeTestsInParallel(unitSuites, {\n      timeout: 5000,\n      isolation: true,\n      mocking: true\n    });\n  }\n\n  async executeTestsInParallel(testSuites, options = {}) {\n    const chunks = this.chunkArray(testSuites, this.config.parallelism);\n    const results = [];\n    \n    for (const chunk of chunks) {\n      const chunkPromises = chunk.map(async ([name, suite]) => {\n        try {\n          const result = await this.executeSingleSuite(name, suite, options);\n          return { name, result, success: true };\n        } catch (error) {\n          return { name, error: error.message, success: false };\n        }\n      });\n      \n      const chunkResults = await Promise.allSettled(chunkPromises);\n      results.push(...chunkResults.map(r => r.value || r.reason));\n    }\n    \n    return results;\n  }\n\n  async executeSingleSuite(name, suite, options) {\n    let attempt = 0;\n    let lastError;\n    \n    while (attempt < this.config.retryAttempts) {\n      try {\n        const startTime = Date.now();\n        const result = await this.runSuite(suite, options);\n        const duration = Date.now() - startTime;\n        \n        this.updateSuiteMetrics(name, result, duration);\n        return result;\n      } catch (error) {\n        lastError = error;\n        attempt++;\n        \n        if (attempt < this.config.retryAttempts) {\n          await this.delay(1000 * attempt); // Exponential backoff\n        }\n      }\n    }\n    \n    throw lastError;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Contract Testing Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Contract testing ensures API compatibility between services without requiring all services to be running, enabling independent development and deployment."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Contract Testing Framework\nclass ContractTestManager {\n  constructor() {\n    this.contracts = new Map();\n    this.providers = new Map();\n    this.consumers = new Map();\n    this.violations = [];\n  }\n\n  defineContract(serviceName, version, contract) {\n    const contractKey = `${serviceName}@${version}`;\n    this.contracts.set(contractKey, {\n      service: serviceName,\n      version,\n      contract,\n      createdAt: Date.now(),\n      lastValidated: null\n    });\n  }\n\n  registerProvider(serviceName, version, implementation) {\n    const providerKey = `${serviceName}@${version}`;\n    this.providers.set(providerKey, {\n      service: serviceName,\n      version,\n      implementation,\n      registeredAt: Date.now()\n    });\n  }\n\n  registerConsumer(serviceName, dependencies) {\n    this.consumers.set(serviceName, {\n      service: serviceName,\n      dependencies,\n      registeredAt: Date.now()\n    });\n  }\n\n  async validateContracts() {\n    const results = [];\n    \n    for (const [contractKey, contractData] of this.contracts) {\n      try {\n        const result = await this.validateSingleContract(contractData);\n        results.push({ contractKey, result, success: true });\n      } catch (error) {\n        results.push({ contractKey, error: error.message, success: false });\n        this.violations.push({\n          contract: contractKey,\n          error: error.message,\n          timestamp: Date.now()\n        });\n      }\n    }\n    \n    return results;\n  }\n\n  async validateSingleContract(contractData) {\n    const { service, version, contract } = contractData;\n    const providerKey = `${service}@${version}`;\n    const provider = this.providers.get(providerKey);\n    \n    if (!provider) {\n      throw new Error(`Provider not found for ${providerKey}`);\n    }\n    \n    const validationResults = [];\n    \n    // Validate each endpoint in the contract\n    for (const endpoint of contract.endpoints) {\n      const result = await this.validateEndpoint(provider.implementation, endpoint);\n      validationResults.push(result);\n    }\n    \n    // Update last validated timestamp\n    contractData.lastValidated = Date.now();\n    \n    return validationResults;\n  }\n\n  async validateEndpoint(implementation, endpoint) {\n    const { method, path, request, response } = endpoint;\n    \n    try {\n      // Generate test data based on contract\n      const testData = this.generateTestData(request.schema);\n      \n      // Execute request against implementation\n      const actualResponse = await implementation[method.toLowerCase()](path, testData);\n      \n      // Validate response against contract\n      const isValid = this.validateResponse(actualResponse, response.schema);\n      \n      return {\n        endpoint: `${method} ${path}`,\n        valid: isValid,\n        testData,\n        actualResponse,\n        expectedSchema: response.schema\n      };\n    } catch (error) {\n      return {\n        endpoint: `${method} ${path}`,\n        valid: false,\n        error: error.message\n      };\n    }\n  }\n\n  generateTestData(schema) {\n    // Generate test data based on JSON schema\n    const generators = {\n      string: () => 'test-string',\n      number: () => Math.floor(Math.random() * 100),\n      boolean: () => Math.random() > 0.5,\n      array: (itemSchema) => [this.generateTestData(itemSchema)],\n      object: (properties) => {\n        const obj = {};\n        Object.entries(properties).forEach(([key, propSchema]) => {\n          obj[key] = this.generateTestData(propSchema);\n        });\n        return obj;\n      }\n    };\n    \n    const generator = generators[schema.type];\n    return generator ? generator(schema.items || schema.properties) : null;\n  }\n\n  validateResponse(actual, expectedSchema) {\n    // Simplified schema validation\n    if (typeof actual !== expectedSchema.type) {\n      return false;\n    }\n    \n    if (expectedSchema.properties) {\n      return Object.entries(expectedSchema.properties).every(([key, propSchema]) => {\n        return actual.hasOwnProperty(key) && \n               typeof actual[key] === propSchema.type;\n      });\n    }\n    \n    return true;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "e2e-testing-scale",
+      "title": "End-to-End Testing at Scale", 
+      "content": [
+        {
+          "type": "heading",
+          "text": "Visual Regression Testing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Visual regression testing automatically detects unintended visual changes across different browsers, devices, and screen sizes, ensuring UI consistency."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Visual Regression Testing Framework\nclass VisualRegressionTester {\n  constructor(config) {\n    this.config = {\n      baselineDir: './tests/visual/baselines',\n      screenshotDir: './tests/visual/screenshots',\n      diffDir: './tests/visual/diffs',\n      threshold: 0.1, // 0.1% difference threshold\n      browsers: ['chrome', 'firefox', 'safari'],\n      viewports: [\n        { width: 1920, height: 1080, name: 'desktop' },\n        { width: 768, height: 1024, name: 'tablet' },\n        { width: 375, height: 667, name: 'mobile' }\n      ],\n      ...config\n    };\n    \n    this.testResults = [];\n    this.regressions = [];\n  }\n\n  async runVisualTests(testSuites) {\n    const results = [];\n    \n    for (const suite of testSuites) {\n      for (const browser of this.config.browsers) {\n        for (const viewport of this.config.viewports) {\n          try {\n            const result = await this.runVisualTestSuite(suite, browser, viewport);\n            results.push(result);\n          } catch (error) {\n            results.push({\n              suite: suite.name,\n              browser,\n              viewport: viewport.name,\n              error: error.message,\n              success: false\n            });\n          }\n        }\n      }\n    }\n    \n    return this.analyzeResults(results);\n  }\n\n  async runVisualTestSuite(suite, browser, viewport) {\n    const page = await this.launchBrowser(browser, viewport);\n    const suiteResults = [];\n    \n    try {\n      for (const test of suite.tests) {\n        const testResult = await this.runSingleVisualTest(page, test, browser, viewport);\n        suiteResults.push(testResult);\n      }\n    } finally {\n      await page.close();\n    }\n    \n    return {\n      suite: suite.name,\n      browser,\n      viewport: viewport.name,\n      tests: suiteResults,\n      success: suiteResults.every(t => t.passed)\n    };\n  }\n\n  async runSingleVisualTest(page, test, browser, viewport) {\n    const testId = `${test.name}-${browser}-${viewport.name}`;\n    \n    // Navigate to test page\n    await page.goto(test.url, { waitUntil: 'networkidle0' });\n    \n    // Execute pre-screenshot actions\n    if (test.actions) {\n      await this.executeActions(page, test.actions);\n    }\n    \n    // Wait for stability\n    await this.waitForStability(page);\n    \n    // Take screenshot\n    const screenshot = await page.screenshot({\n      fullPage: test.fullPage || false,\n      clip: test.clip\n    });\n    \n    // Compare with baseline\n    const comparison = await this.compareWithBaseline(testId, screenshot);\n    \n    return {\n      testId,\n      name: test.name,\n      passed: comparison.match,\n      difference: comparison.difference,\n      screenshotPath: comparison.screenshotPath,\n      baselinePath: comparison.baselinePath,\n      diffPath: comparison.diffPath\n    };\n  }\n\n  async executeActions(page, actions) {\n    for (const action of actions) {\n      switch (action.type) {\n        case 'click':\n          await page.click(action.selector);\n          break;\n        case 'hover':\n          await page.hover(action.selector);\n          break;\n        case 'scroll':\n          await page.evaluate((y) => window.scrollTo(0, y), action.y);\n          break;\n        case 'wait':\n          await page.waitForTimeout(action.duration);\n          break;\n        case 'waitForSelector':\n          await page.waitForSelector(action.selector);\n          break;\n      }\n    }\n  }\n\n  async waitForStability(page) {\n    // Wait for animations and network activity to settle\n    await page.evaluate(() => {\n      return new Promise((resolve) => {\n        let timer;\n        const observer = new MutationObserver(() => {\n          clearTimeout(timer);\n          timer = setTimeout(resolve, 500);\n        });\n        \n        observer.observe(document.body, {\n          childList: true,\n          subtree: true,\n          attributes: true\n        });\n        \n        timer = setTimeout(resolve, 500);\n      });\n    });\n  }\n\n  async compareWithBaseline(testId, screenshot) {\n    const baselinePath = `${this.config.baselineDir}/${testId}.png`;\n    const screenshotPath = `${this.config.screenshotDir}/${testId}.png`;\n    const diffPath = `${this.config.diffDir}/${testId}.png`;\n    \n    // Save current screenshot\n    await this.saveScreenshot(screenshot, screenshotPath);\n    \n    // Check if baseline exists\n    if (!await this.fileExists(baselinePath)) {\n      // Create baseline\n      await this.saveScreenshot(screenshot, baselinePath);\n      return {\n        match: true,\n        difference: 0,\n        screenshotPath,\n        baselinePath,\n        newBaseline: true\n      };\n    }\n    \n    // Compare images\n    const comparison = await this.compareImages(baselinePath, screenshotPath, diffPath);\n    \n    return {\n      match: comparison.difference <= this.config.threshold,\n      difference: comparison.difference,\n      screenshotPath,\n      baselinePath,\n      diffPath: comparison.difference > 0 ? diffPath : null\n    };\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Cross-Browser Test Automation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cross-browser testing ensures application compatibility across different browsers, versions, and operating systems using parallel execution and cloud testing services."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Cross-Browser Test Orchestrator\nclass CrossBrowserTestRunner {\n  constructor(config) {\n    this.config = {\n      browsers: [\n        { name: 'chrome', version: 'latest' },\n        { name: 'firefox', version: 'latest' },\n        { name: 'safari', version: 'latest' },\n        { name: 'edge', version: 'latest' }\n      ],\n      platforms: ['Windows 10', 'macOS', 'Linux'],\n      parallelSessions: 5,\n      timeout: 300000, // 5 minutes\n      retryAttempts: 2,\n      ...config\n    };\n    \n    this.sessionPool = new Map();\n    this.testQueue = [];\n    this.results = new Map();\n  }\n\n  async runCrossBrowserTests(testSuites) {\n    // Generate test matrix\n    const testMatrix = this.generateTestMatrix(testSuites);\n    \n    // Initialize browser sessions\n    await this.initializeSessions();\n    \n    try {\n      // Execute tests in parallel\n      const results = await this.executeTestMatrix(testMatrix);\n      \n      // Analyze compatibility\n      const analysis = this.analyzeCompatibility(results);\n      \n      return {\n        results,\n        analysis,\n        summary: this.generateSummary(results)\n      };\n    } finally {\n      await this.cleanupSessions();\n    }\n  }\n\n  generateTestMatrix(testSuites) {\n    const matrix = [];\n    \n    for (const suite of testSuites) {\n      for (const browser of this.config.browsers) {\n        for (const platform of this.config.platforms) {\n          if (this.isBrowserPlatformCompatible(browser, platform)) {\n            matrix.push({\n              suite,\n              browser,\n              platform,\n              id: `${suite.name}-${browser.name}-${platform.replace(/\\s+/g, '')}`\n            });\n          }\n        }\n      }\n    }\n    \n    return matrix;\n  }\n\n  async executeTestMatrix(matrix) {\n    const chunks = this.chunkArray(matrix, this.config.parallelSessions);\n    const allResults = [];\n    \n    for (const chunk of chunks) {\n      const chunkPromises = chunk.map(testConfig => \n        this.executeTestConfiguration(testConfig)\n      );\n      \n      const chunkResults = await Promise.allSettled(chunkPromises);\n      allResults.push(...chunkResults.map(r => r.value || r.reason));\n    }\n    \n    return allResults;\n  }\n\n  async executeTestConfiguration(testConfig) {\n    const { suite, browser, platform, id } = testConfig;\n    let attempt = 0;\n    let lastError;\n    \n    while (attempt < this.config.retryAttempts) {\n      try {\n        const session = await this.getSession(browser, platform);\n        const startTime = Date.now();\n        \n        const result = await this.runTestSuite(session, suite);\n        const duration = Date.now() - startTime;\n        \n        await this.releaseSession(session);\n        \n        return {\n          id,\n          suite: suite.name,\n          browser: browser.name,\n          platform,\n          success: true,\n          duration,\n          result,\n          attempt: attempt + 1\n        };\n      } catch (error) {\n        lastError = error;\n        attempt++;\n        \n        if (attempt < this.config.retryAttempts) {\n          await this.delay(2000 * attempt);\n        }\n      }\n    }\n    \n    return {\n      id,\n      suite: suite.name,\n      browser: browser.name,\n      platform,\n      success: false,\n      error: lastError.message,\n      attempts: attempt\n    };\n  }\n\n  analyzeCompatibility(results) {\n    const analysis = {\n      overallCompatibility: 0,\n      browserCompatibility: new Map(),\n      platformCompatibility: new Map(),\n      criticalIssues: [],\n      warnings: []\n    };\n    \n    const successfulTests = results.filter(r => r.success);\n    analysis.overallCompatibility = (successfulTests.length / results.length) * 100;\n    \n    // Analyze by browser\n    const browserGroups = this.groupBy(results, 'browser');\n    browserGroups.forEach((browserResults, browser) => {\n      const browserSuccess = browserResults.filter(r => r.success).length;\n      const browserTotal = browserResults.length;\n      const compatibility = (browserSuccess / browserTotal) * 100;\n      \n      analysis.browserCompatibility.set(browser, {\n        compatibility,\n        successCount: browserSuccess,\n        totalCount: browserTotal,\n        failures: browserResults.filter(r => !r.success)\n      });\n      \n      if (compatibility < 90) {\n        analysis.criticalIssues.push({\n          type: 'browser-compatibility',\n          browser,\n          compatibility,\n          message: `${browser} compatibility below 90%`\n        });\n      }\n    });\n    \n    return analysis;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "performance-testing",
+      "title": "Performance Testing & Benchmarking",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Load Testing Frontend Applications"
+        },
+        {
+          "type": "paragraph",
+          "text": "Performance testing validates application behavior under various load conditions, identifying bottlenecks and ensuring scalability requirements are met."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Frontend Load Testing Framework\nclass FrontendLoadTester {\n  constructor(config) {\n    this.config = {\n      baseUrl: 'http://localhost:3000',\n      maxUsers: 1000,\n      rampUpDuration: 300, // 5 minutes\n      testDuration: 600, // 10 minutes\n      scenarios: [],\n      thresholds: {\n        responseTime: 2000, // 2 seconds\n        errorRate: 0.05, // 5%\n        throughput: 100 // requests per second\n      },\n      ...config\n    };\n    \n    this.metrics = new Map();\n    this.errors = [];\n    this.activeUsers = 0;\n  }\n\n  async runLoadTest() {\n    console.log('Starting load test...');\n    const startTime = Date.now();\n    \n    // Initialize metrics collection\n    this.startMetricsCollection();\n    \n    // Ramp up users gradually\n    await this.rampUpUsers();\n    \n    // Sustain load\n    await this.sustainLoad();\n    \n    // Ramp down\n    await this.rampDownUsers();\n    \n    const endTime = Date.now();\n    const totalDuration = endTime - startTime;\n    \n    return this.generateReport(totalDuration);\n  }\n\n  async rampUpUsers() {\n    const usersPerSecond = this.config.maxUsers / this.config.rampUpDuration;\n    const interval = 1000 / usersPerSecond;\n    \n    for (let i = 0; i < this.config.maxUsers; i++) {\n      setTimeout(() => {\n        this.startVirtualUser(i);\n      }, i * interval);\n    }\n    \n    // Wait for ramp up to complete\n    await this.delay(this.config.rampUpDuration * 1000);\n  }\n\n  async startVirtualUser(userId) {\n    this.activeUsers++;\n    \n    try {\n      while (this.activeUsers > 0) {\n        const scenario = this.selectScenario();\n        await this.executeScenario(userId, scenario);\n        \n        // Think time between requests\n        await this.delay(Math.random() * 5000 + 1000);\n      }\n    } catch (error) {\n      this.recordError(userId, error);\n    } finally {\n      this.activeUsers--;\n    }\n  }\n\n  async executeScenario(userId, scenario) {\n    for (const step of scenario.steps) {\n      const startTime = Date.now();\n      \n      try {\n        const response = await this.executeStep(step);\n        const responseTime = Date.now() - startTime;\n        \n        this.recordMetric('responseTime', responseTime);\n        this.recordMetric('throughput', 1);\n        \n        if (!response.ok) {\n          this.recordMetric('errors', 1);\n        }\n        \n        // Validate response if specified\n        if (step.validation) {\n          await this.validateResponse(response, step.validation);\n        }\n        \n      } catch (error) {\n        this.recordError(userId, error);\n        this.recordMetric('errors', 1);\n      }\n    }\n  }\n\n  selectScenario() {\n    // Weighted random selection\n    const totalWeight = this.config.scenarios.reduce((sum, s) => sum + s.weight, 0);\n    let random = Math.random() * totalWeight;\n    \n    for (const scenario of this.config.scenarios) {\n      random -= scenario.weight;\n      if (random <= 0) {\n        return scenario;\n      }\n    }\n    \n    return this.config.scenarios[0];\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "security-testing",
+      "title": "Security Testing & OWASP Compliance",
+      "content": [
+        {
+          "type": "heading",
+          "text": "OWASP Security Testing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Security testing validates application resilience against common vulnerabilities and ensures compliance with OWASP security standards."
+        },
+        {
+          "type": "list",
+          "items": [
+            "XSS (Cross-Site Scripting) prevention testing",
+            "CSRF (Cross-Site Request Forgery) protection validation",
+            "SQL Injection and NoSQL Injection testing",
+            "Authentication and authorization testing",
+            "Content Security Policy (CSP) validation"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Security Testing Framework\nclass SecurityTester {\n  constructor(config) {\n    this.config = {\n      baseUrl: 'http://localhost:3000',\n      authTokens: {},\n      testPayloads: {\n        xss: [\n          '<script>alert(\"XSS\")</script>',\n          'javascript:alert(\"XSS\")',\n          '<img src=\"x\" onerror=\"alert(1)\">'\n        ],\n        sqlInjection: [\n          \"'; DROP TABLE users; --\",\n          \"' OR '1'='1\",\n          \"' UNION SELECT * FROM users --\"\n        ]\n      },\n      ...config\n    };\n    \n    this.vulnerabilities = [];\n    this.testResults = [];\n  }\n\n  async runSecurityTests() {\n    const tests = [\n      this.testXSSVulnerabilities(),\n      this.testCSRFProtection(),\n      this.testAuthenticationSecurity(),\n      this.testContentSecurityPolicy(),\n      this.testInputValidation()\n    ];\n    \n    const results = await Promise.allSettled(tests);\n    \n    return {\n      vulnerabilities: this.vulnerabilities,\n      testResults: this.testResults,\n      summary: this.generateSecuritySummary()\n    };\n  }\n\n  async testXSSVulnerabilities() {\n    const testCases = [\n      { field: 'username', endpoint: '/api/login' },\n      { field: 'comment', endpoint: '/api/comments' },\n      { field: 'search', endpoint: '/api/search' }\n    ];\n    \n    for (const testCase of testCases) {\n      for (const payload of this.config.testPayloads.xss) {\n        try {\n          const response = await fetch(`${this.config.baseUrl}${testCase.endpoint}`, {\n            method: 'POST',\n            headers: { 'Content-Type': 'application/json' },\n            body: JSON.stringify({ [testCase.field]: payload })\n          });\n          \n          const responseText = await response.text();\n          \n          // Check if payload is reflected without encoding\n          if (responseText.includes(payload) && !this.isProperlyEncoded(payload, responseText)) {\n            this.recordVulnerability('XSS', {\n              endpoint: testCase.endpoint,\n              field: testCase.field,\n              payload,\n              severity: 'HIGH',\n              description: 'Potential XSS vulnerability detected'\n            });\n          }\n        } catch (error) {\n          // Network errors are not security vulnerabilities\n        }\n      }\n    }\n  }\n\n  async testCSRFProtection() {\n    const protectedEndpoints = [\n      { method: 'POST', path: '/api/transfer-money' },\n      { method: 'DELETE', path: '/api/delete-account' },\n      { method: 'PUT', path: '/api/change-password' }\n    ];\n    \n    for (const endpoint of protectedEndpoints) {\n      try {\n        // Test without CSRF token\n        const response = await fetch(`${this.config.baseUrl}${endpoint.path}`, {\n          method: endpoint.method,\n          headers: { 'Content-Type': 'application/json' },\n          body: JSON.stringify({ test: 'data' })\n        });\n        \n        // If request succeeds without CSRF token, it's vulnerable\n        if (response.ok) {\n          this.recordVulnerability('CSRF', {\n            endpoint: endpoint.path,\n            method: endpoint.method,\n            severity: 'HIGH',\n            description: 'CSRF protection missing or ineffective'\n          });\n        }\n      } catch (error) {\n        // Expected for protected endpoints\n      }\n    }\n  }\n\n  recordVulnerability(type, details) {\n    this.vulnerabilities.push({\n      type,\n      ...details,\n      timestamp: Date.now(),\n      id: this.generateVulnerabilityId()\n    });\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "quality-metrics",
+      "title": "Quality Metrics & Technical Debt",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Code Quality Metrics"
+        },
+        {
+          "type": "paragraph",
+          "text": "Quality metrics provide quantitative measures of code health, maintainability, and technical debt, enabling data-driven decisions for code improvements."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Quality Metrics Analyzer\nclass QualityMetricsAnalyzer {\n  constructor(config) {\n    this.config = {\n      sourceDir: './src',\n      excludePatterns: ['node_modules', 'dist', 'build'],\n      thresholds: {\n        complexity: 10,\n        coverage: 80,\n        maintainability: 70,\n        duplication: 5\n      },\n      ...config\n    };\n    \n    this.metrics = {\n      complexity: new Map(),\n      coverage: new Map(),\n      maintainability: new Map(),\n      duplication: [],\n      codeSmells: []\n    };\n  }\n\n  async analyzeCodebase() {\n    const files = await this.getSourceFiles();\n    const results = {\n      files: files.length,\n      totalLines: 0,\n      metrics: {},\n      violations: [],\n      trends: {}\n    };\n    \n    for (const file of files) {\n      const fileMetrics = await this.analyzeFile(file);\n      this.aggregateMetrics(fileMetrics, results);\n    }\n    \n    // Calculate overall scores\n    results.overallScore = this.calculateOverallScore(results.metrics);\n    results.technicalDebt = this.calculateTechnicalDebt(results);\n    \n    return results;\n  }\n\n  async analyzeFile(filePath) {\n    const content = await this.readFile(filePath);\n    const ast = this.parseToAST(content);\n    \n    return {\n      file: filePath,\n      lines: content.split('\\n').length,\n      complexity: this.calculateComplexity(ast),\n      maintainability: this.calculateMaintainability(ast),\n      codeSmells: this.detectCodeSmells(ast),\n      dependencies: this.analyzeDependencies(ast)\n    };\n  }\n\n  calculateComplexity(ast) {\n    let complexity = 1; // Base complexity\n    \n    const complexityNodes = [\n      'IfStatement', 'WhileStatement', 'ForStatement', \n      'SwitchCase', 'CatchClause', 'ConditionalExpression',\n      'LogicalExpression'\n    ];\n    \n    this.traverseAST(ast, (node) => {\n      if (complexityNodes.includes(node.type)) {\n        complexity++;\n      }\n      \n      // Additional complexity for logical operators\n      if (node.type === 'LogicalExpression' && \n          (node.operator === '&&' || node.operator === '||')) {\n        complexity++;\n      }\n    });\n    \n    return complexity;\n  }\n\n  calculateMaintainability(ast) {\n    const metrics = {\n      halsteadVolume: this.calculateHalsteadVolume(ast),\n      cyclomaticComplexity: this.calculateComplexity(ast),\n      linesOfCode: this.countLinesOfCode(ast)\n    };\n    \n    // Microsoft maintainability index formula (simplified)\n    const maintainabilityIndex = Math.max(0, \n      (171 - 5.2 * Math.log(metrics.halsteadVolume) - \n       0.23 * metrics.cyclomaticComplexity - \n       16.2 * Math.log(metrics.linesOfCode)) * 100 / 171\n    );\n    \n    return maintainabilityIndex;\n  }\n\n  detectCodeSmells(ast) {\n    const smells = [];\n    \n    this.traverseAST(ast, (node) => {\n      // Long method detection\n      if (node.type === 'FunctionDeclaration' || node.type === 'FunctionExpression') {\n        const functionLength = this.getFunctionLength(node);\n        if (functionLength > 50) {\n          smells.push({\n            type: 'LongMethod',\n            line: node.loc?.start.line,\n            severity: 'MEDIUM',\n            message: `Function is ${functionLength} lines long`\n          });\n        }\n      }\n      \n      // Large class detection\n      if (node.type === 'ClassDeclaration') {\n        const methodCount = this.getMethodCount(node);\n        if (methodCount > 20) {\n          smells.push({\n            type: 'LargeClass',\n            line: node.loc?.start.line,\n            severity: 'HIGH',\n            message: `Class has ${methodCount} methods`\n          });\n        }\n      }\n      \n      // Deep nesting detection\n      const nestingLevel = this.getNestingLevel(node);\n      if (nestingLevel > 4) {\n        smells.push({\n          type: 'DeepNesting',\n          line: node.loc?.start.line,\n          severity: 'MEDIUM',\n          message: `Nesting level is ${nestingLevel}`\n        });\n      }\n    });\n    \n    return smells;\n  }\n\n  calculateTechnicalDebt(results) {\n    const debt = {\n      total: 0,\n      categories: {\n        complexity: 0,\n        duplication: 0,\n        coverage: 0,\n        codeSmells: 0\n      },\n      estimatedHours: 0\n    };\n    \n    // Calculate debt from complexity violations\n    Object.values(this.metrics.complexity).forEach(complexity => {\n      if (complexity > this.config.thresholds.complexity) {\n        const excess = complexity - this.config.thresholds.complexity;\n        debt.categories.complexity += excess * 0.5; // 30 minutes per excess point\n      }\n    });\n    \n    // Calculate debt from code smells\n    results.metrics.codeSmells?.forEach(smell => {\n      const timeMap = {\n        'LongMethod': 2, // 2 hours\n        'LargeClass': 4, // 4 hours\n        'DeepNesting': 1 // 1 hour\n      };\n      debt.categories.codeSmells += timeMap[smell.type] || 1;\n    });\n    \n    debt.total = Object.values(debt.categories).reduce((sum, val) => sum + val, 0);\n    debt.estimatedHours = debt.total;\n    \n    return debt;\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main principle behind the test pyramid?",
+      "options": [
+        "More UI tests than unit tests",
+        "More unit tests at the base, fewer integration and E2E tests at the top",
+        "Equal distribution of all test types",
+        "Only unit tests are needed"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The test pyramid emphasizes having many fast, reliable unit tests at the base (70%), fewer integration tests (20%), and minimal but comprehensive E2E tests (10%) at the top."
+    },
+    {
+      "id": 2,
+      "question": "What is the primary purpose of contract testing?",
+      "options": [
+        "Testing user interfaces",
+        "Ensuring API compatibility between services without requiring all services to run",
+        "Performance testing",
+        "Security testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Contract testing validates that APIs meet agreed-upon contracts between services, enabling independent development and deployment without requiring all services to be running during tests."
+    },
+    {
+      "id": 3,
+      "question": "In visual regression testing, what does the threshold parameter control?",
+      "options": [
+        "Test execution time",
+        "Acceptable percentage of visual difference before flagging as regression",
+        "Number of screenshots to take",
+        "Browser compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The threshold parameter defines the acceptable percentage of visual difference between baseline and current screenshots before a test is flagged as a visual regression."
+    },
+    {
+      "id": 4,
+      "question": "What is the main advantage of parallel test execution?",
+      "options": [
+        "Better test accuracy",
+        "Reduced total test execution time and faster feedback",
+        "Lower memory usage",
+        "Improved test isolation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parallel test execution significantly reduces total test execution time by running multiple tests simultaneously, providing faster feedback to developers."
+    },
+    {
+      "id": 5,
+      "question": "What does cyclomatic complexity measure in code quality analysis?",
+      "options": [
+        "Number of lines of code",
+        "Number of independent paths through code",
+        "Number of functions",
+        "Code execution speed"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cyclomatic complexity measures the number of independent execution paths through code, indicating code complexity and potential difficulty in testing and maintenance."
+    },
+    {
+      "id": 6,
+      "question": "In security testing, what is XSS?",
+      "options": [
+        "Extra Security System",
+        "Cross-Site Scripting vulnerability where malicious scripts are injected",
+        "Extended SQL Syntax",
+        "Cross-Server Synchronization"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XSS (Cross-Site Scripting) is a security vulnerability where malicious scripts are injected into web applications and executed in users' browsers."
+    },
+    {
+      "id": 7,
+      "question": "What is the purpose of CSRF protection testing?",
+      "options": [
+        "Testing database connections",
+        "Validating protection against Cross-Site Request Forgery attacks",
+        "Checking CSS styles",
+        "Testing API performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSRF protection testing validates that applications are protected against Cross-Site Request Forgery attacks, where unauthorized commands are transmitted from a user's browser."
+    },
+    {
+      "id": 8,
+      "question": "In load testing, what does 'ramp up' refer to?",
+      "options": [
+        "Increasing server memory",
+        "Gradually increasing the number of virtual users over time",
+        "Speeding up test execution",
+        "Adding more test cases"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Ramp up in load testing refers to gradually increasing the number of virtual users over a specified time period to simulate realistic load patterns and avoid overwhelming the system immediately."
+    },
+    {
+      "id": 9,
+      "question": "What is technical debt in software development?",
+      "options": [
+        "Money owed to developers",
+        "Cost of additional work caused by choosing quick solutions over better approaches",
+        "Time spent in meetings",
+        "Server hosting costs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Technical debt represents the implied cost of additional work caused by choosing quick, easy solutions over better approaches that would take longer but be more maintainable."
+    },
+    {
+      "id": 10,
+      "question": "Why is mutation testing valuable?",
+      "options": [
+        "It tests database mutations",
+        "It evaluates the quality of tests by introducing bugs and checking if tests catch them",
+        "It tests UI animations",
+        "It measures performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Mutation testing evaluates test quality by introducing small changes (mutations) to the code and checking whether the existing tests detect these changes, revealing gaps in test coverage."
+    },
+    {
+      "id": 11,
+      "question": "What is the main benefit of property-based testing?",
+      "options": [
+        "Testing object properties",
+        "Automatically generating test inputs to find edge cases",
+        "Testing CSS properties",
+        "Faster test execution"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Property-based testing automatically generates a wide range of test inputs based on specified properties, helping discover edge cases that might not be covered by traditional example-based tests."
+    },
+    {
+      "id": 12,
+      "question": "In visual regression testing, what is a baseline?",
+      "options": [
+        "The minimum requirements",
+        "Reference screenshots used for comparison with current screenshots",
+        "The test execution time",
+        "The browser version"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A baseline in visual regression testing is the reference screenshot that represents the expected visual appearance, used for comparison with current screenshots to detect changes."
+    },
+    {
+      "id": 13,
+      "question": "What does the maintainability index measure?",
+      "options": [
+        "Code execution speed",
+        "How easy code is to maintain based on complexity, volume, and other factors",
+        "Number of bugs",
+        "Test coverage percentage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The maintainability index is a composite metric that measures how easy code is to maintain, considering factors like cyclomatic complexity, Halstead volume, and lines of code."
+    },
+    {
+      "id": 14,
+      "question": "Why is test flakiness a problem?",
+      "options": [
+        "Tests run too slowly",
+        "Tests produce inconsistent results, reducing confidence in the test suite",
+        "Tests use too much memory",
+        "Tests are too complex"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Test flakiness occurs when tests produce inconsistent results (sometimes pass, sometimes fail) without code changes, reducing confidence in the test suite and making it difficult to identify real issues."
+    },
+    {
+      "id": 15,
+      "question": "What is the purpose of waiting for stability in visual testing?",
+      "options": [
+        "To save processing time",
+        "To ensure animations and dynamic content have settled before taking screenshots",
+        "To reduce memory usage",
+        "To improve test speed"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Waiting for stability ensures that animations, network requests, and dynamic content have finished loading and settling before taking screenshots, preventing false positives in visual regression tests."
+    },
+    {
+      "id": 16,
+      "question": "What does code coverage measure?",
+      "options": [
+        "Code execution speed",
+        "Percentage of code executed by tests",
+        "Number of functions",
+        "Code complexity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Code coverage measures the percentage of code (lines, branches, functions) that is executed by the test suite, helping identify untested parts of the codebase."
+    },
+    {
+      "id": 17,
+      "question": "Why is retry logic important in test automation?",
+      "options": [
+        "To improve test performance",
+        "To handle transient failures and improve test reliability",
+        "To reduce test complexity",
+        "To save memory"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Retry logic helps handle transient failures (network issues, timing problems) that don't represent real bugs, improving overall test reliability and reducing false negatives."
+    },
+    {
+      "id": 18,
+      "question": "What is the primary goal of performance testing?",
+      "options": [
+        "Finding functional bugs",
+        "Validating application behavior under various load conditions",
+        "Testing user interfaces",
+        "Checking code quality"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Performance testing validates how applications behave under various load conditions, identifying bottlenecks, ensuring scalability requirements are met, and verifying acceptable response times."
+    },
+    {
+      "id": 19,
+      "question": "What is a code smell?",
+      "options": [
+        "Syntax error",
+        "Code that works but indicates deeper design problems",
+        "Performance issue",
+        "Security vulnerability"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A code smell is code that technically works but indicates deeper design problems, making the code harder to maintain, understand, or extend."
+    },
+    {
+      "id": 20,
+      "question": "In load testing, what is think time?",
+      "options": [
+        "Time to write tests",
+        "Pause between user actions to simulate realistic usage patterns",
+        "Test execution time",
+        "Server response time"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Think time is the pause between user actions in load testing that simulates realistic user behavior, as real users don't continuously interact with applications without pauses."
+    },
+    {
+      "id": 21,
+      "question": "What is the main advantage of contract testing over integration testing?",
+      "options": [
+        "Faster execution",
+        "Can test service interactions without requiring all services to be running",
+        "Better coverage",
+        "Easier to write"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Contract testing allows testing service interactions independently without requiring all services to be running, enabling faster feedback and independent development cycles."
+    },
+    {
+      "id": 22,
+      "question": "Why is cross-browser testing important?",
+      "options": [
+        "To improve performance",
+        "To ensure application works consistently across different browsers and versions",
+        "To reduce code size",
+        "To improve security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cross-browser testing ensures applications work consistently across different browsers, versions, and platforms, as browsers may interpret code differently or have varying feature support."
+    },
+    {
+      "id": 23,
+      "question": "What does the error rate metric indicate in performance testing?",
+      "options": [
+        "Number of bugs found",
+        "Percentage of requests that result in errors",
+        "Test execution speed",
+        "Code complexity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Error rate in performance testing indicates the percentage of requests that result in errors (4xx, 5xx HTTP status codes), helping assess system stability under load."
+    },
+    {
+      "id": 24,
+      "question": "What is the purpose of test data management?",
+      "options": [
+        "Storing test results",
+        "Providing consistent, reliable data for tests while maintaining data privacy",
+        "Managing test execution",
+        "Organizing test files"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Test data management ensures tests have consistent, reliable data while maintaining data privacy and compliance, often involving data masking, synthetic data generation, or test database management."
+    },
+    {
+      "id": 25,
+      "question": "In security testing, what is Content Security Policy (CSP)?",
+      "options": [
+        "Server configuration",
+        "Security header that helps prevent XSS attacks by controlling resource loading",
+        "Database security feature",
+        "Authentication protocol"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Content Security Policy (CSP) is a security header that helps prevent XSS attacks by controlling which resources (scripts, styles, images) can be loaded and executed by the browser."
+    },
+    {
+      "id": 26,
+      "question": "What is the main benefit of test automation?",
+      "options": [
+        "Eliminating all manual testing",
+        "Faster feedback, consistent execution, and ability to run tests frequently",
+        "Reducing development time",
+        "Finding more bugs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Test automation provides faster feedback, consistent test execution, and the ability to run tests frequently (in CI/CD pipelines), improving overall development velocity and quality."
+    },
+    {
+      "id": 27,
+      "question": "Why is test isolation important?",
+      "options": [
+        "To improve performance",
+        "To ensure tests don't affect each other and can run independently",
+        "To reduce complexity",
+        "To save memory"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Test isolation ensures that tests don't affect each other's state or outcomes, allowing them to run independently in any order and making test results more reliable and predictable."
+    },
+    {
+      "id": 28,
+      "question": "What is the primary purpose of quality metrics in software development?",
+      "options": [
+        "Measuring team productivity",
+        "Providing quantitative measures to guide code improvement decisions",
+        "Tracking project costs",
+        "Managing deadlines"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Quality metrics provide quantitative measures of code health, complexity, and maintainability, enabling data-driven decisions for code improvements and technical debt management."
+    },
+    {
+      "id": 29,
+      "question": "In cross-browser testing, what is a test matrix?",
+      "options": [
+        "A mathematical calculation",
+        "Combination of test suites, browsers, and platforms to be tested",
+        "A type of test framework",
+        "A performance metric"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A test matrix is the comprehensive combination of test suites, browsers, browser versions, and platforms that need to be tested to ensure cross-browser compatibility."
+    },
+    {
+      "id": 30,
+      "question": "What is SQL injection in security testing?",
+      "options": [
+        "Adding SQL to JavaScript",
+        "Attack where malicious SQL code is inserted into application queries",
+        "Database optimization technique",
+        "SQL debugging method"
+      ],
+      "correctAnswer": 1,
+      "explanation": "SQL injection is a security vulnerability where malicious SQL code is inserted into application database queries, potentially allowing attackers to access, modify, or delete data."
+    }
+  ]
+} 

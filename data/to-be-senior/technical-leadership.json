@@ -1,0 +1,473 @@
+{
+  "title": "Technical Leadership & Team Scaling",
+  "description": "Master architecture decision making, code review leadership, technical debt management, team productivity optimization, and cross-team collaboration for senior-level leadership",
+  "sections": [
+    {
+      "id": "architecture-decisions",
+      "title": "Architecture Decision Making & RFC Processes",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Technical RFC Process Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Request for Comments (RFC) processes enable structured technical decision-making, ensuring all stakeholders can contribute to and understand architectural choices."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Structured decision documentation with context, options, and trade-offs",
+            "Stakeholder review process with defined timelines and approval criteria",
+            "Decision tracking and impact assessment over time",
+            "Template-driven approach for consistency across teams",
+            "Integration with development workflow and tooling"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class RFCManager {\n  constructor(config) {\n    this.config = {\n      reviewPeriod: 7,\n      requiredApprovers: 2,\n      stakeholderGroups: ['frontend', 'backend', 'platform', 'security']\n    };\n    this.rfcs = new Map();\n  }\n\n  async createRFC(proposal) {\n    const rfc = {\n      id: this.generateRFCId(),\n      title: proposal.title,\n      author: proposal.author,\n      type: proposal.type,\n      status: 'draft',\n      content: {\n        problem: proposal.problem,\n        context: proposal.context,\n        options: proposal.options || [],\n        recommendation: proposal.recommendation,\n        timeline: proposal.timeline\n      }\n    };\n    \n    await this.validateRFC(rfc);\n    this.rfcs.set(rfc.id, rfc);\n    return rfc;\n  }\n\n  async trackImplementation(rfcId, update) {\n    const rfc = this.rfcs.get(rfcId);\n    if (!rfc) throw new Error('RFC not found');\n    \n    const tracking = {\n      timestamp: Date.now(),\n      phase: update.phase,\n      progress: update.progress,\n      status: update.status\n    };\n    \n    if (!rfc.implementationTracking) {\n      rfc.implementationTracking = [];\n    }\n    \n    rfc.implementationTracking.push(tracking);\n    return tracking;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "code-review-leadership",
+      "title": "Code Review Leadership & Standards",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Establishing Review Standards & Guidelines"
+        },
+        {
+          "type": "paragraph",
+          "text": "Effective code review standards ensure consistent quality, knowledge transfer, and team growth while maintaining development velocity."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class CodeReviewManager {\n  constructor(config) {\n    this.config = {\n      reviewTimeouts: {\n        hotfix: 2,\n        feature: 24,\n        refactor: 48,\n        architecture: 72\n      },\n      requiredReviewers: {\n        junior: 1,\n        mid: 1,\n        senior: 2\n      }\n    };\n  }\n\n  async createReview(pullRequest) {\n    const review = {\n      id: pullRequest.id,\n      title: pullRequest.title,\n      author: pullRequest.author,\n      type: this.classifyChange(pullRequest),\n      size: this.calculateChangeSize(pullRequest),\n      checklist: this.generateChecklist(pullRequest)\n    };\n    \n    review.assignedReviewers = await this.assignReviewers(review);\n    return review;\n  }\n\n  generateChecklist(pullRequest) {\n    const baseChecklist = [\n      { item: 'Code follows team style guidelines', required: true },\n      { item: 'All tests pass', required: true },\n      { item: 'Error handling is appropriate', required: true }\n    ];\n    \n    const typeSpecificItems = {\n      architecture: [\n        { item: 'Breaking changes documented', required: true },\n        { item: 'Migration plan provided', required: true }\n      ],\n      hotfix: [\n        { item: 'Root cause identified', required: true },\n        { item: 'Rollback plan ready', required: true }\n      ]\n    };\n    \n    const checklist = [...baseChecklist];\n    if (typeSpecificItems[pullRequest.type]) {\n      checklist.push(...typeSpecificItems[pullRequest.type]);\n    }\n    \n    return checklist;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "technical-debt-management",
+      "title": "Technical Debt Management & Migration Planning",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Technical Debt Identification & Prioritization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Systematic approaches to identifying, measuring, and prioritizing technical debt ensure sustainable development velocity and code quality."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class TechnicalDebtManager {\n  constructor() {\n    this.debtItems = new Map();\n    this.categories = {\n      code: { weight: 0.3, description: 'Code quality issues' },\n      architecture: { weight: 0.4, description: 'Architectural problems' },\n      testing: { weight: 0.2, description: 'Test coverage and quality' },\n      documentation: { weight: 0.1, description: 'Missing or outdated docs' }\n    };\n  }\n\n  async scanForDebt() {\n    const debtItems = [];\n    \n    const codeIssues = await this.scanCodeQuality();\n    debtItems.push(...codeIssues);\n    \n    const archIssues = await this.scanArchitecture();\n    debtItems.push(...archIssues);\n    \n    return this.prioritizeDebt(debtItems);\n  }\n\n  prioritizeDebt(debtItems) {\n    return debtItems\n      .map(item => ({\n        ...item,\n        priority: this.calculatePriority(item),\n        roi: this.calculateROI(item)\n      }))\n      .sort((a, b) => b.priority - a.priority);\n  }\n\n  calculatePriority(item) {\n    const severityWeight = {\n      critical: 4,\n      high: 3,\n      medium: 2,\n      low: 1\n    };\n    \n    const effortWeight = {\n      low: 3,\n      medium: 2,\n      high: 1\n    };\n    \n    return severityWeight[item.severity] * 0.4 + effortWeight[item.effort] * 0.3;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "team-productivity",
+      "title": "Team Productivity & Developer Experience",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Developer Experience Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Systematic approaches to improving developer productivity through tooling, processes, and workflow optimization."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class DeveloperExperienceManager {\n  constructor() {\n    this.metrics = new Map();\n    this.workflows = new Map();\n  }\n\n  async assessDeveloperExperience() {\n    const assessment = {\n      toolingEfficiency: await this.assessTooling(),\n      developmentVelocity: await this.measureVelocity(),\n      developerSatisfaction: await this.surveyDevelopers(),\n      onboardingEffectiveness: await this.assessOnboarding()\n    };\n    \n    return this.generateImprovementPlan(assessment);\n  }\n\n  async setupAutomatedWorkflows() {\n    const workflows = [\n      {\n        name: 'pre-commit-hooks',\n        description: 'Automated code quality checks before commit',\n        tools: ['husky', 'lint-staged', 'prettier']\n      },\n      {\n        name: 'continuous-integration',\n        description: 'Automated testing and validation pipeline',\n        tools: ['github-actions', 'jest', 'cypress']\n      }\n    ];\n    \n    return workflows;\n  }\n\n  async measureProductivityMetrics() {\n    const metrics = {\n      leadTime: await this.calculateLeadTime(),\n      deploymentFrequency: await this.calculateDeploymentFrequency(),\n      changeFailureRate: await this.calculateChangeFailureRate(),\n      recoveryTime: await this.calculateRecoveryTime()\n    };\n    \n    return this.benchmarkMetrics(metrics);\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "cross-team-collaboration",
+      "title": "Cross-Team Collaboration & Standards",
+      "content": [
+        {
+          "type": "heading",
+          "text": "API Design Coordination"
+        },
+        {
+          "type": "paragraph",
+          "text": "Establishing consistent API design patterns and coordination processes across multiple teams and services."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class APIGovernanceManager {\n  constructor() {\n    this.standards = {\n      restful: {\n        naming: 'kebab-case',\n        versioning: 'header-based',\n        pagination: 'cursor-based'\n      },\n      graphql: {\n        naming: 'camelCase',\n        deprecation: 'directive-based'\n      }\n    };\n    \n    this.apis = new Map();\n    this.contracts = new Map();\n  }\n\n  async registerAPI(apiSpec) {\n    const api = {\n      id: apiSpec.id,\n      name: apiSpec.name,\n      version: apiSpec.version,\n      type: apiSpec.type,\n      owner: apiSpec.owner,\n      specification: apiSpec.specification\n    };\n    \n    const validation = await this.validateAPIDesign(api);\n    if (!validation.isValid) {\n      throw new Error(`API validation failed: ${validation.errors.join(', ')}`);\n    }\n    \n    this.apis.set(api.id, api);\n    return api;\n  }\n\n  async createAPIContract(providerId, consumerId, contractSpec) {\n    const contract = {\n      id: this.generateContractId(),\n      provider: providerId,\n      consumer: consumerId,\n      specification: contractSpec,\n      tests: contractSpec.tests || []\n    };\n    \n    this.contracts.set(contract.id, contract);\n    return contract;\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the primary purpose of an RFC (Request for Comments) process in technical decision-making?",
+      "options": [
+        "To speed up development",
+        "To ensure structured decision-making with stakeholder input and documentation",
+        "To reduce the number of meetings",
+        "To automate code reviews"
+      ],
+      "correctAnswer": 1,
+      "explanation": "RFC processes provide structured frameworks for technical decision-making, ensuring all stakeholders can contribute, decisions are well-documented with context and trade-offs, and the rationale is preserved for future reference."
+    },
+    {
+      "id": 2,
+      "question": "In code review leadership, what is the most effective approach for mentoring junior developers?",
+      "options": [
+        "Focus only on pointing out errors",
+        "Provide detailed explanations with learning resources and encouragement",
+        "Let them figure it out themselves",
+        "Only review their code after it's merged"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Effective mentoring through code reviews involves providing detailed explanations of why changes are needed, including learning resources, and offering encouragement to help junior developers grow their skills."
+    },
+    {
+      "id": 3,
+      "question": "When prioritizing technical debt, which factors should be considered most important?",
+      "options": [
+        "Age of the code only",
+        "Severity, effort required, and business impact",
+        "Number of files affected only",
+        "Personal preferences of developers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Technical debt prioritization should consider severity (how much it impacts development), effort required to fix it, and business impact to ensure the most valuable debt is addressed first."
+    },
+    {
+      "id": 4,
+      "question": "What is the Strangler Fig pattern in migration strategies?",
+      "options": [
+        "Replacing everything at once",
+        "Gradually replacing legacy functionality while keeping old system as fallback",
+        "Only fixing bugs in legacy code",
+        "Creating a completely separate new system"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Strangler Fig pattern involves gradually replacing legacy functionality piece by piece, routing some requests to new implementations while falling back to the legacy system for unreplaced functionality."
+    },
+    {
+      "id": 5,
+      "question": "In API governance, what is the purpose of consumer-driven contract testing?",
+      "options": [
+        "To test API performance",
+        "To ensure API changes don't break existing consumers",
+        "To validate API documentation",
+        "To monitor API usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Consumer-driven contract testing ensures that API changes don't break existing consumers by defining contracts that specify what consumers expect from the API."
+    },
+    {
+      "id": 6,
+      "question": "What is the primary benefit of tracking developer experience metrics?",
+      "options": [
+        "To rank developers",
+        "To identify bottlenecks and optimize productivity",
+        "To reduce salaries",
+        "To eliminate code reviews"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Developer experience metrics help identify bottlenecks in the development process, allowing teams to optimize tooling, workflows, and processes to improve overall productivity."
+    },
+    {
+      "id": 7,
+      "question": "When should you create a new API version?",
+      "options": [
+        "For every bug fix",
+        "For breaking changes that affect existing clients",
+        "Monthly releases",
+        "When adding any new feature"
+      ],
+      "correctAnswer": 1,
+      "explanation": "New API versions should be created for breaking changes that would affect existing clients. Non-breaking additions can usually be added to existing versions."
+    },
+    {
+      "id": 8,
+      "question": "What is the main advantage of ADRs (Architecture Decision Records)?",
+      "options": [
+        "They replace documentation",
+        "They capture context, decisions, and consequences for future reference",
+        "They automate decision-making",
+        "They eliminate the need for meetings"
+      ],
+      "correctAnswer": 1,
+      "explanation": "ADRs document the context (why a decision was needed), the decision made, and the consequences (positive and negative), preserving architectural knowledge for future developers."
+    },
+    {
+      "id": 9,
+      "question": "In technical debt management, what does ROI (Return on Investment) calculation help determine?",
+      "options": [
+        "Which debt to ignore",
+        "Which debt items provide the most value when fixed relative to effort required",
+        "How much money to spend",
+        "Which developers to assign"
+      ],
+      "correctAnswer": 1,
+      "explanation": "ROI calculation helps prioritize technical debt by identifying which items will provide the most value (reduced maintenance cost, improved velocity) relative to the effort required to fix them."
+    },
+    {
+      "id": 10,
+      "question": "What is the purpose of automated pre-commit hooks in developer workflow?",
+      "options": [
+        "To slow down development",
+        "To catch code quality issues before they enter the repository",
+        "To replace manual testing",
+        "To generate documentation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Pre-commit hooks automatically run code quality checks (linting, formatting, tests) before code is committed, catching issues early and maintaining consistent code quality."
+    },
+    {
+      "id": 11,
+      "question": "When implementing shared library governance, what is the most critical factor for adoption?",
+      "options": [
+        "Forcing teams to use libraries",
+        "Clear documentation, quality, and easy integration",
+        "Making libraries free",
+        "Having the most features"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Successful shared library adoption requires clear documentation, high quality, and easy integration. Libraries must solve real problems better than alternatives to achieve voluntary adoption."
+    },
+    {
+      "id": 12,
+      "question": "What is the primary goal of code review time-boxing?",
+      "options": [
+        "To rush reviews",
+        "To balance thorough review with development velocity",
+        "To reduce reviewer workload",
+        "To eliminate reviews"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Time-boxing code reviews ensures they happen promptly while maintaining quality, preventing development bottlenecks while still catching issues and facilitating knowledge transfer."
+    },
+    {
+      "id": 13,
+      "question": "In migration planning, what is the purpose of identifying dependencies between debt items?",
+      "options": [
+        "To make the plan more complex",
+        "To determine the correct order of migration and avoid conflicts",
+        "To increase the timeline",
+        "To assign blame"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Identifying dependencies ensures migration phases are executed in the correct order, preventing conflicts and ensuring prerequisite changes are completed before dependent changes."
+    },
+    {
+      "id": 14,
+      "question": "What is the main benefit of measuring lead time in development metrics?",
+      "options": [
+        "To pressure developers",
+        "To understand how long it takes from idea to production",
+        "To reduce feature scope",
+        "To eliminate planning"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Lead time measures the total time from when work is requested to when it's delivered to users, helping identify bottlenecks in the entire development and deployment process."
+    },
+    {
+      "id": 15,
+      "question": "In RFC validation, why is it important to require multiple options in proposals?",
+      "options": [
+        "To make RFCs longer",
+        "To ensure thorough analysis and consideration of alternatives",
+        "To confuse reviewers",
+        "To delay decisions"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Requiring multiple options ensures the author has thoroughly analyzed the problem space and considered alternatives, leading to better-informed decisions with clear trade-offs."
+    },
+    {
+      "id": 16,
+      "question": "What is the primary purpose of complexity analysis in code reviews?",
+      "options": [
+        "To reject all complex code",
+        "To identify code that may need extra attention or refactoring",
+        "To calculate developer performance",
+        "To determine project timelines"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Complexity analysis helps identify code that may be difficult to maintain, test, or understand, allowing reviewers to provide targeted feedback and suggestions for improvement."
+    },
+    {
+      "id": 17,
+      "question": "When should technical debt be addressed immediately versus scheduled for later?",
+      "options": [
+        "Never address it immediately",
+        "When it blocks current work or poses critical risks",
+        "Always address it immediately",
+        "Only during dedicated refactoring sprints"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Technical debt should be addressed immediately when it blocks current development work or poses critical risks to system stability or security. Other debt can be prioritized and scheduled."
+    },
+    {
+      "id": 18,
+      "question": "What is the main advantage of using feature flags in migration strategies?",
+      "options": [
+        "To make code more complex",
+        "To enable gradual rollout and quick rollback of changes",
+        "To hide features from users",
+        "To bypass testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Feature flags enable gradual rollout of new functionality and provide quick rollback capabilities if issues are discovered, reducing migration risk and enabling safer deployments."
+    },
+    {
+      "id": 19,
+      "question": "In cross-team collaboration, what is the benefit of API contract testing?",
+      "options": [
+        "To replace integration testing",
+        "To catch breaking changes before they affect consumers",
+        "To generate API documentation",
+        "To monitor API performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "API contract testing catches breaking changes during development before they can affect consuming applications, enabling safer API evolution and better team coordination."
+    },
+    {
+      "id": 20,
+      "question": "What is the primary goal of developer onboarding optimization?",
+      "options": [
+        "To reduce hiring costs",
+        "To minimize time to productive contribution",
+        "To eliminate training",
+        "To standardize all developers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Optimized onboarding minimizes the time it takes for new developers to make productive contributions by providing clear processes, documentation, and tooling setup."
+    },
+    {
+      "id": 21,
+      "question": "When implementing code review standards, what is the most important factor for team adoption?",
+      "options": [
+        "Strict enforcement",
+        "Clear guidelines with rationale and team input",
+        "Management mandate",
+        "External consultant recommendations"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Successful adoption of code review standards requires clear guidelines with explained rationale and team input in their development, ensuring buy-in and understanding."
+    },
+    {
+      "id": 22,
+      "question": "What is the purpose of tracking implementation success metrics in RFC processes?",
+      "options": [
+        "To blame people for failures",
+        "To validate decisions and improve future RFC processes",
+        "To generate reports for management",
+        "To justify the RFC process"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Tracking implementation success validates whether RFC decisions achieved their intended outcomes and provides feedback to improve future RFC processes and decision-making."
+    },
+    {
+      "id": 23,
+      "question": "In technical debt prioritization, what does the 'impact' factor typically measure?",
+      "options": [
+        "Lines of code affected",
+        "Effect on development velocity and system reliability",
+        "Number of developers involved",
+        "Age of the technical debt"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Impact measures how technical debt affects development velocity, system reliability, maintainability, and other business outcomes, helping prioritize debt that most hinders progress."
+    },
+    {
+      "id": 24,
+      "question": "What is the main benefit of automated dependency management in developer workflows?",
+      "options": [
+        "To eliminate all dependencies",
+        "To keep dependencies current and secure with minimal manual effort",
+        "To reduce application performance",
+        "To increase build times"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Automated dependency management keeps dependencies up-to-date and secure while reducing the manual effort required to track and update them, improving security and maintainability."
+    },
+    {
+      "id": 25,
+      "question": "When should you escalate a code review that's taking too long?",
+      "options": [
+        "Never escalate",
+        "When it exceeds defined time limits and blocks development progress",
+        "Immediately if any delay occurs",
+        "Only if the author complains"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Code reviews should be escalated when they exceed defined time limits and begin blocking development progress, ensuring the team maintains velocity while preserving quality."
+    },
+    {
+      "id": 26,
+      "question": "What is the primary purpose of architectural review boards?",
+      "options": [
+        "To slow down development",
+        "To ensure architectural decisions align with standards and long-term vision",
+        "To eliminate individual decision-making",
+        "To create more meetings"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Architectural review boards ensure that significant architectural decisions align with organizational standards, long-term technical vision, and cross-team considerations."
+    },
+    {
+      "id": 27,
+      "question": "In shared library management, when should a library be deprecated?",
+      "options": [
+        "Never deprecate libraries",
+        "When better alternatives exist or maintenance cost exceeds value",
+        "After exactly one year",
+        "When no one is using it"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Libraries should be deprecated when better alternatives exist, when maintenance costs exceed the value provided, or when they no longer align with current architectural direction."
+    },
+    {
+      "id": 28,
+      "question": "What is the main advantage of cursor-based pagination over offset-based pagination in API design?",
+      "options": [
+        "Simpler implementation",
+        "Better performance and consistency with large datasets",
+        "Easier to understand",
+        "Works with all databases"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cursor-based pagination provides better performance and consistency with large datasets, avoiding issues with shifting data that can occur with offset-based pagination."
+    },
+    {
+      "id": 29,
+      "question": "In migration strategy selection, what is the main advantage of the parallel-run approach?",
+      "options": [
+        "Fastest implementation",
+        "Lowest risk through validation before full cutover",
+        "Cheapest option",
+        "Simplest to implement"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parallel-run migration allows validation of the new system against the old system before full cutover, providing the lowest risk but at higher complexity and cost."
+    },
+    {
+      "id": 30,
+      "question": "What is the primary goal of measuring change failure rate in development metrics?",
+      "options": [
+        "To punish developers",
+        "To understand deployment quality and identify improvement areas",
+        "To reduce deployment frequency",
+        "To eliminate all failures"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Change failure rate measures the percentage of deployments that cause failures, helping teams understand deployment quality and identify areas for improvement in testing and deployment processes."
+    }
+  ]
+}

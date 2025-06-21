@@ -1,15 +1,34 @@
 import { TrophyOutlined } from "@ant-design/icons";
 import ContentListPage from "../../components/ContentListPage";
+import advancedSystemArchitectureContent from "../../data/to-be-senior/advanced-system-architecture.json";
+import advancedReactEcosystemContent from "../../data/to-be-senior/advanced-react-ecosystem.json";
+import enterpriseTypescriptContent from "../../data/to-be-senior/enterprise-typescript.json";
+import performanceEngineeringContent from "../../data/to-be-senior/performance-engineering.json";
+import advancedTestingQaContent from "../../data/to-be-senior/advanced-testing-qa.json";
+import devopsInfrastructureContent from "../../data/to-be-senior/devops-infrastructure.json";
+import technicalLeadershipContent from "../../data/to-be-senior/technical-leadership.json";
+import advancedSecurityComplianceContent from "../../data/to-be-senior/advanced-security-compliance.json";
+import innovationEmergingTechnologiesContent from "../../data/to-be-senior/innovation-emerging-technologies.json";
+import businessProductStrategyContent from "../../data/to-be-senior/business-product-strategy.json";
+import mentorshipKnowledgeLeadershipContent from "../../data/to-be-senior/mentorship-knowledge-leadership.json";
+import advancedProblemSolvingContent from "../../data/to-be-senior/advanced-problem-solving.json";
 
-// Import content for to-be-senior section
-import advancedJavascriptTypescriptContent from "../../data/to-be-senior/advanced-javascript-typescript.json";
-import reactEcosystemContent from "../../data/to-be-senior/react-ecosystem.json";
 
 // Define content for to-be-senior
 const contentMap = {
-  "advanced-javascript-typescript": advancedJavascriptTypescriptContent,
-  "react-ecosystem": reactEcosystemContent,
-};
+  "advanced-system-architecture": advancedSystemArchitectureContent,
+  "advanced-react-ecosystem": advancedReactEcosystemContent,
+  "enterprise-typescript": enterpriseTypescriptContent,
+  "performance-engineering": performanceEngineeringContent,
+  "advanced-testing-qa": advancedTestingQaContent,
+  "devops-infrastructure": devopsInfrastructureContent,
+  "technical-leadership": technicalLeadershipContent,
+  "advanced-security-compliance": advancedSecurityComplianceContent,
+  "innovation-emerging-technologies": innovationEmergingTechnologiesContent,
+  "business-product-strategy": businessProductStrategyContent,
+  "mentorship-knowledge-leadership": mentorshipKnowledgeLeadershipContent,
+  "advanced-problem-solving": advancedProblemSolvingContent,
+  };
 
 export default function ToBeSeniorPage() {
   return (

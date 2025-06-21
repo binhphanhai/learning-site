@@ -1,0 +1,499 @@
+{
+  "title": "DevOps & Infrastructure Mastery",
+  "description": "Master CI/CD architecture, containerization strategies, cloud architecture, monitoring & observability, and security hardening for enterprise-level applications",
+  "sections": [
+    {
+      "id": "cicd-architecture",
+      "title": "CI/CD Architecture & Deployment Strategies",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Multi-Stage CI/CD Pipeline Architecture"
+        },
+        {
+          "type": "paragraph",
+          "text": "Advanced CI/CD pipelines enable reliable, fast, and secure deployment of frontend applications through automated testing, building, and deployment stages."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Multi-stage pipelines: Build, test, security scan, deploy stages",
+            "Deployment strategies: Blue-green, canary, rolling deployments",
+            "Infrastructure as Code: Terraform, CloudFormation, Pulumi",
+            "Pipeline orchestration: GitHub Actions, GitLab CI, Jenkins, Azure DevOps",
+            "Artifact management: Container registries, package repositories"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "text": "# Advanced GitHub Actions CI/CD Pipeline\nname: Frontend CI/CD Pipeline\n\non:\n  push:\n    branches: [main, develop]\n  pull_request:\n    branches: [main]\n\nenv:\n  NODE_VERSION: '18'\n  REGISTRY: ghcr.io\n  IMAGE_NAME: ${{ github.repository }}\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        node-version: [16, 18, 20]\n    steps:\n      - uses: actions/checkout@v4\n      \n      - name: Setup Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: ${{ matrix.node-version }}\n          cache: 'npm'\n      \n      - name: Install dependencies\n        run: npm ci\n      \n      - name: Run unit tests\n        run: npm run test:unit -- --coverage\n      \n      - name: Run integration tests\n        run: npm run test:integration\n      \n      - name: Upload coverage reports\n        uses: codecov/codecov-action@v3\n        with:\n          file: ./coverage/lcov.info\n\n  security-scan:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      \n      - name: Run security audit\n        run: npm audit --audit-level=high\n      \n      - name: SAST scan with CodeQL\n        uses: github/codeql-action/analyze@v2\n        with:\n          languages: javascript\n      \n      - name: Container security scan\n        uses: aquasecurity/trivy-action@master\n        with:\n          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}\n          format: 'sarif'\n          output: 'trivy-results.sarif'\n\n  build:\n    needs: [test, security-scan]\n    runs-on: ubuntu-latest\n    outputs:\n      image-digest: ${{ steps.build.outputs.digest }}\n    steps:\n      - uses: actions/checkout@v4\n      \n      - name: Setup Docker Buildx\n        uses: docker/setup-buildx-action@v3\n      \n      - name: Login to Container Registry\n        uses: docker/login-action@v3\n        with:\n          registry: ${{ env.REGISTRY }}\n          username: ${{ github.actor }}\n          password: ${{ secrets.GITHUB_TOKEN }}\n      \n      - name: Build and push Docker image\n        id: build\n        uses: docker/build-push-action@v5\n        with:\n          context: .\n          platforms: linux/amd64,linux/arm64\n          push: true\n          tags: |\n            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\n            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}\n          cache-from: type=gha\n          cache-to: type=gha,mode=max\n\n  deploy-staging:\n    if: github.ref == 'refs/heads/develop'\n    needs: build\n    runs-on: ubuntu-latest\n    environment: staging\n    steps:\n      - name: Deploy to staging\n        run: |\n          echo \"Deploying to staging environment\"\n          # Deployment logic here\n\n  deploy-production:\n    if: github.ref == 'refs/heads/main'\n    needs: build\n    runs-on: ubuntu-latest\n    environment: production\n    steps:\n      - name: Blue-Green Deployment\n        run: |\n          echo \"Executing blue-green deployment\"\n          # Blue-green deployment logic"
+        },
+        {
+          "type": "heading",
+          "text": "Advanced Deployment Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern deployment strategies minimize downtime and risk by gradually rolling out changes with automated rollback capabilities."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Deployment Strategy Manager\nclass DeploymentManager {\n  constructor(config) {\n    this.config = {\n      strategy: 'blue-green', // blue-green, canary, rolling\n      healthCheckUrl: '/health',\n      healthCheckTimeout: 30000,\n      rollbackOnFailure: true,\n      canaryPercentage: 10,\n      canaryDuration: 600000, // 10 minutes\n      ...config\n    };\n    \n    this.deploymentHistory = [];\n    this.currentDeployment = null;\n  }\n\n  async deploy(version, environment) {\n    const deployment = {\n      id: this.generateDeploymentId(),\n      version,\n      environment,\n      strategy: this.config.strategy,\n      startTime: Date.now(),\n      status: 'in-progress',\n      stages: []\n    };\n    \n    this.currentDeployment = deployment;\n    this.deploymentHistory.push(deployment);\n    \n    try {\n      switch (this.config.strategy) {\n        case 'blue-green':\n          await this.executeBlueGreenDeployment(deployment);\n          break;\n        case 'canary':\n          await this.executeCanaryDeployment(deployment);\n          break;\n        case 'rolling':\n          await this.executeRollingDeployment(deployment);\n          break;\n        default:\n          throw new Error(`Unknown deployment strategy: ${this.config.strategy}`);\n      }\n      \n      deployment.status = 'completed';\n      deployment.endTime = Date.now();\n      \n      return deployment;\n    } catch (error) {\n      deployment.status = 'failed';\n      deployment.error = error.message;\n      deployment.endTime = Date.now();\n      \n      if (this.config.rollbackOnFailure) {\n        await this.rollback(deployment);\n      }\n      \n      throw error;\n    }\n  }\n\n  async executeBlueGreenDeployment(deployment) {\n    // Stage 1: Deploy to green environment\n    await this.addStage(deployment, 'deploy-green', async () => {\n      await this.deployToEnvironment('green', deployment.version);\n    });\n    \n    // Stage 2: Health check green environment\n    await this.addStage(deployment, 'health-check-green', async () => {\n      await this.performHealthCheck('green');\n    });\n    \n    // Stage 3: Run smoke tests on green\n    await this.addStage(deployment, 'smoke-tests-green', async () => {\n      await this.runSmokeTests('green');\n    });\n    \n    // Stage 4: Switch traffic to green\n    await this.addStage(deployment, 'switch-traffic', async () => {\n      await this.switchTraffic('blue', 'green');\n    });\n    \n    // Stage 5: Verify production traffic\n    await this.addStage(deployment, 'verify-production', async () => {\n      await this.verifyProductionTraffic();\n      await this.delay(60000); // Wait 1 minute for verification\n    });\n    \n    // Stage 6: Cleanup old blue environment\n    await this.addStage(deployment, 'cleanup-blue', async () => {\n      await this.cleanupEnvironment('blue');\n    });\n  }\n\n  async executeCanaryDeployment(deployment) {\n    // Stage 1: Deploy canary version\n    await this.addStage(deployment, 'deploy-canary', async () => {\n      await this.deployCanary(deployment.version, this.config.canaryPercentage);\n    });\n    \n    // Stage 2: Monitor canary metrics\n    await this.addStage(deployment, 'monitor-canary', async () => {\n      await this.monitorCanaryMetrics(this.config.canaryDuration);\n    });\n    \n    // Stage 3: Evaluate canary success\n    await this.addStage(deployment, 'evaluate-canary', async () => {\n      const metrics = await this.getCanaryMetrics();\n      if (!this.isCanarySuccessful(metrics)) {\n        throw new Error('Canary deployment failed metrics evaluation');\n      }\n    });\n    \n    // Stage 4: Promote canary to full deployment\n    await this.addStage(deployment, 'promote-canary', async () => {\n      await this.promoteCanaryToFull(deployment.version);\n    });\n  }\n\n  async addStage(deployment, stageName, stageFunction) {\n    const stage = {\n      name: stageName,\n      startTime: Date.now(),\n      status: 'running'\n    };\n    \n    deployment.stages.push(stage);\n    \n    try {\n      await stageFunction();\n      stage.status = 'completed';\n      stage.endTime = Date.now();\n    } catch (error) {\n      stage.status = 'failed';\n      stage.error = error.message;\n      stage.endTime = Date.now();\n      throw error;\n    }\n  }\n\n  async performHealthCheck(environment) {\n    const healthUrl = `${this.getEnvironmentUrl(environment)}${this.config.healthCheckUrl}`;\n    const startTime = Date.now();\n    \n    while (Date.now() - startTime < this.config.healthCheckTimeout) {\n      try {\n        const response = await fetch(healthUrl);\n        if (response.ok) {\n          const healthData = await response.json();\n          if (healthData.status === 'healthy') {\n            return true;\n          }\n        }\n      } catch (error) {\n        // Continue trying\n      }\n      \n      await this.delay(5000); // Wait 5 seconds between checks\n    }\n    \n    throw new Error(`Health check failed for ${environment} environment`);\n  }\n\n  async rollback(deployment) {\n    const rollbackDeployment = {\n      id: this.generateDeploymentId(),\n      version: 'previous',\n      environment: deployment.environment,\n      strategy: 'rollback',\n      startTime: Date.now(),\n      status: 'in-progress',\n      stages: [],\n      rollbackFor: deployment.id\n    };\n    \n    this.deploymentHistory.push(rollbackDeployment);\n    \n    try {\n      // Get previous successful deployment\n      const previousDeployment = this.getPreviousSuccessfulDeployment(deployment.environment);\n      if (!previousDeployment) {\n        throw new Error('No previous successful deployment found for rollback');\n      }\n      \n      // Execute rollback based on original strategy\n      switch (deployment.strategy) {\n        case 'blue-green':\n          await this.rollbackBlueGreen(rollbackDeployment, previousDeployment);\n          break;\n        case 'canary':\n          await this.rollbackCanary(rollbackDeployment, previousDeployment);\n          break;\n        default:\n          await this.rollbackDefault(rollbackDeployment, previousDeployment);\n      }\n      \n      rollbackDeployment.status = 'completed';\n      rollbackDeployment.endTime = Date.now();\n      \n    } catch (error) {\n      rollbackDeployment.status = 'failed';\n      rollbackDeployment.error = error.message;\n      rollbackDeployment.endTime = Date.now();\n      throw new Error(`Rollback failed: ${error.message}`);\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "containerization",
+      "title": "Containerization & Docker Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Multi-Stage Docker Builds"
+        },
+        {
+          "type": "paragraph",
+          "text": "Multi-stage Docker builds optimize container size and security by separating build dependencies from runtime dependencies."
+        },
+        {
+          "type": "code",
+          "language": "dockerfile",
+          "text": "# Multi-stage Dockerfile for React Application\n# Stage 1: Build stage\nFROM node:18-alpine AS builder\n\n# Set working directory\nWORKDIR /app\n\n# Copy package files\nCOPY package*.json ./\nCOPY yarn.lock ./\n\n# Install dependencies\nRUN yarn install --frozen-lockfile --production=false\n\n# Copy source code\nCOPY . .\n\n# Build application\nRUN yarn build\n\n# Stage 2: Production stage\nFROM nginx:alpine AS production\n\n# Install security updates\nRUN apk update && apk upgrade && apk add --no-cache dumb-init\n\n# Create non-root user\nRUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001\n\n# Copy built application\nCOPY --from=builder /app/build /usr/share/nginx/html\n\n# Copy nginx configuration\nCOPY nginx.conf /etc/nginx/nginx.conf\n\n# Set proper permissions\nRUN chown -R nextjs:nodejs /usr/share/nginx/html\nRUN chown -R nextjs:nodejs /var/cache/nginx\nRUN chown -R nextjs:nodejs /var/log/nginx\nRUN chown -R nextjs:nodejs /etc/nginx/conf.d\nRUN touch /var/run/nginx.pid\nRUN chown -R nextjs:nodejs /var/run/nginx.pid\n\n# Switch to non-root user\nUSER nextjs\n\n# Expose port\nEXPOSE 8080\n\n# Health check\nHEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \\\n  CMD curl -f http://localhost:8080/health || exit 1\n\n# Start nginx\nCMD [\"dumb-init\", \"nginx\", \"-g\", \"daemon off;\"]"
+        },
+        {
+          "type": "heading",
+          "text": "Container Security & Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Container security involves vulnerability scanning, minimal base images, and proper security configurations."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Container Security Scanner\nclass ContainerSecurityScanner {\n  constructor(config) {\n    this.config = {\n      registryUrl: 'https://registry.hub.docker.com',\n      scanners: ['trivy', 'clair', 'snyk'],\n      severityThreshold: 'HIGH',\n      maxCriticalVulns: 0,\n      maxHighVulns: 5,\n      ...config\n    };\n    \n    this.scanResults = new Map();\n    this.vulnerabilities = [];\n  }\n\n  async scanImage(imageName, tag = 'latest') {\n    const imageRef = `${imageName}:${tag}`;\n    const scanId = this.generateScanId();\n    \n    console.log(`Starting security scan for ${imageRef}`);\n    \n    const scanResult = {\n      id: scanId,\n      image: imageRef,\n      startTime: Date.now(),\n      scanners: [],\n      vulnerabilities: [],\n      summary: {\n        critical: 0,\n        high: 0,\n        medium: 0,\n        low: 0\n      },\n      passed: false\n    };\n    \n    // Run multiple scanners in parallel\n    const scanPromises = this.config.scanners.map(scanner => \n      this.runScanner(scanner, imageRef)\n    );\n    \n    try {\n      const scannerResults = await Promise.allSettled(scanPromises);\n      \n      scannerResults.forEach((result, index) => {\n        const scannerName = this.config.scanners[index];\n        \n        if (result.status === 'fulfilled') {\n          scanResult.scanners.push({\n            name: scannerName,\n            status: 'completed',\n            vulnerabilities: result.value.vulnerabilities,\n            duration: result.value.duration\n          });\n          \n          // Merge vulnerabilities\n          scanResult.vulnerabilities.push(...result.value.vulnerabilities);\n        } else {\n          scanResult.scanners.push({\n            name: scannerName,\n            status: 'failed',\n            error: result.reason.message\n          });\n        }\n      });\n      \n      // Deduplicate and categorize vulnerabilities\n      scanResult.vulnerabilities = this.deduplicateVulnerabilities(scanResult.vulnerabilities);\n      scanResult.summary = this.categorizeVulnerabilities(scanResult.vulnerabilities);\n      \n      // Determine if scan passed\n      scanResult.passed = this.evaluateScanResult(scanResult.summary);\n      \n      scanResult.endTime = Date.now();\n      scanResult.duration = scanResult.endTime - scanResult.startTime;\n      \n      this.scanResults.set(scanId, scanResult);\n      \n      return scanResult;\n    } catch (error) {\n      scanResult.status = 'failed';\n      scanResult.error = error.message;\n      scanResult.endTime = Date.now();\n      \n      throw error;\n    }\n  }\n\n  async runScanner(scannerName, imageRef) {\n    const startTime = Date.now();\n    \n    switch (scannerName) {\n      case 'trivy':\n        return await this.runTrivyScanner(imageRef, startTime);\n      case 'clair':\n        return await this.runClairScanner(imageRef, startTime);\n      case 'snyk':\n        return await this.runSnykScanner(imageRef, startTime);\n      default:\n        throw new Error(`Unknown scanner: ${scannerName}`);\n    }\n  }\n\n  async runTrivyScanner(imageRef, startTime) {\n    const { exec } = require('child_process');\n    const { promisify } = require('util');\n    const execAsync = promisify(exec);\n    \n    try {\n      const command = `trivy image --format json --severity ${this.config.severityThreshold} ${imageRef}`;\n      const { stdout } = await execAsync(command);\n      const trivyResult = JSON.parse(stdout);\n      \n      const vulnerabilities = [];\n      \n      if (trivyResult.Results) {\n        trivyResult.Results.forEach(result => {\n          if (result.Vulnerabilities) {\n            result.Vulnerabilities.forEach(vuln => {\n              vulnerabilities.push({\n                id: vuln.VulnerabilityID,\n                severity: vuln.Severity,\n                title: vuln.Title,\n                description: vuln.Description,\n                package: vuln.PkgName,\n                version: vuln.InstalledVersion,\n                fixedVersion: vuln.FixedVersion,\n                scanner: 'trivy'\n              });\n            });\n          }\n        });\n      }\n      \n      return {\n        vulnerabilities,\n        duration: Date.now() - startTime\n      };\n    } catch (error) {\n      throw new Error(`Trivy scan failed: ${error.message}`);\n    }\n  }\n\n  evaluateScanResult(summary) {\n    if (summary.critical > this.config.maxCriticalVulns) {\n      return false;\n    }\n    \n    if (summary.high > this.config.maxHighVulns) {\n      return false;\n    }\n    \n    return true;\n  }\n\n  generateSecurityReport(scanResult) {\n    const report = {\n      image: scanResult.image,\n      scanDate: new Date(scanResult.startTime).toISOString(),\n      duration: scanResult.duration,\n      passed: scanResult.passed,\n      summary: scanResult.summary,\n      recommendations: [],\n      criticalVulnerabilities: scanResult.vulnerabilities\n        .filter(v => v.severity === 'CRITICAL')\n        .slice(0, 10), // Top 10 critical\n      compliance: this.checkCompliance(scanResult)\n    };\n    \n    // Generate recommendations\n    if (scanResult.summary.critical > 0) {\n      report.recommendations.push('Immediately address critical vulnerabilities before deployment');\n    }\n    \n    if (scanResult.summary.high > 5) {\n      report.recommendations.push('Consider updating base image to reduce high-severity vulnerabilities');\n    }\n    \n    const outdatedPackages = scanResult.vulnerabilities\n      .filter(v => v.fixedVersion)\n      .length;\n    \n    if (outdatedPackages > 10) {\n      report.recommendations.push(`Update ${outdatedPackages} packages with available fixes`);\n    }\n    \n    return report;\n  }\n\n  checkCompliance(scanResult) {\n    const compliance = {\n      cis: this.checkCISCompliance(scanResult),\n      nist: this.checkNISTCompliance(scanResult),\n      pci: this.checkPCICompliance(scanResult)\n    };\n    \n    return compliance;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "cloud-architecture",
+      "title": "Cloud Architecture & Serverless",
+      "content": [
+        {
+          "type": "heading",
+          "text": "CDN Optimization & Edge Computing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Content Delivery Networks and edge computing optimize application performance by serving content from locations closer to users."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CDN Management and Edge Computing\nclass CDNManager {\n  constructor(config) {\n    this.config = {\n      provider: 'cloudflare', // cloudflare, aws-cloudfront, azure-cdn\n      regions: ['us-east-1', 'eu-west-1', 'ap-southeast-1'],\n      cachingRules: {\n        static: { ttl: 31536000 }, // 1 year\n        api: { ttl: 300 }, // 5 minutes\n        html: { ttl: 3600 } // 1 hour\n      },\n      ...config\n    };\n  }\n\n  async optimizeDistribution() {\n    const optimization = {\n      caching: await this.optimizeCaching(),\n      compression: await this.enableCompression(),\n      edgeRules: await this.configureEdgeRules(),\n      performance: await this.analyzePerformance()\n    };\n    \n    return optimization;\n  }\n\n  async configureEdgeRules() {\n    const rules = [\n      {\n        name: 'security-headers',\n        condition: 'all-requests',\n        action: {\n          type: 'modify-headers',\n          headers: {\n            'X-Content-Type-Options': 'nosniff',\n            'X-Frame-Options': 'DENY',\n            'X-XSS-Protection': '1; mode=block',\n            'Strict-Transport-Security': 'max-age=31536000; includeSubDomains'\n          }\n        }\n      },\n      {\n        name: 'api-rate-limiting',\n        condition: 'path-starts-with(\"/api/\")',\n        action: {\n          type: 'rate-limit',\n          limit: 100,\n          window: 60000 // 1 minute\n        }\n      },\n      {\n        name: 'static-asset-caching',\n        condition: 'file-extension-in([\"js\", \"css\", \"png\", \"jpg\", \"svg\"])',\n        action: {\n          type: 'cache',\n          ttl: 31536000,\n          headers: {\n            'Cache-Control': 'public, max-age=31536000, immutable'\n          }\n        }\n      }\n    ];\n    \n    return rules;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "monitoring-observability",
+      "title": "Monitoring & Observability",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Application Performance Monitoring (APM)"
+        },
+        {
+          "type": "paragraph",
+          "text": "APM provides deep insights into application performance, user experience, and system health through comprehensive monitoring and alerting."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced APM System\nclass APMSystem {\n  constructor(config) {\n    this.config = {\n      samplingRate: 0.1, // 10% sampling\n      alertThresholds: {\n        responseTime: 2000,\n        errorRate: 0.05,\n        apdex: 0.8\n      },\n      ...config\n    };\n    \n    this.metrics = new Map();\n    this.traces = [];\n    this.alerts = [];\n  }\n\n  startTrace(operationName, tags = {}) {\n    const trace = {\n      id: this.generateTraceId(),\n      operationName,\n      startTime: Date.now(),\n      tags,\n      spans: [],\n      logs: []\n    };\n    \n    this.traces.push(trace);\n    return trace;\n  }\n\n  addSpan(trace, spanName, startTime = Date.now()) {\n    const span = {\n      id: this.generateSpanId(),\n      name: spanName,\n      startTime,\n      tags: {},\n      logs: []\n    };\n    \n    trace.spans.push(span);\n    return span;\n  }\n\n  finishSpan(span, tags = {}) {\n    span.endTime = Date.now();\n    span.duration = span.endTime - span.startTime;\n    span.tags = { ...span.tags, ...tags };\n    \n    // Record metrics\n    this.recordMetric(`span.${span.name}.duration`, span.duration);\n    this.recordMetric(`span.${span.name}.count`, 1);\n  }\n\n  recordMetric(name, value, tags = {}) {\n    const timestamp = Date.now();\n    const metricKey = `${name}:${JSON.stringify(tags)}`;\n    \n    if (!this.metrics.has(metricKey)) {\n      this.metrics.set(metricKey, {\n        name,\n        tags,\n        values: [],\n        count: 0,\n        sum: 0,\n        min: Infinity,\n        max: -Infinity\n      });\n    }\n    \n    const metric = this.metrics.get(metricKey);\n    metric.values.push({ value, timestamp });\n    metric.count++;\n    metric.sum += value;\n    metric.min = Math.min(metric.min, value);\n    metric.max = Math.max(metric.max, value);\n    \n    // Check for alerts\n    this.checkAlerts(name, value, tags);\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "security-hardening",
+      "title": "Security Hardening & Compliance",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Content Security Policy Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "CSP provides defense-in-depth against XSS attacks by controlling which resources can be loaded and executed."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CSP Configuration Manager\nclass CSPManager {\n  constructor(config) {\n    this.config = {\n      reportOnly: false,\n      reportUri: '/api/csp-report',\n      nonce: true,\n      ...config\n    };\n    \n    this.policies = new Map();\n    this.violations = [];\n  }\n\n  generateCSPHeader(environment = 'production') {\n    const policy = this.buildPolicy(environment);\n    const headerName = this.config.reportOnly ? \n      'Content-Security-Policy-Report-Only' : \n      'Content-Security-Policy';\n    \n    return {\n      [headerName]: this.serializePolicy(policy)\n    };\n  }\n\n  buildPolicy(environment) {\n    const basePolicy = {\n      'default-src': [\"'self'\"],\n      'script-src': [\"'self'\"],\n      'style-src': [\"'self'\", \"'unsafe-inline'\"],\n      'img-src': [\"'self'\", 'data:', 'https:'],\n      'font-src': [\"'self'\", 'https:'],\n      'connect-src': [\"'self'\"],\n      'frame-ancestors': [\"'none'\"],\n      'base-uri': [\"'self'\"],\n      'object-src': [\"'none'\"],\n      'upgrade-insecure-requests': true\n    };\n    \n    // Environment-specific adjustments\n    if (environment === 'development') {\n      basePolicy['script-src'].push(\"'unsafe-eval'\");\n      basePolicy['connect-src'].push('ws:', 'wss:');\n    }\n    \n    if (this.config.nonce) {\n      const nonce = this.generateNonce();\n      basePolicy['script-src'].push(`'nonce-${nonce}'`);\n      basePolicy['style-src'].push(`'nonce-${nonce}'`);\n    }\n    \n    return basePolicy;\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main advantage of blue-green deployment?",
+      "options": [
+        "Faster deployment speed",
+        "Zero-downtime deployment with instant rollback capability",
+        "Lower resource usage",
+        "Better security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Blue-green deployment maintains two identical production environments, allowing zero-downtime deployments and instant rollback by switching traffic between environments."
+    },
+    {
+      "id": 2,
+      "question": "In multi-stage Docker builds, what is the primary benefit?",
+      "options": [
+        "Faster build times",
+        "Smaller final image size by excluding build dependencies",
+        "Better security",
+        "Easier maintenance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Multi-stage builds allow you to use different base images for building and runtime, excluding build tools and dependencies from the final image, resulting in smaller, more secure containers."
+    },
+    {
+      "id": 3,
+      "question": "What does canary deployment allow you to do?",
+      "options": [
+        "Deploy faster",
+        "Test new versions with a small percentage of users before full rollout",
+        "Use less resources",
+        "Improve security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Canary deployment gradually rolls out new versions to a small percentage of users first, allowing you to monitor metrics and catch issues before affecting all users."
+    },
+    {
+      "id": 4,
+      "question": "In container security scanning, what does CRITICAL severity indicate?",
+      "options": [
+        "Minor security issue",
+        "Vulnerability that can be easily exploited and cause significant damage",
+        "Performance issue",
+        "Configuration warning"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CRITICAL severity vulnerabilities are easily exploitable and can cause significant damage, typically requiring immediate attention before deployment."
+    },
+    {
+      "id": 5,
+      "question": "What is the purpose of Infrastructure as Code (IaC)?",
+      "options": [
+        "Writing application code",
+        "Managing infrastructure through code for consistency and reproducibility",
+        "Testing applications",
+        "Monitoring systems"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Infrastructure as Code manages infrastructure through code, enabling version control, reproducible deployments, and consistent environments across different stages."
+    },
+    {
+      "id": 6,
+      "question": "In CI/CD pipelines, what is the purpose of parallel job execution?",
+      "options": [
+        "Better security",
+        "Faster pipeline execution by running independent jobs simultaneously",
+        "Lower costs",
+        "Easier debugging"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parallel execution runs independent jobs simultaneously, significantly reducing total pipeline execution time and providing faster feedback to developers."
+    },
+    {
+      "id": 7,
+      "question": "What is the main benefit of using a non-root user in Docker containers?",
+      "options": [
+        "Better performance",
+        "Reduced security risk by limiting container privileges",
+        "Smaller image size",
+        "Faster startup time"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Running containers as non-root users follows the principle of least privilege, reducing security risks if the container is compromised."
+    },
+    {
+      "id": 8,
+      "question": "In APM systems, what does distributed tracing help with?",
+      "options": [
+        "Reducing costs",
+        "Tracking requests across multiple services to identify bottlenecks",
+        "Improving security",
+        "Faster deployments"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Distributed tracing follows requests across multiple services, helping identify performance bottlenecks and understand complex system interactions."
+    },
+    {
+      "id": 9,
+      "question": "What is the purpose of Content Security Policy (CSP)?",
+      "options": [
+        "Improving performance",
+        "Preventing XSS attacks by controlling resource loading",
+        "Reducing bandwidth usage",
+        "Better SEO"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSP helps prevent XSS attacks by controlling which resources (scripts, styles, images) can be loaded and executed by the browser."
+    },
+    {
+      "id": 10,
+      "question": "In CDN configuration, what does TTL control?",
+      "options": [
+        "Transfer speed",
+        "How long content is cached before being refreshed",
+        "Security level",
+        "Compression ratio"
+      ],
+      "correctAnswer": 1,
+      "explanation": "TTL (Time To Live) controls how long content is cached at CDN edge locations before being refreshed from the origin server."
+    },
+    {
+      "id": 11,
+      "question": "What is the main advantage of serverless architecture?",
+      "options": [
+        "Better performance",
+        "Automatic scaling and pay-per-use pricing",
+        "More control over infrastructure",
+        "Better security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Serverless architecture automatically scales based on demand and charges only for actual usage, eliminating the need to manage server infrastructure."
+    },
+    {
+      "id": 12,
+      "question": "In monitoring systems, what is the purpose of alerting thresholds?",
+      "options": [
+        "Reducing costs",
+        "Automatically notifying when metrics exceed acceptable limits",
+        "Improving performance",
+        "Better user experience"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Alerting thresholds automatically trigger notifications when metrics like response time or error rate exceed predefined acceptable limits."
+    },
+    {
+      "id": 13,
+      "question": "What is the benefit of using health checks in containers?",
+      "options": [
+        "Faster startup",
+        "Automatic detection and replacement of unhealthy containers",
+        "Smaller image size",
+        "Better security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Health checks allow orchestration systems to automatically detect unhealthy containers and replace them, improving application reliability."
+    },
+    {
+      "id": 14,
+      "question": "In CI/CD, what is the purpose of artifact management?",
+      "options": [
+        "Code compilation",
+        "Storing and versioning build outputs for deployment",
+        "Testing applications",
+        "Monitoring systems"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Artifact management stores and versions build outputs (like Docker images, packages) ensuring consistent deployments and enabling rollbacks."
+    },
+    {
+      "id": 15,
+      "question": "What does immutable infrastructure mean?",
+      "options": [
+        "Infrastructure that never changes",
+        "Infrastructure components are replaced rather than modified",
+        "Infrastructure that's very secure",
+        "Infrastructure that's very fast"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Immutable infrastructure means components are replaced entirely rather than modified in place, ensuring consistency and reducing configuration drift."
+    },
+    {
+      "id": 16,
+      "question": "In container orchestration, what is a rolling update?",
+      "options": [
+        "Updating all containers at once",
+        "Gradually updating containers one by one to maintain availability",
+        "Rolling back to previous version",
+        "Rotating container logs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Rolling updates gradually replace containers with new versions one by one, maintaining application availability during the update process."
+    },
+    {
+      "id": 17,
+      "question": "What is the main purpose of log aggregation?",
+      "options": [
+        "Reducing log size",
+        "Centralizing logs from multiple sources for analysis and monitoring",
+        "Improving performance",
+        "Better security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Log aggregation centralizes logs from multiple sources, making it easier to search, analyze, and monitor across distributed systems."
+    },
+    {
+      "id": 18,
+      "question": "In security scanning, what is SAST?",
+      "options": [
+        "System Administration Security Tool",
+        "Static Application Security Testing - analyzing source code for vulnerabilities",
+        "Server Application Security Testing",
+        "Software Asset Security Testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "SAST (Static Application Security Testing) analyzes source code, bytecode, or binaries for security vulnerabilities without executing the program."
+    },
+    {
+      "id": 19,
+      "question": "What is the benefit of using environment-specific configurations?",
+      "options": [
+        "Faster deployment",
+        "Different settings for development, staging, and production environments",
+        "Better security only",
+        "Lower costs only"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Environment-specific configurations allow different settings (database URLs, API keys, debug levels) for different environments while using the same codebase."
+    },
+    {
+      "id": 20,
+      "question": "In observability, what are the three pillars?",
+      "options": [
+        "Speed, Security, Scale",
+        "Metrics, Logs, Traces",
+        "Build, Test, Deploy",
+        "Code, Config, Container"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The three pillars of observability are Metrics (quantitative data), Logs (discrete events), and Traces (request flows through systems)."
+    },
+    {
+      "id": 21,
+      "question": "What is the purpose of feature flags in deployment?",
+      "options": [
+        "Faster builds",
+        "Controlling feature visibility without code deployment",
+        "Better security",
+        "Lower costs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Feature flags allow controlling feature visibility and behavior at runtime without requiring new code deployments, enabling safer releases."
+    },
+    {
+      "id": 22,
+      "question": "In container registries, what is image signing used for?",
+      "options": [
+        "Compression",
+        "Verifying image authenticity and integrity",
+        "Faster downloads",
+        "Better organization"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Image signing ensures image authenticity and integrity, allowing verification that images haven't been tampered with during distribution."
+    },
+    {
+      "id": 23,
+      "question": "What is the main benefit of auto-scaling?",
+      "options": [
+        "Better security",
+        "Automatically adjusting resources based on demand",
+        "Faster deployment",
+        "Easier debugging"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Auto-scaling automatically adjusts computing resources based on demand, ensuring performance during traffic spikes while optimizing costs during low usage."
+    },
+    {
+      "id": 24,
+      "question": "In CI/CD, what is the purpose of smoke tests?",
+      "options": [
+        "Performance testing",
+        "Quick validation that critical functionality works after deployment",
+        "Security testing",
+        "Load testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Smoke tests are quick, basic tests that validate critical functionality works after deployment, providing fast feedback on deployment success."
+    },
+    {
+      "id": 25,
+      "question": "What is the benefit of using secrets management?",
+      "options": [
+        "Faster access",
+        "Secure storage and access control for sensitive data like passwords and API keys",
+        "Better performance",
+        "Easier deployment"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Secrets management provides secure storage, access control, rotation, and auditing for sensitive data like passwords, API keys, and certificates."
+    },
+    {
+      "id": 26,
+      "question": "In monitoring, what is the purpose of SLIs and SLOs?",
+      "options": [
+        "Cost optimization",
+        "Measuring and setting targets for service reliability",
+        "Security compliance",
+        "Performance optimization"
+      ],
+      "correctAnswer": 1,
+      "explanation": "SLIs (Service Level Indicators) measure service performance, while SLOs (Service Level Objectives) set targets for reliability that teams commit to achieving."
+    },
+    {
+      "id": 27,
+      "question": "What is the main advantage of using CDN for static assets?",
+      "options": [
+        "Better security",
+        "Faster content delivery by serving from locations closer to users",
+        "Lower bandwidth costs",
+        "Easier management"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CDNs serve static assets from edge locations closer to users, reducing latency and improving page load times while reducing origin server load."
+    },
+    {
+      "id": 28,
+      "question": "In container orchestration, what is a service mesh?",
+      "options": [
+        "Container networking",
+        "Infrastructure layer handling service-to-service communication",
+        "Container storage",
+        "Container monitoring"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A service mesh is an infrastructure layer that handles service-to-service communication, providing features like load balancing, security, and observability."
+    },
+    {
+      "id": 29,
+      "question": "What is the purpose of chaos engineering?",
+      "options": [
+        "Creating problems",
+        "Testing system resilience by intentionally introducing failures",
+        "Performance testing",
+        "Security testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Chaos engineering tests system resilience by intentionally introducing failures in controlled environments to identify weaknesses before they cause outages."
+    },
+    {
+      "id": 30,
+      "question": "In DevOps, what is the main goal of GitOps?",
+      "options": [
+        "Faster Git operations",
+        "Using Git as the single source of truth for infrastructure and application deployment",
+        "Better Git security",
+        "Git performance optimization"
+      ],
+      "correctAnswer": 1,
+      "explanation": "GitOps uses Git repositories as the single source of truth for infrastructure and application configurations, enabling declarative and auditable deployments."
+    }
+  ]
+} 

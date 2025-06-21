@@ -1,0 +1,543 @@
+{
+  "title": "Performance Engineering & Optimization",
+  "description": "Master advanced performance monitoring, critical rendering path optimization, memory management, network optimization, and browser performance techniques for enterprise-level applications",
+  "sections": [
+    {
+      "id": "advanced-performance-monitoring",
+      "title": "Advanced Performance Monitoring",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Real User Monitoring (RUM) Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "Real User Monitoring provides insights into actual user experience by collecting performance data from real users in production environments, capturing metrics that synthetic testing cannot replicate."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Captures real user conditions: actual devices, networks, and usage patterns",
+            "Provides statistical significance through large sample sizes",
+            "Identifies performance issues affecting real users",
+            "Enables correlation between performance and business metrics",
+            "Supports A/B testing and feature flag impact analysis"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// RUM Implementation Core\nclass RealUserMonitoring {\n  constructor(config) {\n    this.config = {\n      endpoint: '/api/rum',\n      sampleRate: 0.1,\n      bufferSize: 100,\n      flushInterval: 30000,\n      ...config\n    };\n    this.buffer = [];\n    this.sessionId = this.generateSessionId();\n    this.initializeObservers();\n  }\n\n  initializeObservers() {\n    // Performance Observer for navigation timing\n    if ('PerformanceObserver' in window) {\n      const perfObserver = new PerformanceObserver((list) => {\n        list.getEntries().forEach(entry => {\n          this.collectMetric({\n            type: 'navigation',\n            duration: entry.duration,\n            domContentLoaded: entry.domContentLoadedEventEnd - entry.domContentLoadedEventStart,\n            firstPaint: this.getFirstPaint(),\n            firstContentfulPaint: this.getFirstContentfulPaint(),\n            largestContentfulPaint: this.getLargestContentfulPaint(),\n            timestamp: Date.now()\n          });\n        });\n      });\n      perfObserver.observe({ entryTypes: ['navigation'] });\n    }\n  }\n\n  collectMetric(metric) {\n    if (Math.random() > this.config.sampleRate) return;\n    \n    const enrichedMetric = {\n      ...metric,\n      sessionId: this.sessionId,\n      viewport: { width: window.innerWidth, height: window.innerHeight },\n      connection: this.getConnectionInfo(),\n      deviceMemory: navigator.deviceMemory\n    };\n    \n    this.buffer.push(enrichedMetric);\n    if (this.buffer.length >= this.config.bufferSize) {\n      this.flush();\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Core Web Vitals Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "Core Web Vitals are essential metrics that measure real-world user experience, focusing on loading performance, interactivity, and visual stability."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Largest Contentful Paint (LCP): Loading performance - should occur within 2.5 seconds",
+            "First Input Delay (FID): Interactivity - should be less than 100 milliseconds",
+            "Cumulative Layout Shift (CLS): Visual stability - should be less than 0.1",
+            "First Contentful Paint (FCP): When first content appears - should be under 1.8 seconds",
+            "Time to Interactive (TTI): When page becomes fully interactive"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Web Vitals Monitoring\nclass WebVitalsMonitor {\n  constructor() {\n    this.metrics = new Map();\n    this.initializeObservers();\n  }\n\n  initializeObservers() {\n    // Largest Contentful Paint\n    new PerformanceObserver((list) => {\n      list.getEntries().forEach(entry => {\n        this.recordMetric('LCP', {\n          value: entry.startTime,\n          element: entry.element?.tagName,\n          size: entry.size,\n          url: entry.url\n        });\n      });\n    }).observe({ entryTypes: ['largest-contentful-paint'] });\n\n    // First Input Delay\n    new PerformanceObserver((list) => {\n      list.getEntries().forEach(entry => {\n        this.recordMetric('FID', {\n          value: entry.processingStart - entry.startTime,\n          eventType: entry.name,\n          target: entry.target?.tagName\n        });\n      });\n    }).observe({ entryTypes: ['first-input'] });\n\n    // Cumulative Layout Shift\n    let clsValue = 0;\n    new PerformanceObserver((list) => {\n      list.getEntries().forEach(entry => {\n        if (!entry.hadRecentInput) {\n          clsValue += entry.value;\n          this.recordMetric('CLS', {\n            value: clsValue,\n            sources: entry.sources?.map(source => ({\n              element: source.node?.tagName,\n              previousRect: source.previousRect,\n              currentRect: source.currentRect\n            }))\n          });\n        }\n      });\n    }).observe({ entryTypes: ['layout-shift'] });\n  }\n\n  recordMetric(name, data) {\n    this.metrics.set(name, { ...data, timestamp: Date.now() });\n    this.evaluateThresholds(name, data.value);\n  }\n\n  evaluateThresholds(metric, value) {\n    const thresholds = {\n      LCP: { good: 2500, poor: 4000 },\n      FID: { good: 100, poor: 300 },\n      CLS: { good: 0.1, poor: 0.25 }\n    };\n\n    const threshold = thresholds[metric];\n    if (threshold) {\n      let rating = 'good';\n      if (value > threshold.poor) rating = 'poor';\n      else if (value > threshold.good) rating = 'needs-improvement';\n      \n      this.reportMetric(metric, value, rating);\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Performance Budget Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "Performance budgets establish measurable limits on key metrics to prevent performance regressions and maintain user experience standards."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Performance Budget Implementation\nclass PerformanceBudget {\n  constructor(budgets) {\n    this.budgets = budgets;\n    this.violations = [];\n    this.monitor();\n  }\n\n  monitor() {\n    window.addEventListener('load', () => {\n      setTimeout(() => this.checkBudgets(), 1000);\n    });\n  }\n\n  checkBudgets() {\n    const navigation = performance.getEntriesByType('navigation')[0];\n    const resources = performance.getEntriesByType('resource');\n    \n    // Check timing budgets\n    this.checkTimingBudget('firstContentfulPaint', this.getFirstContentfulPaint());\n    this.checkTimingBudget('largestContentfulPaint', this.getLargestContentfulPaint());\n    this.checkTimingBudget('timeToInteractive', this.calculateTimeToInteractive());\n    \n    // Check resource budgets\n    const totalSize = resources.reduce((sum, resource) => sum + (resource.transferSize || 0), 0);\n    this.checkSizeBudget('totalSize', totalSize);\n    \n    // Check resource count budgets\n    const resourceCounts = this.getResourceCounts(resources);\n    Object.entries(this.budgets.resourceCounts || {}).forEach(([type, limit]) => {\n      if (resourceCounts[type] > limit) {\n        this.addViolation(`${type} count`, resourceCounts[type], limit);\n      }\n    });\n    \n    if (this.violations.length > 0) {\n      this.reportViolations();\n    }\n  }\n\n  checkTimingBudget(metric, value) {\n    if (this.budgets[metric] && value > this.budgets[metric]) {\n      this.addViolation(metric, value, this.budgets[metric]);\n    }\n  }\n\n  addViolation(metric, actual, budget) {\n    this.violations.push({\n      metric,\n      actual,\n      budget,\n      overage: actual - budget,\n      percentage: ((actual - budget) / budget) * 100\n    });\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "critical-rendering-path",
+      "title": "Critical Rendering Path Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Resource Hints and Preloading Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Resource hints help browsers optimize loading by providing information about resources that will be needed, enabling better prioritization and preloading."
+        },
+        {
+          "type": "list",
+          "items": [
+            "dns-prefetch: Resolve DNS early for external domains",
+            "preconnect: Establish early connections to important origins",
+            "preload: High-priority loading of critical resources",
+            "prefetch: Low-priority loading of likely-needed resources",
+            "modulepreload: Preload ES modules and their dependencies"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "html",
+          "text": "<!-- Resource Hints Examples -->\n<!-- DNS prefetch for external domains -->\n<link rel=\"dns-prefetch\" href=\"//fonts.googleapis.com\">\n<link rel=\"dns-prefetch\" href=\"//api.example.com\">\n\n<!-- Preconnect to critical origins -->\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link rel=\"preconnect\" href=\"https://cdn.example.com\">\n\n<!-- Preload critical resources -->\n<link rel=\"preload\" href=\"/critical.css\" as=\"style\">\n<link rel=\"preload\" href=\"/hero-image.webp\" as=\"image\">\n<link rel=\"preload\" href=\"/app.js\" as=\"script\">\n\n<!-- Preload fonts with crossorigin -->\n<link rel=\"preload\" href=\"/fonts/main.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>\n\n<!-- Module preload for ES modules -->\n<link rel=\"modulepreload\" href=\"/modules/app.js\">\n<link rel=\"modulepreload\" href=\"/modules/router.js\">"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Dynamic Resource Preloading\nclass ResourcePreloader {\n  constructor() {\n    this.preloadedResources = new Set();\n    this.intersectionObserver = this.createIntersectionObserver();\n  }\n\n  preloadResource(href, as, type = null, crossorigin = false) {\n    if (this.preloadedResources.has(href)) return;\n    \n    const link = document.createElement('link');\n    link.rel = 'preload';\n    link.href = href;\n    link.as = as;\n    if (type) link.type = type;\n    if (crossorigin) link.crossOrigin = 'anonymous';\n    \n    document.head.appendChild(link);\n    this.preloadedResources.add(href);\n  }\n\n  preloadOnViewport(element, resources) {\n    element.dataset.preloadResources = JSON.stringify(resources);\n    this.intersectionObserver.observe(element);\n  }\n\n  createIntersectionObserver() {\n    return new IntersectionObserver((entries) => {\n      entries.forEach(entry => {\n        if (entry.isIntersecting) {\n          const resources = JSON.parse(entry.target.dataset.preloadResources || '[]');\n          resources.forEach(resource => {\n            this.preloadResource(resource.href, resource.as, resource.type, resource.crossorigin);\n          });\n          this.intersectionObserver.unobserve(entry.target);\n        }\n      });\n    }, { rootMargin: '50px' });\n  }\n\n  preloadRoute(routePath) {\n    // Preload route-specific resources\n    const routeManifest = {\n      '/dashboard': [\n        { href: '/js/dashboard.js', as: 'script' },\n        { href: '/css/dashboard.css', as: 'style' },\n        { href: '/api/dashboard-data', as: 'fetch' }\n      ],\n      '/profile': [\n        { href: '/js/profile.js', as: 'script' },\n        { href: '/css/profile.css', as: 'style' }\n      ]\n    };\n\n    const resources = routeManifest[routePath] || [];\n    resources.forEach(resource => {\n      this.preloadResource(resource.href, resource.as, resource.type);\n    });\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Critical CSS Extraction and Above-the-Fold Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Critical CSS optimization ensures that styles needed for above-the-fold content are loaded immediately, while non-critical styles are loaded asynchronously."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Critical CSS Management\nclass CriticalCSSManager {\n  constructor() {\n    this.criticalCSS = '';\n    this.nonCriticalCSS = [];\n    this.mediaQueries = new Map();\n  }\n\n  async extractCriticalCSS(viewportHeight = 800) {\n    const allStyles = Array.from(document.styleSheets);\n    const criticalRules = [];\n    \n    for (const stylesheet of allStyles) {\n      try {\n        const rules = Array.from(stylesheet.cssRules || []);\n        for (const rule of rules) {\n          if (this.isRuleCritical(rule, viewportHeight)) {\n            criticalRules.push(rule.cssText);\n          }\n        }\n      } catch (e) {\n        // Handle cross-origin stylesheets\n        console.warn('Cannot access stylesheet:', stylesheet.href);\n      }\n    }\n    \n    this.criticalCSS = criticalRules.join('\\n');\n    return this.criticalCSS;\n  }\n\n  isRuleCritical(rule, viewportHeight) {\n    if (rule.type === CSSRule.MEDIA_RULE) {\n      // Check if media query applies to initial viewport\n      return this.isMediaQueryCritical(rule.conditionText);\n    }\n    \n    if (rule.type === CSSRule.STYLE_RULE) {\n      // Check if selector targets above-the-fold elements\n      return this.isSelectorCritical(rule.selectorText, viewportHeight);\n    }\n    \n    return false;\n  }\n\n  isSelectorCritical(selector, viewportHeight) {\n    try {\n      const elements = document.querySelectorAll(selector);\n      return Array.from(elements).some(element => {\n        const rect = element.getBoundingClientRect();\n        return rect.top < viewportHeight && rect.bottom > 0;\n      });\n    } catch (e) {\n      return false;\n    }\n  }\n\n  async loadNonCriticalCSS() {\n    const nonCriticalLinks = document.querySelectorAll('link[rel=\"preload\"][as=\"style\"]');\n    \n    nonCriticalLinks.forEach(link => {\n      const stylesheet = document.createElement('link');\n      stylesheet.rel = 'stylesheet';\n      stylesheet.href = link.href;\n      stylesheet.media = 'print';\n      stylesheet.onload = () => {\n        stylesheet.media = 'all';\n      };\n      document.head.appendChild(stylesheet);\n    });\n  }\n\n  inlineCSS(css) {\n    const style = document.createElement('style');\n    style.textContent = css;\n    document.head.appendChild(style);\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "memory-management",
+      "title": "Memory Management & Leak Detection",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Memory Leak Detection and Prevention"
+        },
+        {
+          "type": "paragraph",
+          "text": "Memory leaks in JavaScript applications can cause performance degradation and crashes. Proper detection and prevention strategies are essential for long-running applications."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Event listener leaks: Unremoved event listeners keep references alive",
+            "Timer leaks: setInterval/setTimeout not cleared properly",
+            "Closure leaks: Closures holding references to large objects",
+            "DOM reference leaks: JavaScript holding references to removed DOM elements",
+            "Global variable accumulation: Unintentional global scope pollution"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Memory Leak Detection Utilities\nclass MemoryLeakDetector {\n  constructor() {\n    this.baseline = null;\n    this.measurements = [];\n    this.leakThreshold = 50 * 1024 * 1024; // 50MB\n    this.monitoringInterval = null;\n  }\n\n  startMonitoring(intervalMs = 30000) {\n    this.baseline = this.getCurrentMemoryUsage();\n    \n    this.monitoringInterval = setInterval(() => {\n      const current = this.getCurrentMemoryUsage();\n      this.measurements.push({\n        timestamp: Date.now(),\n        ...current\n      });\n      \n      this.detectLeaks(current);\n    }, intervalMs);\n  }\n\n  getCurrentMemoryUsage() {\n    if ('memory' in performance) {\n      return {\n        usedJSHeapSize: performance.memory.usedJSHeapSize,\n        totalJSHeapSize: performance.memory.totalJSHeapSize,\n        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit\n      };\n    }\n    return null;\n  }\n\n  detectLeaks(current) {\n    if (!this.baseline || !current) return;\n    \n    const memoryGrowth = current.usedJSHeapSize - this.baseline.usedJSHeapSize;\n    const growthRate = this.calculateGrowthRate();\n    \n    if (memoryGrowth > this.leakThreshold || growthRate > 1024 * 1024) { // 1MB/min\n      this.reportLeak({\n        growth: memoryGrowth,\n        growthRate,\n        current: current.usedJSHeapSize,\n        baseline: this.baseline.usedJSHeapSize\n      });\n    }\n  }\n\n  calculateGrowthRate() {\n    if (this.measurements.length < 2) return 0;\n    \n    const recent = this.measurements.slice(-5);\n    const timeSpan = recent[recent.length - 1].timestamp - recent[0].timestamp;\n    const memoryChange = recent[recent.length - 1].usedJSHeapSize - recent[0].usedJSHeapSize;\n    \n    return (memoryChange / timeSpan) * 60000; // bytes per minute\n  }\n\n  analyzeHeapSnapshot() {\n    // This would integrate with DevTools Protocol in development\n    if (typeof window.takeHeapSnapshot === 'function') {\n      return window.takeHeapSnapshot();\n    }\n    \n    console.warn('Heap snapshot analysis requires DevTools integration');\n    return null;\n  }\n}"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// WeakMap and WeakSet Usage Patterns\nclass WeakReferencesManager {\n  constructor() {\n    // Use WeakMap for object associations that shouldn't prevent GC\n    this.elementData = new WeakMap();\n    this.componentInstances = new WeakMap();\n    this.eventHandlers = new WeakMap();\n    \n    // Use WeakSet for object collections that shouldn't prevent GC\n    this.processedElements = new WeakSet();\n    this.activeComponents = new WeakSet();\n  }\n\n  // Store data associated with DOM elements\n  setElementData(element, data) {\n    this.elementData.set(element, data);\n  }\n\n  getElementData(element) {\n    return this.elementData.get(element);\n  }\n\n  // Track component instances without preventing garbage collection\n  registerComponent(element, component) {\n    this.componentInstances.set(element, component);\n    this.activeComponents.add(component);\n  }\n\n  isComponentActive(component) {\n    return this.activeComponents.has(component);\n  }\n\n  // Safe event handler management\n  addEventHandler(element, eventType, handler) {\n    if (!this.eventHandlers.has(element)) {\n      this.eventHandlers.set(element, new Map());\n    }\n    \n    const elementHandlers = this.eventHandlers.get(element);\n    elementHandlers.set(eventType, handler);\n    \n    element.addEventListener(eventType, handler);\n  }\n\n  removeEventHandler(element, eventType) {\n    const elementHandlers = this.eventHandlers.get(element);\n    if (elementHandlers && elementHandlers.has(eventType)) {\n      const handler = elementHandlers.get(eventType);\n      element.removeEventListener(eventType, handler);\n      elementHandlers.delete(eventType);\n    }\n  }\n\n  // Cleanup when element is removed\n  cleanupElement(element) {\n    const elementHandlers = this.eventHandlers.get(element);\n    if (elementHandlers) {\n      elementHandlers.forEach((handler, eventType) => {\n        element.removeEventListener(eventType, handler);\n      });\n    }\n    \n    // WeakMap entries will be automatically cleaned up\n    // when the element is garbage collected\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "network-optimization",
+      "title": "Network Optimization Strategies",
+      "content": [
+        {
+          "type": "heading",
+          "text": "HTTP/2 and HTTP/3 Optimization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Modern HTTP protocols offer significant performance improvements through multiplexing, server push, and reduced latency. Optimizing for these protocols requires different strategies than HTTP/1.1."
+        },
+        {
+          "type": "list",
+          "items": [
+            "HTTP/2 multiplexing eliminates head-of-line blocking",
+            "Server push can proactively send resources",
+            "HTTP/3 uses QUIC protocol for reduced connection latency",
+            "Binary framing improves parsing efficiency",
+            "Header compression reduces overhead"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Service Worker for Advanced Caching\nclass AdvancedCacheManager {\n  constructor() {\n    this.cacheStrategies = new Map();\n    this.cacheName = 'app-cache-v1';\n    this.maxAge = 24 * 60 * 60 * 1000; // 24 hours\n  }\n\n  async handleRequest(request) {\n    const url = new URL(request.url);\n    const strategy = this.getCacheStrategy(url.pathname);\n    \n    switch (strategy) {\n      case 'cache-first':\n        return this.cacheFirst(request);\n      case 'network-first':\n        return this.networkFirst(request);\n      case 'stale-while-revalidate':\n        return this.staleWhileRevalidate(request);\n      default:\n        return fetch(request);\n    }\n  }\n\n  async cacheFirst(request) {\n    const cachedResponse = await caches.match(request);\n    if (cachedResponse) {\n      return cachedResponse;\n    }\n    \n    const networkResponse = await fetch(request);\n    if (networkResponse.ok) {\n      const cache = await caches.open(this.cacheName);\n      cache.put(request, networkResponse.clone());\n    }\n    \n    return networkResponse;\n  }\n\n  async networkFirst(request) {\n    try {\n      const networkResponse = await fetch(request);\n      if (networkResponse.ok) {\n        const cache = await caches.open(this.cacheName);\n        cache.put(request, networkResponse.clone());\n      }\n      return networkResponse;\n    } catch (error) {\n      const cachedResponse = await caches.match(request);\n      if (cachedResponse) {\n        return cachedResponse;\n      }\n      throw error;\n    }\n  }\n\n  async staleWhileRevalidate(request) {\n    const cachedResponse = await caches.match(request);\n    const fetchPromise = fetch(request).then(response => {\n      if (response.ok) {\n        const cache = caches.open(this.cacheName);\n        cache.then(c => c.put(request, response.clone()));\n      }\n      return response;\n    });\n    \n    return cachedResponse || fetchPromise;\n  }\n\n  getCacheStrategy(pathname) {\n    if (pathname.startsWith('/api/')) return 'network-first';\n    if (pathname.endsWith('.js') || pathname.endsWith('.css')) return 'cache-first';\n    if (pathname.startsWith('/images/')) return 'cache-first';\n    return 'stale-while-revalidate';\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main advantage of Real User Monitoring (RUM) over synthetic testing?",
+      "options": [
+        "RUM is cheaper to implement",
+        "RUM provides actual user experience data from real conditions and devices",
+        "RUM is more accurate for testing",
+        "RUM requires less setup"
+      ],
+      "correctAnswer": 1,
+      "explanation": "RUM captures performance data from real users in actual conditions, including different devices, networks, and usage patterns, providing insights that synthetic testing in controlled environments cannot replicate."
+    },
+    {
+      "id": 2,
+      "question": "What is the purpose of performance budgets in web applications?",
+      "options": [
+        "To limit development costs",
+        "To set measurable limits on performance metrics and prevent regressions",
+        "To allocate server resources",
+        "To manage team productivity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Performance budgets establish measurable limits on key metrics like load time, bundle size, and resource counts, helping teams prevent performance regressions and maintain user experience standards."
+    },
+    {
+      "id": 3,
+      "question": "Which Core Web Vital measures visual stability during page load?",
+      "options": [
+        "First Contentful Paint (FCP)",
+        "Largest Contentful Paint (LCP)",
+        "Cumulative Layout Shift (CLS)",
+        "First Input Delay (FID)"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Cumulative Layout Shift (CLS) measures visual stability by quantifying unexpected layout shifts during the page load, helping identify elements that cause content to jump around."
+    },
+    {
+      "id": 4,
+      "question": "What is the main benefit of using sampling in RUM data collection?",
+      "options": [
+        "Better data accuracy",
+        "Reduced performance impact and server load while maintaining statistical significance",
+        "Faster data processing",
+        "Better user privacy"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Sampling reduces the performance impact on users and server load while still providing statistically significant data for performance analysis, typically using 1-10% of users."
+    },
+    {
+      "id": 5,
+      "question": "What does the First Input Delay (FID) metric measure?",
+      "options": [
+        "Time to first byte",
+        "Time from user's first interaction to browser response",
+        "Time to first paint",
+        "Time to interactive"
+      ],
+      "correctAnswer": 1,
+      "explanation": "FID measures the delay between when a user first interacts with a page (clicks, taps, key presses) and when the browser actually begins processing that interaction."
+    },
+    {
+      "id": 6,
+      "question": "What is the advantage of using sendBeacon() for sending performance data?",
+      "options": [
+        "Faster data transmission",
+        "Guaranteed delivery even during page unload",
+        "Better compression",
+        "Lower bandwidth usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "sendBeacon() ensures data is sent reliably even when the user navigates away or closes the page, as it's designed to work during page unload scenarios."
+    },
+    {
+      "id": 7,
+      "question": "What information does the Navigation Timing API provide?",
+      "options": [
+        "User interaction data",
+        "Detailed breakdown of page load phases (DNS, TCP, SSL, etc.)",
+        "Memory usage statistics",
+        "CPU utilization metrics"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Navigation Timing API provides detailed timing information about page load phases including DNS lookup, TCP connection, SSL handshake, server response, and DOM processing."
+    },
+    {
+      "id": 8,
+      "question": "Why is median calculation preferred over average for performance baselines?",
+      "options": [
+        "Median is faster to calculate",
+        "Median is less affected by outliers and provides more stable baselines",
+        "Median uses less memory",
+        "Median is more accurate"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Median values are less affected by extreme outliers (very slow or very fast measurements) and provide more stable and representative baselines for regression detection."
+    },
+    {
+      "id": 9,
+      "question": "What is the main purpose of critical CSS extraction?",
+      "options": [
+        "To reduce file sizes",
+        "To inline styles needed for above-the-fold content and defer non-critical styles",
+        "To improve CSS organization",
+        "To enable CSS compression"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Critical CSS extraction identifies and inlines styles needed for above-the-fold content, allowing the page to render quickly while non-critical styles load asynchronously."
+    },
+    {
+      "id": 10,
+      "question": "What is the benefit of using WeakMap over Map for DOM element associations?",
+      "options": [
+        "WeakMap is faster",
+        "WeakMap doesn't prevent garbage collection of referenced objects",
+        "WeakMap uses less memory",
+        "WeakMap has better browser support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "WeakMap allows garbage collection of keys (DOM elements) when they're no longer referenced elsewhere, preventing memory leaks that would occur with regular Map."
+    },
+    {
+      "id": 11,
+      "question": "In service worker caching, when should you use the 'network-first' strategy?",
+      "options": [
+        "For static assets that rarely change",
+        "For dynamic content that needs to be fresh, with cache as fallback",
+        "For images and media files",
+        "For CSS and JavaScript files"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Network-first strategy is ideal for dynamic content like API responses where freshness is important, but you want cache as a fallback when the network is unavailable."
+    },
+    {
+      "id": 12,
+      "question": "What does the 'preconnect' resource hint accomplish?",
+      "options": [
+        "Preloads resources",
+        "Establishes early connections (DNS, TCP, TLS) to important origins",
+        "Prefetches DNS records",
+        "Preloads JavaScript modules"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Preconnect establishes early connections including DNS resolution, TCP handshake, and TLS negotiation to important origins, reducing connection latency when resources are actually requested."
+    },
+    {
+      "id": 13,
+      "question": "What is the main advantage of HTTP/2 multiplexing?",
+      "options": [
+        "Smaller file sizes",
+        "Multiple requests can be sent simultaneously over a single connection",
+        "Better compression",
+        "Improved security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "HTTP/2 multiplexing allows multiple requests and responses to be interleaved over a single connection, eliminating head-of-line blocking and reducing connection overhead."
+    },
+    {
+      "id": 14,
+      "question": "What does Time to Interactive (TTI) measure?",
+      "options": [
+        "Time to first paint",
+        "Time when page becomes fully interactive and responsive to user input",
+        "Time to first byte",
+        "Time to complete loading"
+      ],
+      "correctAnswer": 1,
+      "explanation": "TTI measures when a page becomes fully interactive, meaning the page has displayed useful content, event handlers are registered, and the page responds to interactions within 50ms."
+    },
+    {
+      "id": 15,
+      "question": "What is the purpose of long task monitoring in performance analysis?",
+      "options": [
+        "To measure network latency",
+        "To identify JavaScript tasks that block the main thread for >50ms",
+        "To track memory usage",
+        "To monitor server performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Long tasks are JavaScript executions that block the main thread for more than 50ms, preventing the browser from responding to user interactions and causing poor user experience."
+    },
+    {
+      "id": 16,
+      "question": "Why is connection information important in RUM implementation?",
+      "options": [
+        "For security purposes",
+        "To understand performance in context of network conditions",
+        "To track user location",
+        "To optimize server routing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Connection information (effective connection type, downlink speed, RTT) helps contextualize performance data, as network conditions significantly impact user experience."
+    },
+    {
+      "id": 17,
+      "question": "What does the Resource Timing API help identify?",
+      "options": [
+        "Memory leaks",
+        "Individual resource load performance and optimization opportunities",
+        "Security vulnerabilities",
+        "Code complexity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Resource Timing API provides detailed timing information for individual resources (scripts, images, stylesheets), helping identify slow-loading assets and optimization opportunities."
+    },
+    {
+      "id": 18,
+      "question": "What is the main challenge with performance monitoring in production?",
+      "options": [
+        "Technical complexity",
+        "Balancing data collection needs with performance impact on users",
+        "Cost considerations",
+        "Data storage requirements"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The main challenge is collecting sufficient performance data for analysis while minimizing the performance impact of the monitoring itself on user experience."
+    },
+    {
+      "id": 19,
+      "question": "What does Largest Contentful Paint (LCP) indicate about user experience?",
+      "options": [
+        "Page loading speed",
+        "When the main content becomes visible to users",
+        "Interactive readiness",
+        "Visual stability"
+      ],
+      "correctAnswer": 1,
+      "explanation": "LCP indicates when the largest content element becomes visible, representing when users perceive the main content as loaded and the page as useful."
+    },
+    {
+      "id": 20,
+      "question": "What is the benefit of using requestIdleCallback for performance measurement?",
+      "options": [
+        "Better accuracy",
+        "Measuring performance impact without interfering with critical rendering",
+        "Faster execution",
+        "Lower memory usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "requestIdleCallback ensures performance measurements happen during idle time, avoiding interference with critical rendering and user interactions."
+    },
+    {
+      "id": 21,
+      "question": "In memory leak detection, what indicates a potential leak?",
+      "options": [
+        "High CPU usage",
+        "Continuously increasing memory usage over time",
+        "Slow network requests",
+        "High disk usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Memory leaks are characterized by continuously increasing memory usage over time, especially when the application should have stable memory usage during normal operation."
+    },
+    {
+      "id": 22,
+      "question": "What is the 'stale-while-revalidate' caching strategy?",
+      "options": [
+        "Always serves fresh data",
+        "Serves cached data immediately while fetching fresh data in background",
+        "Only serves cached data",
+        "Serves random data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Stale-while-revalidate serves cached data immediately for fast response, while simultaneously fetching fresh data in the background to update the cache for the next request."
+    },
+    {
+      "id": 23,
+      "question": "Why is historical data retention important in performance monitoring?",
+      "options": [
+        "For compliance requirements",
+        "To establish baselines and detect long-term trends and regressions",
+        "For backup purposes",
+        "For audit trails"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Historical data enables establishing performance baselines, detecting long-term trends, and identifying gradual performance degradation that might not be obvious in short-term monitoring."
+    },
+    {
+      "id": 24,
+      "question": "What is the primary goal of performance engineering in enterprise applications?",
+      "options": [
+        "Reducing development costs",
+        "Ensuring optimal user experience through systematic performance optimization",
+        "Minimizing server resources",
+        "Accelerating development speed"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Performance engineering focuses on systematically optimizing applications to provide optimal user experience through monitoring, measurement, and continuous improvement of performance metrics."
+    },
+    {
+      "id": 25,
+      "question": "What is the benefit of third-party resource tracking in performance monitoring?",
+      "options": [
+        "Legal compliance",
+        "Identifying external dependencies that may impact performance",
+        "Cost optimization",
+        "Security monitoring"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Tracking third-party resources helps identify external dependencies that may be causing performance issues and are outside direct control but impact user experience."
+    },
+    {
+      "id": 26,
+      "question": "In performance budgets, what happens when a violation is detected?",
+      "options": [
+        "The application stops working",
+        "Alerts are generated and violations are reported for investigation",
+        "The budget is automatically adjusted",
+        "Users are notified"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Performance budget violations trigger alerts and reporting mechanisms to notify developers and stakeholders, enabling investigation and remediation of performance regressions."
+    },
+    {
+      "id": 27,
+      "question": "What is the advantage of using Performance Observer API?",
+      "options": [
+        "Manual performance measurement",
+        "Automatic collection of performance metrics as they become available",
+        "Performance optimization",
+        "Error tracking"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Performance Observer API allows automatic collection of performance metrics as they become available, providing a more efficient and comprehensive way to gather performance data."
+    },
+    {
+      "id": 28,
+      "question": "Why is session and user context important in performance monitoring?",
+      "options": [
+        "For user authentication",
+        "To correlate performance issues with user patterns and device characteristics",
+        "For personalization",
+        "For security tracking"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Session and user context help correlate performance issues with specific user patterns, device types, and usage scenarios, enabling more targeted optimization efforts."
+    },
+    {
+      "id": 29,
+      "question": "What is the main benefit of buffering in RUM data collection?",
+      "options": [
+        "To improve data accuracy",
+        "To batch data for efficient transmission and reduce network overhead",
+        "To compress data",
+        "To encrypt data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Buffering allows batching multiple metrics into single requests, reducing network overhead and improving efficiency while ensuring data is sent reliably."
+    },
+    {
+      "id": 30,
+      "question": "In critical rendering path optimization, what is the purpose of resource hints?",
+      "options": [
+        "To reduce file sizes",
+        "To help browsers optimize loading by providing information about future resource needs",
+        "To improve code quality",
+        "To enable compression"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Resource hints provide browsers with information about resources that will be needed, enabling better prioritization, preloading, and connection optimization to improve loading performance."
+    }
+  ]
+} 
