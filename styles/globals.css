@@ -18,6 +18,94 @@ body {
     sans-serif;
   line-height: 1.6;
   overflow-y: hidden;
+  /* Prevent layout shift by setting default theme styles */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  background-color: #ffffff;
+  color: #000000d9;
+}
+
+/* Default theme colors to prevent flash */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #000000d9;
+  --border-color: #d9d9d9;
+}
+
+html[data-theme="dark"] {
+  --bg-color: #000000;
+  --text-color: #ffffffd9;
+  --border-color: #424242;
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Equal height cards fix */
+.ant-row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.ant-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-card.h-full {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-card.h-full .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-card.h-full .ant-card-meta {
+  flex: 1;
+}
+
+.ant-card.h-full .ant-card-actions {
+  margin-top: auto;
+}
+
+/* Ensure consistent card heights in grid layouts */
+.ant-card-cover + .ant-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-card-meta-description {
+  flex: 1;
+}
+
+/* Card content wrapper for better height management */
+.card-content-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card-content-wrapper .ant-card-meta {
+  margin-bottom: 16px;
+}
+
+.card-content-wrapper .flex-grow {
+  flex-grow: 1;
+  display: flex;
+  align-items: flex-start;
 }
 
 a {

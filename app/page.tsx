@@ -69,16 +69,18 @@ export default function HomePage() {
                   </Link>,
                 ]}
               >
-                <Card.Meta
-                  title="Basic Knowledge"
-                  description="Foundational concepts and personal learning notes covering various programming topics and technologies."
-                />
-                <div className="mt-4">
-                  <Space direction="vertical" size="small">
-                    <span>• Advanced JavaScript</span>
-                    <span>• Core Programming Concepts</span>
-                    <span>• Fundamental Best Practices</span>
-                  </Space>
+                <div className="card-content-wrapper">
+                  <Card.Meta
+                    title="Basic Knowledge"
+                    description="Foundational concepts and personal learning notes covering various programming topics and technologies."
+                  />
+                  <div className="mt-4 flex-grow">
+                    <Space direction="vertical" size="small">
+                      <span>• Advanced JavaScript</span>
+                      <span>• Core Programming Concepts</span>
+                      <span>• Fundamental Best Practices</span>
+                    </Space>
+                  </div>
                 </div>
               </Card>
             </Col>
@@ -100,17 +102,19 @@ export default function HomePage() {
                   </Link>,
                 ]}
               >
-                <Card.Meta
-                  title="To Be Senior Engineer"
-                  description="Advanced topics and deep-dive content for developers aiming to reach senior-level expertise."
-                />
-                <div className="mt-4">
-                  <Space direction="vertical" size="small">
-                    <span>• Advanced JavaScript & TypeScript</span>
-                    <span>• React Ecosystem Mastery</span>
-                    <span>• Architecture & Leadership</span>
-                    <span>• Security & Best Practices</span>
-                  </Space>
+                <div className="card-content-wrapper">
+                  <Card.Meta
+                    title="To Be Senior Engineer"
+                    description="Advanced topics and deep-dive content for developers aiming to reach senior-level expertise."
+                  />
+                  <div className="mt-4 flex-grow">
+                    <Space direction="vertical" size="small">
+                      <span>• Advanced JavaScript & TypeScript</span>
+                      <span>• React Ecosystem Mastery</span>
+                      <span>• Architecture & Leadership</span>
+                      <span>• Security & Best Practices</span>
+                    </Space>
+                  </div>
                 </div>
               </Card>
             </Col>
@@ -131,17 +135,19 @@ export default function HomePage() {
                   </Link>,
                 ]}
               >
-                <Card.Meta
-                  title="Frontend Learning Roadmap"
-                  description="Complete roadmap from junior to senior frontend engineer, covering all essential skills and technologies."
-                />
-                <div className="mt-4">
-                  <Space direction="vertical" size="small">
-                    <span>• Core Frontend Skills</span>
-                    <span>• Backend & API Integration</span>
-                    <span>• Testing & Debugging</span>
-                    <span>• Performance Optimization</span>
-                  </Space>
+                <div className="card-content-wrapper">
+                  <Card.Meta
+                    title="Frontend Learning Roadmap"
+                    description="Complete roadmap from junior to senior frontend engineer, covering all essential skills and technologies."
+                  />
+                  <div className="mt-4 flex-grow">
+                    <Space direction="vertical" size="small">
+                      <span>• Core Frontend Skills</span>
+                      <span>• Backend & API Integration</span>
+                      <span>• Testing & Debugging</span>
+                      <span>• Performance Optimization</span>
+                    </Space>
+                  </div>
                 </div>
               </Card>
             </Col>

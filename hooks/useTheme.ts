@@ -21,18 +21,22 @@ export const useTheme = () => {
 };
 
 export const useThemeState = () => {
-  const [theme, setThemeState] = useState<ThemeMode>('light');
+  // Initialize theme from DOM to prevent hydration mismatch
+  const getInitialTheme = (): ThemeMode => {
+    if (typeof window === 'undefined') return 'light';
+    // Read from DOM attribute set by the script in layout.tsx
+    const domTheme = document.documentElement.getAttribute('data-theme');
+    return domTheme === 'dark' ? 'dark' : 'light';
+  };
+
+  const [theme, setThemeState] = useState<ThemeMode>(getInitialTheme);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Check localStorage for saved theme
-    const savedTheme = localStorage.getItem('theme') as ThemeMode;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      setThemeState(savedTheme);
-    } else {
-      // Check system preference
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setThemeState(prefersDark ? 'dark' : 'light');
+    // Sync state with DOM on mount
+    const domTheme = document.documentElement.getAttribute('data-theme');
+    if (domTheme && (domTheme === 'light' || domTheme === 'dark')) {
+      setThemeState(domTheme);
     }
     setMounted(true);
   }, []);
@@ -41,7 +45,7 @@ export const useThemeState = () => {
     if (mounted) {
       // Update localStorage
       localStorage.setItem('theme', theme);
-      // Update document class
+      // Update document class and attribute
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
         document.documentElement.setAttribute('data-theme', 'dark');

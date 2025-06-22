@@ -84,7 +84,48 @@ function AntdConfigProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Minimal loading component that matches the theme
+function LoadingScreen() {
+  return (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      backgroundColor: 'var(--bg-color, #ffffff)',
+      color: 'var(--text-color, #000000d9)',
+      transition: 'background-color 0.2s ease, color 0.2s ease'
+    }}>
+      <div style={{
+        width: '24px',
+        height: '24px',
+        border: '2px solid #1890ff',
+        borderTop: '2px solid transparent',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite'
+      }} />
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function ClientWrapper({ children }: ClientWrapperProps) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Show loading screen during hydration to prevent flash
+  if (!mounted) {
+    return <LoadingScreen />;
+  }
+
   return (
     <ThemeProvider>
       <AntdConfigProvider>

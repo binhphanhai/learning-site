@@ -240,6 +240,16 @@ export default function LearningPage({
     content.sections[0]?.id || ""
   );
   const [testAnswers, setTestAnswers] = useState<TestAnswer[]>([]);
+  
+  // Ref for the learning content scrollable container
+  const contentScrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Reset scroll position when section changes
+  React.useEffect(() => {
+    if (contentScrollRef.current) {
+      contentScrollRef.current.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [selectedSection]);
 
   const handleTestAnswer = (questionId: number, selectedOption: number) => {
     const question = content.testQuestions.find((q) => q.id === questionId);
@@ -395,6 +405,7 @@ export default function LearningPage({
             </Sider>
 
             <Content
+              ref={contentScrollRef}
               className="bg-white dark:bg-dark-bg"
               style={{ height: 'calc(100vh - 150px)', overflow: "auto" }}
             >
