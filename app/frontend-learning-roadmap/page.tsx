@@ -21,6 +21,7 @@ import {
   TeamOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
+import ThemeToggle from "../../components/ThemeToggle";
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -151,16 +152,19 @@ export default function FrontendLearningRoadmapPage() {
       className="min-h-screen"
       style={{ overflowY: "auto", height: "100vh" }}
     >
-      <Header className="bg-white shadow-sm">
+      <Header className="bg-white shadow-sm dark:bg-dark-surface dark:border-b dark:border-dark-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Title level={3} className="m-0 text-blue-600">
             Frontend Learning Roadmap
           </Title>
-          <Link href="/">
-            <Button type="text" icon={<HomeOutlined />}>
-              Home
-            </Button>
-          </Link>
+          <div className="flex items-center space-x-4" style={{marginLeft: 16}}>
+            <ThemeToggle />
+            <Link href="/">
+              <Button type="text" icon={<HomeOutlined />}>
+                Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </Header>
 
@@ -175,7 +179,7 @@ export default function FrontendLearningRoadmapPage() {
 
           <div className="text-center mb-12">
             <Title level={1}>Frontend Engineer Learning Roadmap</Title>
-            <Paragraph className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <Paragraph className="text-lg text-gray-600 dark:text-dark-text-secondary max-w-3xl mx-auto">
               A comprehensive roadmap to guide your journey from junior to
               senior frontend engineer. Follow this structured path to build the
               skills and knowledge needed for each level.

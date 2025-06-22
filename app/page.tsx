@@ -17,6 +17,7 @@ import {
   ReadOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
+import ThemeToggle from "../components/ThemeToggle";
 
 const { Header, Content, Footer } = Layout;
 const { Title, Paragraph } = Typography;
@@ -27,12 +28,15 @@ export default function HomePage() {
       className="min-h-screen"
       style={{ overflowY: "auto", height: "100vh" }}
     >
-      <Header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center">
+      <Header className="bg-white shadow-sm dark:bg-dark-surface dark:border-b dark:border-dark-border">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Title level={3} className="m-0 text-blue-600">
             <BookOutlined className="mr-2" />
             Learning Site
           </Title>
+          <Space size="middle" style={{marginLeft: 16}}>
+            <ThemeToggle />
+          </Space>
         </div>
       </Header>
 
@@ -145,8 +149,8 @@ export default function HomePage() {
         </div>
       </Content>
 
-      <Footer className="text-center bg-white">
-        <Paragraph className="mb-0 text-gray-600">
+      <Footer className="text-center bg-white dark:bg-dark-surface">
+        <Paragraph className="mb-0 text-gray-600 dark:text-dark-text-secondary">
           Personal Learning Site © 2024 - Built with Next.js & Ant Design
         </Paragraph>
       </Footer>

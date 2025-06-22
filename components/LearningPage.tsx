@@ -23,6 +23,7 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import { LearningContent, ContentItem } from "../lib/content-loader";
+import ThemeToggle from "./ThemeToggle";
 
 const { Header, Content, Sider } = Layout;
 const { Title, Paragraph, Text } = Typography;
@@ -59,7 +60,7 @@ const CodeBlock = ({
       !language ||
       (!language.includes("javascript") && !language.includes("typescript"))
     ) {
-      return <span style={{ color: "#d4d4d4" }}>{line}</span>;
+      return <span className="text-gray-300 dark:text-gray-400">{line}</span>;
     }
 
     const parts: JSX.Element[] = [];
@@ -74,7 +75,7 @@ const CodeBlock = ({
       if (remaining.startsWith("//")) {
         const commentEnd = remaining.length;
         parts.push(
-          <span key={key++} style={{ color: "#6a9955" }}>
+          <span key={key++} className="text-green-400 dark:text-green-300">
             {remaining.slice(0, commentEnd)}
           </span>
         );
@@ -87,7 +88,7 @@ const CodeBlock = ({
         const commentText =
           commentEnd > 1 ? remaining.slice(0, commentEnd) : remaining;
         parts.push(
-          <span key={key++} style={{ color: "#6a9955" }}>
+          <span key={key++} className="text-green-400 dark:text-green-300">
             {commentText}
           </span>
         );
@@ -106,7 +107,7 @@ const CodeBlock = ({
 
         const stringText = remaining.slice(0, stringEnd);
         parts.push(
-          <span key={key++} style={{ color: "#ce9178" }}>
+          <span key={key++} className="text-orange-300 dark:text-orange-200">
             {stringText}
           </span>
         );
@@ -120,7 +121,7 @@ const CodeBlock = ({
         );
         if (keywordMatch) {
           parts.push(
-            <span key={key++} style={{ color: "#569cd6" }}>
+            <span key={key++} className="text-blue-400 dark:text-blue-300">
               {keywordMatch[0]}
             </span>
           );
@@ -132,7 +133,7 @@ const CodeBlock = ({
           const numberMatch = remaining.match(/^\d+\.?\d*/);
           if (numberMatch) {
             parts.push(
-              <span key={key++} style={{ color: "#b5cea8" }}>
+              <span key={key++} className="text-green-300 dark:text-green-200">
                 {numberMatch[0]}
               </span>
             );
@@ -146,7 +147,7 @@ const CodeBlock = ({
             );
             if (functionMatch) {
               parts.push(
-                <span key={key++} style={{ color: "#dcdcaa" }}>
+                <span key={key++} className="text-yellow-300 dark:text-yellow-200">
                   {functionMatch[0]}
                 </span>
               );
@@ -160,7 +161,7 @@ const CodeBlock = ({
       // If no pattern matched, add single character as normal text
       if (!matched) {
         parts.push(
-          <span key={key++} style={{ color: "#d4d4d4" }}>
+          <span key={key++} className="text-gray-300 dark:text-gray-400">
             {remaining[0]}
           </span>
         );
@@ -296,7 +297,7 @@ export default function LearningPage({
                 {item.items?.map((listItem: string, listIndex: number) => (
                   <li
                     key={listIndex}
-                    className="text-gray-700 leading-relaxed relative"
+                    className="text-gray-700 dark:text-gray-300 leading-relaxed relative"
                   >
                     <span className="absolute -left-6 top-1 w-2 h-2 bg-blue-500 rounded-full"></span>
                     {listItem}
@@ -323,19 +324,14 @@ export default function LearningPage({
         </span>
       ),
       children: (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <Layout className="bg-white">
+        <div className="bg-white dark:bg-dark-surface rounded-lg shadow-sm border border-gray-200 dark:border-dark-border">
+          <Layout className="bg-white dark:bg-dark-surface">
             <Sider
               width={350}
-              className="bg-gray-50 border-r border-gray-200"
-              style={{
-                height: "100%",
-                overflow: "auto",
-                backgroundColor: "#f9fafb",
-              }}
+              className="bg-gray-50 dark:bg-dark-surface border-r border-gray-200 dark:border-dark-border"
             >
-              <div className="p-4 border-b border-gray-200 bg-white">
-                <Title level={4} className="m-0 text-gray-800">
+              <div className="p-4 border-b border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
+                <Title level={4} className="m-0 text-gray-800 dark:text-dark-text">
                   Table of Contents
                 </Title>
               </div>
@@ -343,10 +339,9 @@ export default function LearningPage({
                 mode="inline"
                 selectedKeys={[selectedSection]}
                 onClick={({ key }) => setSelectedSection(key as string)}
-                className="border-0"
+                className="border-0 bg-gray-50 dark:bg-dark-surface"
                 style={{
-                  backgroundColor: "#f9fafb",
-                  height: "calc(80vh - 100px)",
+                  height: "calc(100vh - 220px)",
                   borderRight: "none",
                   padding: "12px",
                 }}
@@ -356,22 +351,14 @@ export default function LearningPage({
                     key={section.id}
                     className={`rounded-lg mb-2 transition-all duration-200 ${
                       selectedSection === section.id
-                        ? "bg-blue-100 border-blue-300 shadow-sm"
-                        : "hover:bg-blue-50 hover:shadow-sm"
+                        ? "bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-600 shadow-sm"
+                        : "hover:bg-blue-50 dark:hover:bg-blue-900 hover:shadow-sm"
                     }`}
                     style={{
-                      backgroundColor:
-                        selectedSection === section.id
-                          ? "#dbeafe"
-                          : "transparent",
                       margin: "0 0 8px 0",
                       height: "auto",
                       lineHeight: "1.4",
                       padding: "16px",
-                      border:
-                        selectedSection === section.id
-                          ? "1px solid #93c5fd"
-                          : "1px solid transparent",
                       borderRadius: "8px",
                       minHeight: "60px",
                       display: "flex",
@@ -383,8 +370,8 @@ export default function LearningPage({
                         <div
                           className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                             selectedSection === section.id
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-300 text-gray-600"
+                              ? "bg-blue-500 dark:bg-blue-400 text-white"
+                              : "bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
                           }`}
                         >
                           {String(index + 1).padStart(2, "0")}
@@ -393,8 +380,8 @@ export default function LearningPage({
                           <div
                             className={`font-medium text-sm leading-tight ${
                               selectedSection === section.id
-                                ? "text-blue-800"
-                                : "text-gray-700"
+                                ? "text-blue-800 dark:text-blue-200"
+                                : "text-gray-700 dark:text-gray-300"
                             }`}
                           >
                             {section.title}
@@ -408,19 +395,19 @@ export default function LearningPage({
             </Sider>
 
             <Content
-              className="bg-white"
-              style={{ height: "80vh", overflow: "auto" }}
+              className="bg-white dark:bg-dark-bg"
+              style={{ height: 'calc(100vh - 150px)', overflow: "auto" }}
             >
               <div className="p-8 max-w-4xl">
                 {currentSection && (
                   <div>
                     <div className="mb-8">
-                      <Title level={1} className="text-gray-900 mb-3">
+                      <Title level={1} className="text-gray-900 dark:text-dark-text mb-3">
                         {currentSection.title}
                       </Title>
                       <div className="w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
                     </div>
-                    <div className="prose prose-lg max-w-none">
+                    <div className="prose prose-lg max-w-none dark:prose-invert">
                       {renderContent(currentSection.content)}
                     </div>
                   </div>
@@ -445,19 +432,19 @@ export default function LearningPage({
       ),
       children: (
         <div
-          className="bg-gray-50 py-8"
-          style={{ height: "80vh", overflow: "auto", paddingBottom: 40 }}
+          className="bg-gray-50 dark:bg-dark-bg py-8"
+          style={{ height: "calc(100vh - 150px)", overflow: "auto", paddingBottom: 40 }}
         >
           <div className="max-w-4xl mx-auto px-6">
             {/* Progress Card */}
             {testAnswers.length > 0 && (
-              <Card className="mb-8 shadow-sm border-0 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <Card className="mb-8 shadow-sm border-0 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900 dark:to-indigo-900">
                 <div className="flex items-center justify-between">
                   <div className="space-y-2">
-                    <Text strong className="text-lg text-gray-800">
+                    <Text strong className="text-lg text-gray-800 dark:text-gray-200">
                       Your Progress
                     </Text>
-                    <div className="text-gray-600">
+                    <div className="text-gray-600 dark:text-gray-300">
                       {testAnswers.length} of {content.testQuestions.length}{" "}
                       questions completed
                     </div>
@@ -467,7 +454,7 @@ export default function LearningPage({
                           <div className="text-2xl font-bold text-blue-600">
                             {getTestScore()}%
                           </div>
-                          <div className="text-gray-600">
+                          <div className="text-gray-600 dark:text-gray-300">
                             {getTestScore() >= 80
                               ? "🎉 Excellent!"
                               : getTestScore() >= 60
@@ -494,12 +481,12 @@ export default function LearningPage({
             )}
 
             {/* Instructions */}
-            <Card className="mb-8 shadow-sm border-0 bg-white">
+            <Card className="mb-8 shadow-sm border-0 bg-white dark:bg-dark-surface">
               <div className="text-center py-4">
-                <Title level={2} className="text-gray-800 mb-4">
+                <Title level={2} className="text-gray-800 dark:text-dark-text mb-4">
                   Practice Test
                 </Title>
-                <Text className="text-gray-600 text-lg">
+                <Text className="text-gray-600 dark:text-gray-300 text-lg">
                   Test your knowledge with these carefully crafted questions.
                   Each question includes detailed explanations to help you
                   learn.
@@ -670,22 +657,17 @@ export default function LearningPage({
                             <Radio
                               key={optionIndex}
                               value={optionIndex}
-                              className={`w-full p-4 rounded-lg border transition-all duration-200 ${
+                              className={`w-full p-4 rounded-lg border transition-all duration-200 !h-auto !items-start ${
                                 isAnswered &&
                                 optionIndex === question.correctAnswer
-                                  ? "border-green-400 bg-green-50 text-green-700 font-medium"
+                                  ? "border-green-400 bg-green-50 text-green-700 font-medium dark:border-green-500 dark:bg-green-900 dark:text-green-300"
                                   : isAnswered &&
                                     optionIndex ===
                                       userAnswer?.selectedOption &&
                                     !isCorrect
-                                  ? "border-red-400 bg-red-50 text-red-700"
-                                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+                                  ? "border-red-400 bg-red-50 text-red-700 dark:border-red-500 dark:bg-red-900 dark:text-red-300"
+                                  : "border-gray-200 hover:border-blue-300 hover:bg-blue-50 dark:border-dark-border dark:hover:border-blue-400 dark:hover:bg-blue-900"
                               }`}
-                              style={{
-                                height: "auto",
-                                alignItems: "flex-start",
-                                padding: "12px 16px",
-                              }}
                             >
                               <span className="text-base leading-relaxed ml-2">
                                 {option}
@@ -699,18 +681,18 @@ export default function LearningPage({
                       {isAnswered && (
                         <>
                           <Divider />
-                          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
+                          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg dark:bg-blue-900 dark:border-blue-500">
                             <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0 w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center mt-0.5">
+                              <div className="flex-shrink-0 w-6 h-6 bg-blue-400 rounded-full flex items-center justify-center mt-0.5 dark:bg-blue-500">
                                 <span className="text-white text-sm font-bold">
                                   i
                                 </span>
                               </div>
                               <div>
-                                <Text strong className="text-blue-800">
+                                <Text strong className="text-blue-800 dark:text-blue-300">
                                   Explanation:
                                 </Text>
-                                <div className="mt-2 text-blue-700 leading-relaxed">
+                                <div className="mt-2 text-blue-700 leading-relaxed dark:text-blue-200">
                                   {question.explanation}
                                 </div>
                               </div>
@@ -754,19 +736,20 @@ export default function LearningPage({
 
   return (
     <Layout>
-      <Header className="bg-white shadow-sm border-b border-gray-200">
+      <Header className="bg-white shadow-sm border-b border-gray-200 dark:bg-dark-surface dark:border-dark-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
           <div className="flex items-center space-x-4">
-            <Title level={3} className="m-0 text-gray-800">
+            <Title level={3} className="m-0 text-gray-800 dark:text-dark-text">
               {content.title}
             </Title>
           </div>
-          <Space size="middle">
+          <Space size="middle" style={{marginLeft: 16}}>
+            <ThemeToggle />
             {breadcrumbItems.map((item, index) => (
               <Link key={index} href={item.href || "#"}>
                 <Button
                   type="text"
-                  className="text-gray-600 hover:text-blue-600"
+                  className="text-gray-600 hover:text-blue-600 dark:text-dark-text-secondary"
                 >
                   {item.title}
                 </Button>
@@ -776,7 +759,7 @@ export default function LearningPage({
               <Button
                 type="text"
                 icon={<HomeOutlined />}
-                className="text-gray-600 hover:text-blue-600"
+                className="text-gray-600 hover:text-blue-600 dark:text-dark-text-secondary"
               >
                 Home
               </Button>

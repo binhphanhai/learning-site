@@ -21,6 +21,7 @@ import {
 } from "@ant-design/icons";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 const { Header, Content } = Layout;
 const { Title, Paragraph } = Typography;
@@ -123,17 +124,20 @@ export default function ContentListPage({
         className="min-h-screen"
         style={{ overflowY: "auto", height: "100vh" }}
       >
-        <Header className="bg-white shadow-sm">
+        <Header className="bg-white shadow-sm dark:bg-dark-surface dark:border-b dark:border-dark-border">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
             <Title level={3} className="m-0" style={{ color: iconColor }}>
               {icon}
               <span className="ml-2">{title}</span>
             </Title>
-            <Link href="/">
-              <Button type="text" icon={<HomeOutlined />}>
-                Home
-              </Button>
-            </Link>
+            <div className="flex items-center space-x-4" style={{marginLeft: 16}}>
+              <ThemeToggle />
+              <Link href="/">
+                <Button type="text" icon={<HomeOutlined />}>
+                  Home
+                </Button>
+              </Link>
+            </div>
           </div>
         </Header>
         <Content className="flex-1 bg-gray-50 flex items-center justify-center">
@@ -146,19 +150,22 @@ export default function ContentListPage({
   return (
     <Layout
       className="min-h-screen"
-      style={{ overflowY: "auto", height: "100vh", background: "#fff" }}
+      style={{ overflowY: "auto", height: "100vh" }}
     >
-      <Header className="bg-white shadow-sm">
+      <Header className="bg-white shadow-sm dark:bg-dark-surface dark:border-b dark:border-dark-border">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <Title level={3} className="m-0" style={{ color: iconColor }}>
             {icon}
             <span className="ml-2">{title}</span>
           </Title>
-          <Link href="/">
-            <Button type="text" icon={<HomeOutlined />}>
-              Home
-            </Button>
-          </Link>
+          <div className="flex items-center space-x-4" style={{marginLeft: 16}}>
+            <ThemeToggle />
+            <Link href="/">
+              <Button type="text" icon={<HomeOutlined />}>
+                Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </Header>
 
@@ -173,7 +180,7 @@ export default function ContentListPage({
 
           <div className="mb-8">
             <Title level={1}>{title}</Title>
-            <Paragraph className="text-lg text-gray-600">
+            <Paragraph className="text-lg text-gray-600 dark:text-dark-text-secondary">
               {description}
             </Paragraph>
           </div>
