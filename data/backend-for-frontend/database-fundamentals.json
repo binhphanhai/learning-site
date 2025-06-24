@@ -1,0 +1,615 @@
+{
+  "title": "Database Fundamentals",
+  "description": "Master essential database concepts including SQL, NoSQL, database design, normalization, indexing, and modern database patterns for frontend developers",
+  "sections": [
+    {
+      "id": "introduction",
+      "title": "Introduction to Databases",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is a Database?"
+        },
+        {
+          "type": "paragraph",
+          "text": "A database is an organized collection of structured information, or data, typically stored electronically in a computer system. It's managed by a Database Management System (DBMS) that controls the data, the database engine, and the database schema."
+        },
+        {
+          "type": "heading",
+          "text": "Why Frontend Developers Need Database Knowledge"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Better API design and optimization",
+            "Understanding backend limitations and constraints",
+            "Efficient data fetching and caching strategies",
+            "Debugging performance issues",
+            "Full-stack development capabilities",
+            "Better collaboration with backend developers"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Types of Databases"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Relational Databases (SQL): MySQL, PostgreSQL, SQLite, SQL Server",
+            "NoSQL Databases: MongoDB, CouchDB, Firebase Firestore",
+            "Key-Value Stores: Redis, DynamoDB",
+            "Graph Databases: Neo4j, Amazon Neptune",
+            "Time-Series Databases: InfluxDB, TimescaleDB",
+            "Search Engines: Elasticsearch, Solr"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Database vs File System"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Data Integrity: Databases ensure data consistency and validity",
+            "Concurrent Access: Multiple users can access safely",
+            "Query Language: Structured ways to retrieve data",
+            "ACID Properties: Atomicity, Consistency, Isolation, Durability",
+            "Backup and Recovery: Built-in data protection",
+            "Security: User authentication and authorization"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "relational-databases",
+      "title": "Relational Databases & SQL",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Relational Database Concepts"
+        },
+        {
+          "type": "paragraph",
+          "text": "Relational databases organize data into tables (relations) with rows and columns. They use SQL (Structured Query Language) for data manipulation and querying."
+        },
+        {
+          "type": "heading",
+          "text": "Key Components"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Tables: Store data in rows and columns",
+            "Primary Key: Unique identifier for each row",
+            "Foreign Key: Links to primary key in another table",
+            "Schema: Structure and organization of the database",
+            "Indexes: Speed up data retrieval",
+            "Constraints: Rules to ensure data integrity"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "SQL Basics - Data Definition Language (DDL)"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- Create a database\nCREATE DATABASE ecommerce;\n\n-- Use the database\nUSE ecommerce;\n\n-- Create tables\nCREATE TABLE users (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    username VARCHAR(50) UNIQUE NOT NULL,\n    email VARCHAR(100) UNIQUE NOT NULL,\n    password_hash VARCHAR(255) NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP\n);\n\nCREATE TABLE products (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    name VARCHAR(200) NOT NULL,\n    description TEXT,\n    price DECIMAL(10,2) NOT NULL,\n    stock_quantity INT DEFAULT 0,\n    category_id INT,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);\n\nCREATE TABLE orders (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    user_id INT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL,\n    status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',\n    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (user_id) REFERENCES users(id)\n);\n\n-- Add constraints\nALTER TABLE products \nADD CONSTRAINT chk_price CHECK (price > 0);\n\n-- Create indexes for better performance\nCREATE INDEX idx_user_email ON users(email);\nCREATE INDEX idx_product_category ON products(category_id);\nCREATE INDEX idx_order_status ON orders(status);"
+        },
+        {
+          "type": "heading",
+          "text": "SQL Basics - Data Manipulation Language (DML)"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- INSERT data\nINSERT INTO users (username, email, password_hash) VALUES \n('john_doe', 'john@example.com', 'hashed_password_123'),\n('jane_smith', 'jane@example.com', 'hashed_password_456');\n\nINSERT INTO products (name, description, price, stock_quantity) VALUES \n('MacBook Pro', 'Apple laptop with M2 chip', 1999.99, 10),\n('iPhone 15', 'Latest iPhone model', 999.99, 25);\n\n-- SELECT queries\nSELECT * FROM users;\nSELECT username, email FROM users WHERE created_at > '2024-01-01';\n\n-- UPDATE data\nUPDATE products \nSET price = 1899.99, stock_quantity = stock_quantity - 1 \nWHERE id = 1;\n\n-- DELETE data\nDELETE FROM users WHERE username = 'inactive_user';\n\n-- Advanced SELECT with JOINs\nSELECT \n    o.id as order_id,\n    u.username,\n    u.email,\n    o.total_amount,\n    o.status,\n    o.order_date\nFROM orders o\nINNER JOIN users u ON o.user_id = u.id\nWHERE o.status = 'pending'\nORDER BY o.order_date DESC\nLIMIT 10;"
+        },
+        {
+          "type": "heading",
+          "text": "Common SQL Patterns for Frontend Developers"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- Pagination (essential for frontend lists)\nSELECT * FROM products \nORDER BY created_at DESC \nLIMIT 10 OFFSET 20; -- Get items 21-30\n\n-- Search functionality\nSELECT * FROM products \nWHERE name LIKE '%laptop%' \n   OR description LIKE '%laptop%'\nORDER BY \n  CASE WHEN name LIKE '%laptop%' THEN 1 ELSE 2 END;\n\n-- Filtering with multiple conditions\nSELECT * FROM products \nWHERE price BETWEEN 500 AND 2000 \n  AND stock_quantity > 0 \n  AND category_id IN (1, 2, 3);\n\n-- Aggregations for dashboard data\nSELECT \n    COUNT(*) as total_orders,\n    SUM(total_amount) as revenue,\n    AVG(total_amount) as avg_order_value,\n    MAX(total_amount) as highest_order\nFROM orders \nWHERE order_date >= CURDATE() - INTERVAL 30 DAY;\n\n-- Group by for analytics\nSELECT \n    DATE(order_date) as order_day,\n    COUNT(*) as orders_count,\n    SUM(total_amount) as daily_revenue\nFROM orders \nWHERE order_date >= CURDATE() - INTERVAL 7 DAY\nGROUP BY DATE(order_date)\nORDER BY order_day;\n\n-- Subqueries for complex filtering\nSELECT * FROM users \nWHERE id IN (\n    SELECT DISTINCT user_id \n    FROM orders \n    WHERE order_date >= CURDATE() - INTERVAL 30 DAY\n);"
+        }
+      ]
+    },
+    {
+      "id": "database-design",
+      "title": "Database Design & Normalization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Database Design Principles"
+        },
+        {
+          "type": "paragraph",
+          "text": "Good database design ensures data integrity, reduces redundancy, and optimizes performance. It's crucial for scalable applications."
+        },
+        {
+          "type": "heading",
+          "text": "Entity-Relationship (ER) Modeling"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Entities: Objects or concepts (User, Product, Order)",
+            "Attributes: Properties of entities (name, email, price)",
+            "Relationships: How entities are connected (One-to-One, One-to-Many, Many-to-Many)",
+            "Cardinality: Number of instances in relationships",
+            "Primary Keys: Unique identifiers",
+            "Foreign Keys: References to other tables"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Normalization Forms"
+        },
+        {
+          "type": "paragraph",
+          "text": "Normalization is the process of organizing data to reduce redundancy and improve data integrity."
+        },
+        {
+          "type": "list",
+          "items": [
+            "1NF (First Normal Form): No repeating groups, atomic values",
+            "2NF (Second Normal Form): 1NF + no partial dependencies",
+            "3NF (Third Normal Form): 2NF + no transitive dependencies",
+            "BCNF (Boyce-Codd): Stricter version of 3NF"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- Bad design (not normalized)\nCREATE TABLE bad_orders (\n    order_id INT PRIMARY KEY,\n    customer_name VARCHAR(100),\n    customer_email VARCHAR(100),\n    customer_address TEXT,\n    product_names TEXT, -- 'Laptop, Mouse, Keyboard'\n    product_prices TEXT, -- '999.99, 29.99, 79.99'\n    total_amount DECIMAL(10,2)\n);\n\n-- Good design (normalized)\nCREATE TABLE customers (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    name VARCHAR(100) NOT NULL,\n    email VARCHAR(100) UNIQUE NOT NULL,\n    address TEXT\n);\n\nCREATE TABLE orders (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    customer_id INT NOT NULL,\n    total_amount DECIMAL(10,2) NOT NULL,\n    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY (customer_id) REFERENCES customers(id)\n);\n\nCREATE TABLE order_items (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    order_id INT NOT NULL,\n    product_id INT NOT NULL,\n    quantity INT NOT NULL DEFAULT 1,\n    unit_price DECIMAL(10,2) NOT NULL,\n    FOREIGN KEY (order_id) REFERENCES orders(id),\n    FOREIGN KEY (product_id) REFERENCES products(id)\n);"
+        },
+        {
+          "type": "heading",
+          "text": "Common Relationship Patterns"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- One-to-Many: User -> Orders\nCREATE TABLE users (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    username VARCHAR(50) UNIQUE NOT NULL,\n    email VARCHAR(100) UNIQUE NOT NULL\n);\n\nCREATE TABLE orders (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    user_id INT NOT NULL,\n    total_amount DECIMAL(10,2),\n    FOREIGN KEY (user_id) REFERENCES users(id)\n);\n\n-- Many-to-Many: Products <-> Categories\nCREATE TABLE products (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    name VARCHAR(200) NOT NULL,\n    price DECIMAL(10,2)\n);\n\nCREATE TABLE categories (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    name VARCHAR(100) NOT NULL\n);\n\n-- Junction table for Many-to-Many\nCREATE TABLE product_categories (\n    product_id INT,\n    category_id INT,\n    PRIMARY KEY (product_id, category_id),\n    FOREIGN KEY (product_id) REFERENCES products(id),\n    FOREIGN KEY (category_id) REFERENCES categories(id)\n);\n\n-- One-to-One: User -> Profile\nCREATE TABLE user_profiles (\n    id INT PRIMARY KEY AUTO_INCREMENT,\n    user_id INT UNIQUE NOT NULL, -- Unique ensures one-to-one\n    first_name VARCHAR(50),\n    last_name VARCHAR(50),\n    bio TEXT,\n    avatar_url VARCHAR(255),\n    FOREIGN KEY (user_id) REFERENCES users(id)\n);"
+        }
+      ]
+    },
+    {
+      "id": "nosql-databases",
+      "title": "NoSQL Databases",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is NoSQL?"
+        },
+        {
+          "type": "paragraph",
+          "text": "NoSQL (Not Only SQL) databases are designed for specific data models and have flexible schemas for building modern applications. They're particularly useful for large sets of distributed data."
+        },
+        {
+          "type": "heading",
+          "text": "Types of NoSQL Databases"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Document Stores: MongoDB, CouchDB, Amazon DocumentDB",
+            "Key-Value Stores: Redis, DynamoDB, Riak",
+            "Column-Family: Cassandra, HBase",
+            "Graph Databases: Neo4j, Amazon Neptune, ArangoDB"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "MongoDB - Document Database"
+        },
+        {
+          "type": "paragraph",
+          "text": "MongoDB stores data in flexible, JSON-like documents. It's popular among frontend developers because the data structure resembles JavaScript objects."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// MongoDB document structure\n// Users collection\n{\n  \"_id\": ObjectId(\"507f1f77bcf86cd799439011\"),\n  \"username\": \"john_doe\",\n  \"email\": \"john@example.com\",\n  \"profile\": {\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"age\": 28,\n    \"interests\": [\"programming\", \"music\", \"travel\"]\n  },\n  \"addresses\": [\n    {\n      \"type\": \"home\",\n      \"street\": \"123 Main St\",\n      \"city\": \"New York\",\n      \"zipCode\": \"10001\"\n    },\n    {\n      \"type\": \"work\",\n      \"street\": \"456 Corporate Blvd\",\n      \"city\": \"New York\",\n      \"zipCode\": \"10002\"\n    }\n  ],\n  \"createdAt\": ISODate(\"2024-01-15T10:30:00Z\"),\n  \"lastLogin\": ISODate(\"2024-01-20T14:25:00Z\")\n}\n\n// Products collection with nested data\n{\n  \"_id\": ObjectId(\"507f1f77bcf86cd799439012\"),\n  \"name\": \"MacBook Pro\",\n  \"description\": \"Apple laptop with M2 chip\",\n  \"price\": 1999.99,\n  \"specifications\": {\n    \"processor\": \"Apple M2\",\n    \"memory\": \"16GB\",\n    \"storage\": \"512GB SSD\",\n    \"display\": \"14-inch Retina\"\n  },\n  \"categories\": [\"Electronics\", \"Computers\", \"Laptops\"],\n  \"reviews\": [\n    {\n      \"userId\": ObjectId(\"507f1f77bcf86cd799439011\"),\n      \"rating\": 5,\n      \"comment\": \"Amazing performance!\",\n      \"date\": ISODate(\"2024-01-18T09:15:00Z\")\n    }\n  ],\n  \"inStock\": true,\n  \"stockQuantity\": 25\n}"
+        },
+        {
+          "type": "heading",
+          "text": "MongoDB Query Examples"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Basic queries\ndb.users.find({ \"username\": \"john_doe\" });\ndb.products.find({ \"price\": { $lt: 1000 } });\n\n// Complex queries with nested fields\ndb.users.find({ \"profile.age\": { $gte: 18, $lt: 65 } });\ndb.products.find({ \"specifications.processor\": /Apple/ });\n\n// Array queries\ndb.users.find({ \"profile.interests\": \"programming\" });\ndb.products.find({ \"categories\": { $in: [\"Electronics\", \"Computers\"] } });\n\n// Aggregation pipeline (similar to SQL GROUP BY)\ndb.orders.aggregate([\n  { $match: { \"status\": \"completed\" } },\n  { $group: {\n      _id: \"$customerId\",\n      totalSpent: { $sum: \"$totalAmount\" },\n      orderCount: { $sum: 1 }\n    }\n  },\n  { $sort: { totalSpent: -1 } },\n  { $limit: 10 }\n]);\n\n// Lookup (similar to SQL JOIN)\ndb.orders.aggregate([\n  {\n    $lookup: {\n      from: \"users\",\n      localField: \"userId\",\n      foreignField: \"_id\",\n      as: \"customer\"\n    }\n  },\n  { $unwind: \"$customer\" },\n  {\n    $project: {\n      orderDate: 1,\n      totalAmount: 1,\n      \"customer.username\": 1,\n      \"customer.email\": 1\n    }\n  }\n]);"
+        },
+        {
+          "type": "heading",
+          "text": "SQL vs NoSQL Comparison"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Schema: SQL (Fixed) vs NoSQL (Flexible)",
+            "Scaling: SQL (Vertical) vs NoSQL (Horizontal)",
+            "Transactions: SQL (ACID) vs NoSQL (Eventually Consistent)",
+            "Query Language: SQL (Standardized) vs NoSQL (Varies)",
+            "Relationships: SQL (JOINs) vs NoSQL (Embedded/References)",
+            "Use Cases: SQL (Complex queries) vs NoSQL (Large scale, flexibility)"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "When to Use NoSQL"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Rapid development with changing requirements",
+            "Large amounts of data with horizontal scaling needs",
+            "Real-time applications with high read/write loads",
+            "Content management and user profiles",
+            "IoT applications with varied data structures",
+            "Caching and session storage"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database-performance",
+      "title": "Database Performance & Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Database Indexing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Indexes are data structures that improve the speed of data retrieval operations. They're crucial for database performance but come with trade-offs."
+        },
+        {
+          "type": "heading",
+          "text": "Types of Indexes"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Primary Index: Based on primary key, automatically created",
+            "Secondary Index: Created on non-primary key columns",
+            "Unique Index: Ensures uniqueness and speeds up queries",
+            "Composite Index: Covers multiple columns",
+            "Partial Index: Only indexes rows meeting certain conditions"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- Creating indexes for common query patterns\n\n-- Single column index for frequent WHERE clauses\nCREATE INDEX idx_user_email ON users(email);\nCREATE INDEX idx_product_price ON products(price);\n\n-- Composite index for multi-column queries\nCREATE INDEX idx_order_user_date ON orders(user_id, order_date);\nCREATE INDEX idx_product_category_price ON products(category_id, price);\n\n-- Unique index for business rules\nCREATE UNIQUE INDEX idx_username_unique ON users(username);\n\n-- Partial index for specific conditions\nCREATE INDEX idx_active_products ON products(name) \nWHERE stock_quantity > 0;\n\n-- Index for sorting (ORDER BY)\nCREATE INDEX idx_products_created_desc ON products(created_at DESC);\n\n-- Index for JSON fields (PostgreSQL)\nCREATE INDEX idx_metadata_tags ON products \nUSING GIN ((metadata->>'tags'));"
+        },
+        {
+          "type": "heading",
+          "text": "Query Optimization Techniques"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "text": "-- Use EXPLAIN to analyze query performance\nEXPLAIN ANALYZE \nSELECT * FROM products \nWHERE category_id = 1 AND price < 500;\n\n-- Optimize with proper WHERE clause order\n-- Good: Most selective condition first\nSELECT * FROM orders \nWHERE status = 'pending' -- Most selective\n  AND user_id = 123 \n  AND order_date > '2024-01-01';\n\n-- Use LIMIT to avoid loading too much data\nSELECT * FROM products \nORDER BY created_at DESC \nLIMIT 20;\n\n-- Avoid SELECT * - specify only needed columns\nSELECT id, name, price FROM products \nWHERE category_id = 1;\n\n-- Use EXISTS instead of IN for subqueries\n-- Good\nSELECT * FROM users u\nWHERE EXISTS (\n    SELECT 1 FROM orders o \n    WHERE o.user_id = u.id\n);\n\n-- Use JOINs instead of subqueries when possible\n-- Good\nSELECT DISTINCT u.* \nFROM users u\nINNER JOIN orders o ON u.id = o.user_id;\n\n-- Pagination with OFFSET can be slow - use cursor-based\n-- Slow for large offsets\nSELECT * FROM products ORDER BY id LIMIT 20 OFFSET 10000;\n\n-- Better: cursor-based pagination\nSELECT * FROM products \nWHERE id > 10000 \nORDER BY id \nLIMIT 20;"
+        },
+        {
+          "type": "heading",
+          "text": "Database Connection Management"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Connection pooling in Node.js with PostgreSQL\nconst { Pool } = require('pg');\n\nconst pool = new Pool({\n  host: 'localhost',\n  database: 'myapp',\n  port: 5432,\n  max: 20, // Maximum number of connections\n  idleTimeoutMillis: 30000, // Close idle connections after 30s\n  connectionTimeoutMillis: 2000, // Return error after 2s if no connection\n});\n\n// Efficient query execution\nasync function getUser(userId) {\n  const client = await pool.connect();\n  try {\n    const result = await client.query(\n      'SELECT id, username, email FROM users WHERE id = $1',\n      [userId]\n    );\n    return result.rows[0];\n  } finally {\n    client.release(); // Always release connection back to pool\n  }\n}\n\n// Prepared statements for security and performance\nconst getUserStmt = {\n  text: 'SELECT id, username, email FROM users WHERE id = $1',\n  name: 'get-user'\n};\n\nasync function getUserPrepared(userId) {\n  const result = await pool.query(getUserStmt, [userId]);\n  return result.rows[0];\n}\n\n// Transaction handling\nasync function transferMoney(fromUserId, toUserId, amount) {\n  const client = await pool.connect();\n  try {\n    await client.query('BEGIN');\n    \n    // Deduct from sender\n    await client.query(\n      'UPDATE accounts SET balance = balance - $1 WHERE user_id = $2',\n      [amount, fromUserId]\n    );\n    \n    // Add to receiver\n    await client.query(\n      'UPDATE accounts SET balance = balance + $1 WHERE user_id = $2',\n      [amount, toUserId]\n    );\n    \n    await client.query('COMMIT');\n  } catch (error) {\n    await client.query('ROLLBACK');\n    throw error;\n  } finally {\n    client.release();\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Frontend Performance Considerations"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Implement pagination for large datasets",
+            "Use lazy loading and virtual scrolling",
+            "Cache frequently accessed data",
+            "Debounce search queries to reduce database load",
+            "Use GraphQL or custom APIs to fetch only needed data",
+            "Implement optimistic updates for better UX",
+            "Use database-level full-text search instead of LIKE queries",
+            "Consider read replicas for read-heavy applications"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database-integration",
+      "title": "Database Integration with Frontend",
+      "content": [
+        {
+          "type": "heading",
+          "text": "API Design for Database Operations"
+        },
+        {
+          "type": "paragraph",
+          "text": "Understanding how databases integrate with APIs helps frontend developers write better code and work effectively with backend teams."
+        },
+        {
+          "type": "heading",
+          "text": "RESTful API Database Patterns"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express.js API with database integration\nconst express = require('express');\nconst { Pool } = require('pg');\nconst app = express();\n\nconst pool = new Pool({\n  connectionString: process.env.DATABASE_URL\n});\n\n// GET /api/users - List users with pagination\napp.get('/api/users', async (req, res) => {\n  try {\n    const page = parseInt(req.query.page) || 1;\n    const limit = parseInt(req.query.limit) || 10;\n    const offset = (page - 1) * limit;\n    \n    const result = await pool.query(\n      'SELECT id, username, email, created_at FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2',\n      [limit, offset]\n    );\n    \n    const countResult = await pool.query('SELECT COUNT(*) FROM users');\n    const total = parseInt(countResult.rows[0].count);\n    \n    res.json({\n      data: result.rows,\n      pagination: {\n        page,\n        limit,\n        total,\n        pages: Math.ceil(total / limit)\n      }\n    });\n  } catch (error) {\n    res.status(500).json({ error: 'Database error' });\n  }\n});\n\n// GET /api/users/:id - Get single user\napp.get('/api/users/:id', async (req, res) => {\n  try {\n    const { id } = req.params;\n    const result = await pool.query(\n      'SELECT id, username, email, created_at FROM users WHERE id = $1',\n      [id]\n    );\n    \n    if (result.rows.length === 0) {\n      return res.status(404).json({ error: 'User not found' });\n    }\n    \n    res.json(result.rows[0]);\n  } catch (error) {\n    res.status(500).json({ error: 'Database error' });\n  }\n});\n\n// POST /api/users - Create user\napp.post('/api/users', async (req, res) => {\n  try {\n    const { username, email, password } = req.body;\n    \n    // Validation\n    if (!username || !email || !password) {\n      return res.status(400).json({ error: 'Missing required fields' });\n    }\n    \n    const result = await pool.query(\n      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',\n      [username, email, hashPassword(password)]\n    );\n    \n    res.status(201).json(result.rows[0]);\n  } catch (error) {\n    if (error.code === '23505') { // Unique violation\n      res.status(409).json({ error: 'Username or email already exists' });\n    } else {\n      res.status(500).json({ error: 'Database error' });\n    }\n  }\n});\n\n// PUT /api/users/:id - Update user\napp.put('/api/users/:id', async (req, res) => {\n  try {\n    const { id } = req.params;\n    const { username, email } = req.body;\n    \n    const result = await pool.query(\n      'UPDATE users SET username = $1, email = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING id, username, email, updated_at',\n      [username, email, id]\n    );\n    \n    if (result.rows.length === 0) {\n      return res.status(404).json({ error: 'User not found' });\n    }\n    \n    res.json(result.rows[0]);\n  } catch (error) {\n    res.status(500).json({ error: 'Database error' });\n  }\n});\n\n// DELETE /api/users/:id - Delete user\napp.delete('/api/users/:id', async (req, res) => {\n  try {\n    const { id } = req.params;\n    const result = await pool.query('DELETE FROM users WHERE id = $1', [id]);\n    \n    if (result.rowCount === 0) {\n      return res.status(404).json({ error: 'User not found' });\n    }\n    \n    res.status(204).send();\n  } catch (error) {\n    res.status(500).json({ error: 'Database error' });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Frontend Data Fetching Patterns"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// React hooks for database operations\nimport { useState, useEffect } from 'react';\n\n// Custom hook for fetching paginated data\nfunction usePaginatedData(endpoint, page = 1, limit = 10) {\n  const [data, setData] = useState([]);\n  const [loading, setLoading] = useState(true);\n  const [error, setError] = useState(null);\n  const [pagination, setPagination] = useState(null);\n\n  useEffect(() => {\n    const fetchData = async () => {\n      try {\n        setLoading(true);\n        const response = await fetch(`${endpoint}?page=${page}&limit=${limit}`);\n        \n        if (!response.ok) {\n          throw new Error('Failed to fetch data');\n        }\n        \n        const result = await response.json();\n        setData(result.data);\n        setPagination(result.pagination);\n        setError(null);\n      } catch (err) {\n        setError(err.message);\n      } finally {\n        setLoading(false);\n      }\n    };\n\n    fetchData();\n  }, [endpoint, page, limit]);\n\n  return { data, loading, error, pagination };\n}\n\n// Usage in component\nfunction UsersList() {\n  const [currentPage, setCurrentPage] = useState(1);\n  const { data: users, loading, error, pagination } = usePaginatedData(\n    '/api/users', \n    currentPage, \n    10\n  );\n\n  if (loading) return <div>Loading...</div>;\n  if (error) return <div>Error: {error}</div>;\n\n  return (\n    <div>\n      <ul>\n        {users.map(user => (\n          <li key={user.id}>\n            {user.username} - {user.email}\n          </li>\n        ))}\n      </ul>\n      \n      <Pagination \n        current={currentPage}\n        total={pagination.total}\n        pageSize={10}\n        onChange={setCurrentPage}\n      />\n    </div>\n  );\n}\n\n// Search with debouncing\nfunction useSearchUsers(query, delay = 300) {\n  const [results, setResults] = useState([]);\n  const [loading, setLoading] = useState(false);\n\n  useEffect(() => {\n    if (!query) {\n      setResults([]);\n      return;\n    }\n\n    const timer = setTimeout(async () => {\n      setLoading(true);\n      try {\n        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);\n        const data = await response.json();\n        setResults(data);\n      } catch (error) {\n        console.error('Search error:', error);\n      } finally {\n        setLoading(false);\n      }\n    }, delay);\n\n    return () => clearTimeout(timer);\n  }, [query, delay]);\n\n  return { results, loading };\n}\n\n// Optimistic updates\nfunction useOptimisticUsers() {\n  const [users, setUsers] = useState([]);\n\n  const addUser = async (userData) => {\n    // Optimistically add user to UI\n    const tempUser = { \n      id: `temp-${Date.now()}`, \n      ...userData, \n      pending: true \n    };\n    setUsers(prev => [tempUser, ...prev]);\n\n    try {\n      const response = await fetch('/api/users', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(userData)\n      });\n      \n      const newUser = await response.json();\n      \n      // Replace temporary user with real user\n      setUsers(prev => \n        prev.map(user => \n          user.id === tempUser.id ? newUser : user\n        )\n      );\n    } catch (error) {\n      // Remove optimistic user on error\n      setUsers(prev => prev.filter(user => user.id !== tempUser.id));\n      throw error;\n    }\n  };\n\n  return { users, addUser };\n}"
+        },
+        {
+          "type": "heading",
+          "text": "GraphQL Database Integration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// GraphQL resolver with database queries\nconst resolvers = {\n  Query: {\n    users: async (parent, { page = 1, limit = 10 }, { db }) => {\n      const offset = (page - 1) * limit;\n      const users = await db.query(\n        'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2',\n        [limit, offset]\n      );\n      return users.rows;\n    },\n    \n    user: async (parent, { id }, { db }) => {\n      const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);\n      return result.rows[0];\n    },\n    \n    searchUsers: async (parent, { query }, { db }) => {\n      const result = await db.query(\n        'SELECT * FROM users WHERE username ILIKE $1 OR email ILIKE $1',\n        [`%${query}%`]\n      );\n      return result.rows;\n    }\n  },\n  \n  User: {\n    orders: async (parent, args, { db }) => {\n      const result = await db.query(\n        'SELECT * FROM orders WHERE user_id = $1',\n        [parent.id]\n      );\n      return result.rows;\n    }\n  },\n  \n  Mutation: {\n    createUser: async (parent, { input }, { db }) => {\n      const result = await db.query(\n        'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING *',\n        [input.username, input.email, hashPassword(input.password)]\n      );\n      return result.rows[0];\n    }\n  }\n};\n\n// GraphQL query from frontend\nconst GET_USERS = gql`\n  query GetUsers($page: Int, $limit: Int) {\n    users(page: $page, limit: $limit) {\n      id\n      username\n      email\n      createdAt\n    }\n  }\n`;\n\nconst GET_USER_WITH_ORDERS = gql`\n  query GetUserWithOrders($id: ID!) {\n    user(id: $id) {\n      id\n      username\n      email\n      orders {\n        id\n        totalAmount\n        status\n        orderDate\n      }\n    }\n  }\n`;\n\n// Usage in React component\nfunction UserProfile({ userId }) {\n  const { loading, error, data } = useQuery(GET_USER_WITH_ORDERS, {\n    variables: { id: userId }\n  });\n\n  if (loading) return <div>Loading...</div>;\n  if (error) return <div>Error: {error.message}</div>;\n\n  const { user } = data;\n\n  return (\n    <div>\n      <h1>{user.username}</h1>\n      <p>{user.email}</p>\n      \n      <h2>Orders</h2>\n      <ul>\n        {user.orders.map(order => (\n          <li key={order.id}>\n            ${order.totalAmount} - {order.status}\n          </li>\n        ))}\n      </ul>\n    </div>\n  );\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Best Practices for Frontend-Database Integration"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Always validate data on both frontend and backend",
+            "Use pagination for large datasets",
+            "Implement proper error handling for database failures",
+            "Cache frequently accessed data",
+            "Use optimistic updates for better user experience",
+            "Debounce search queries to reduce database load",
+            "Implement proper loading states",
+            "Use database constraints to ensure data integrity",
+            "Log database queries for debugging and optimization",
+            "Consider using ORM/ODM for complex applications"
+          ]
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main difference between SQL and NoSQL databases?",
+      "options": [
+        "SQL databases are newer than NoSQL",
+        "SQL databases use structured schemas, NoSQL databases have flexible schemas",
+        "NoSQL databases are always faster",
+        "SQL databases can't handle large amounts of data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "SQL databases use structured, predefined schemas and are relational, while NoSQL databases have flexible schemas and are designed for specific data models and scalability needs."
+    },
+    {
+      "id": 2,
+      "question": "What does ACID stand for in database transactions?",
+      "options": [
+        "Atomicity, Consistency, Isolation, Durability",
+        "Accuracy, Completeness, Integrity, Dependability",
+        "Authentication, Certification, Integration, Development",
+        "Analysis, Configuration, Implementation, Deployment"
+      ],
+      "correctAnswer": 0,
+      "explanation": "ACID stands for Atomicity (all or nothing), Consistency (valid state), Isolation (concurrent transactions don't interfere), and Durability (committed changes persist)."
+    },
+    {
+      "id": 3,
+      "question": "What is the primary purpose of database indexing?",
+      "options": [
+        "To store more data",
+        "To speed up data retrieval operations",
+        "To reduce database size",
+        "To enable data encryption"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Database indexes are data structures that improve the speed of data retrieval operations by providing fast access paths to table data, similar to an index in a book."
+    },
+    {
+      "id": 4,
+      "question": "In a relational database, what is a foreign key?",
+      "options": [
+        "A key from another database",
+        "A key that references the primary key of another table",
+        "A key used for encryption",
+        "A backup key"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A foreign key is a field (or fields) in one table that refers to the primary key in another table, establishing a link between the two tables and maintaining referential integrity."
+    },
+    {
+      "id": 5,
+      "question": "What is database normalization primarily used for?",
+      "options": [
+        "Making databases run faster",
+        "Reducing data redundancy and improving data integrity",
+        "Adding more tables to the database",
+        "Encrypting sensitive data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Database normalization is the process of organizing data to reduce redundancy and improve data integrity by eliminating duplicate data and ensuring data dependencies make sense."
+    },
+    {
+      "id": 6,
+      "question": "Which SQL command is used to retrieve data from a database?",
+      "options": ["INSERT", "UPDATE", "SELECT", "DELETE"],
+      "correctAnswer": 2,
+      "explanation": "SELECT is the SQL command used to retrieve data from a database. It allows you to query tables and specify which columns and rows you want to retrieve."
+    },
+    {
+      "id": 7,
+      "question": "What is the difference between DELETE and TRUNCATE in SQL?",
+      "options": [
+        "They are exactly the same",
+        "DELETE removes specific rows and can be rolled back, TRUNCATE removes all rows and is faster but can't be rolled back",
+        "TRUNCATE removes specific rows, DELETE removes all rows",
+        "DELETE is faster than TRUNCATE"
+      ],
+      "correctAnswer": 1,
+      "explanation": "DELETE removes specific rows based on conditions and can be rolled back, while TRUNCATE removes all rows from a table, is faster, but typically cannot be rolled back and resets auto-increment counters."
+    },
+    {
+      "id": 8,
+      "question": "What type of database is MongoDB?",
+      "options": [
+        "Relational database",
+        "Document database (NoSQL)",
+        "Graph database",
+        "Key-value store"
+      ],
+      "correctAnswer": 1,
+      "explanation": "MongoDB is a document database (NoSQL) that stores data in flexible, JSON-like documents instead of tables and rows like traditional relational databases."
+    },
+    {
+      "id": 9,
+      "question": "What is the purpose of a database transaction?",
+      "options": [
+        "To speed up queries",
+        "To group multiple operations into a single atomic unit",
+        "To create backups",
+        "To compress data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A database transaction groups multiple operations into a single atomic unit that either completely succeeds or completely fails, ensuring data consistency and integrity."
+    },
+    {
+      "id": 10,
+      "question": "Which of the following is NOT a valid SQL JOIN type?",
+      "options": ["INNER JOIN", "LEFT JOIN", "MIDDLE JOIN", "RIGHT JOIN"],
+      "correctAnswer": 2,
+      "explanation": "MIDDLE JOIN is not a valid SQL JOIN type. The main JOIN types are INNER JOIN, LEFT JOIN (LEFT OUTER JOIN), RIGHT JOIN (RIGHT OUTER JOIN), and FULL JOIN (FULL OUTER JOIN)."
+    },
+    {
+      "id": 11,
+      "question": "What is the primary key in a database table?",
+      "options": [
+        "The first column in a table",
+        "A unique identifier for each row in a table",
+        "The most important column",
+        "A column that contains passwords"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A primary key is a unique identifier for each row in a database table. It ensures that each row can be uniquely identified and cannot contain null values."
+    },
+    {
+      "id": 12,
+      "question": "What does SQL stand for?",
+      "options": [
+        "Structured Query Language",
+        "Simple Query Language",
+        "Sequential Query Language",
+        "Standard Query Language"
+      ],
+      "correctAnswer": 0,
+      "explanation": "SQL stands for Structured Query Language. It's the standard language for managing and manipulating relational databases."
+    },
+    {
+      "id": 13,
+      "question": "In MongoDB, what is a collection equivalent to in relational databases?",
+      "options": ["A database", "A table", "A row", "A column"],
+      "correctAnswer": 1,
+      "explanation": "In MongoDB, a collection is equivalent to a table in relational databases. It's a group of documents (which are equivalent to rows in relational databases)."
+    },
+    {
+      "id": 14,
+      "question": "What is database sharding?",
+      "options": [
+        "Creating backup copies of data",
+        "Splitting data across multiple database servers horizontally",
+        "Combining multiple databases into one",
+        "Encrypting database data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Database sharding is a method of horizontally partitioning data across multiple database servers to distribute load and improve performance and scalability."
+    },
+    {
+      "id": 15,
+      "question": "What is the difference between clustered and non-clustered indexes?",
+      "options": [
+        "Clustered indexes are faster",
+        "Clustered indexes determine physical storage order, non-clustered indexes point to data locations",
+        "Non-clustered indexes are newer",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A clustered index determines the physical storage order of data in a table (like a phone book sorted by last name), while a non-clustered index is a separate structure that points to the data locations (like an index at the back of a book)."
+    },
+    {
+      "id": 16,
+      "question": "What is the purpose of database connection pooling?",
+      "options": [
+        "To store database connections permanently",
+        "To reuse database connections efficiently and reduce overhead",
+        "To create multiple databases",
+        "To backup database connections"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Connection pooling maintains a cache of database connections that can be reused across multiple requests, reducing the overhead of establishing and tearing down connections frequently."
+    },
+    {
+      "id": 17,
+      "question": "What is a stored procedure?",
+      "options": [
+        "A backup of database data",
+        "A precompiled collection of SQL statements stored in the database",
+        "A type of database table",
+        "A database user role"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A stored procedure is a precompiled collection of SQL statements and procedural logic that is stored in the database and can be executed as a single unit, improving performance and reusability."
+    },
+    {
+      "id": 18,
+      "question": "What is the difference between UNION and UNION ALL in SQL?",
+      "options": [
+        "UNION removes duplicates, UNION ALL keeps all records including duplicates",
+        "UNION ALL removes duplicates, UNION keeps duplicates",
+        "They are exactly the same",
+        "UNION is faster than UNION ALL"
+      ],
+      "correctAnswer": 0,
+      "explanation": "UNION removes duplicate rows from the result set, while UNION ALL returns all rows including duplicates. UNION ALL is typically faster since it doesn't need to check for duplicates."
+    },
+    {
+      "id": 19,
+      "question": "What is database denormalization?",
+      "options": [
+        "The opposite of normalization - introducing redundancy for performance",
+        "Removing all data from a database",
+        "Converting NoSQL to SQL",
+        "Encrypting database data"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Denormalization is the process of intentionally introducing redundancy into a database design to improve read performance, often at the cost of increased storage and potential update anomalies."
+    },
+    {
+      "id": 20,
+      "question": "In database design, what is a composite key?",
+      "options": [
+        "A key made of multiple columns",
+        "A key that's both primary and foreign",
+        "An encrypted key",
+        "A backup key"
+      ],
+      "correctAnswer": 0,
+      "explanation": "A composite key is a primary key that consists of two or more columns that together uniquely identify each row in a table, used when no single column can serve as a unique identifier."
+    }
+  ]
+} 

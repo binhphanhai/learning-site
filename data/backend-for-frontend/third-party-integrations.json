@@ -1,0 +1,394 @@
+{
+  "title": "Third-Party Integrations",
+  "description": "Master third-party service integrations including payment processing, email services, cloud platforms, and API management for modern web applications",
+  "sections": [
+    {
+      "id": "payment-processing",
+      "title": "Payment Processing",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Stripe Integration"
+        },
+        {
+          "type": "paragraph",
+          "text": "Stripe is a popular payment processor that provides secure payment handling with extensive APIs for various payment methods and business models."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Stripe server-side integration\nconst stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);\n\n// Create payment intent\napp.post('/api/payment/create-intent', async (req, res) => {\n  try {\n    const { amount, currency = 'usd', metadata } = req.body;\n    \n    const paymentIntent = await stripe.paymentIntents.create({\n      amount: amount * 100, // Convert to cents\n      currency,\n      metadata,\n      automatic_payment_methods: {\n        enabled: true,\n      },\n    });\n    \n    res.json({\n      clientSecret: paymentIntent.client_secret,\n      id: paymentIntent.id\n    });\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});\n\n// Handle webhook events\napp.post('/api/webhooks/stripe', express.raw({type: 'application/json'}), (req, res) => {\n  const sig = req.headers['stripe-signature'];\n  let event;\n  \n  try {\n    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);\n  } catch (err) {\n    console.log(`Webhook signature verification failed.`, err.message);\n    return res.status(400).send(`Webhook Error: ${err.message}`);\n  }\n  \n  // Handle the event\n  switch (event.type) {\n    case 'payment_intent.succeeded':\n      const paymentIntent = event.data.object;\n      console.log('PaymentIntent was successful!');\n      // Update order status in database\n      await updateOrderStatus(paymentIntent.metadata.orderId, 'paid');\n      break;\n    case 'payment_method.attached':\n      const paymentMethod = event.data.object;\n      console.log('PaymentMethod was attached to a Customer!');\n      break;\n    default:\n      console.log(`Unhandled event type ${event.type}`);\n  }\n  \n  res.json({received: true});\n});"
+        },
+        {
+          "type": "heading",
+          "text": "PayPal Integration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// PayPal SDK integration\nconst paypal = require('@paypal/checkout-server-sdk');\n\n// PayPal environment setup\nconst Environment = process.env.NODE_ENV === 'production' \n  ? paypal.core.LiveEnvironment \n  : paypal.core.SandboxEnvironment;\n\nconst paypalClient = new paypal.core.PayPalHttpClient(\n  new Environment(\n    process.env.PAYPAL_CLIENT_ID,\n    process.env.PAYPAL_CLIENT_SECRET\n  )\n);\n\n// Create order\napp.post('/api/paypal/create-order', async (req, res) => {\n  const { amount, currency = 'USD' } = req.body;\n  \n  const request = new paypal.orders.OrdersCreateRequest();\n  request.prefer(\"return=representation\");\n  request.requestBody({\n    intent: 'CAPTURE',\n    purchase_units: [{\n      amount: {\n        currency_code: currency,\n        value: amount.toString()\n      }\n    }]\n  });\n  \n  try {\n    const order = await paypalClient.execute(request);\n    res.json({ id: order.result.id });\n  } catch (error) {\n    res.status(500).json({ error: error.message });\n  }\n});\n\n// Capture payment\napp.post('/api/paypal/capture-order', async (req, res) => {\n  const { orderID } = req.body;\n  \n  const request = new paypal.orders.OrdersCaptureRequest(orderID);\n  request.requestBody({});\n  \n  try {\n    const capture = await paypalClient.execute(request);\n    res.json({ status: 'success', capture: capture.result });\n  } catch (error) {\n    res.status(500).json({ error: error.message });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Transaction Security"
+        },
+        {
+          "type": "list",
+          "items": [
+            "PCI DSS compliance: Never store credit card data directly",
+            "Use tokenization: Store payment tokens instead of card details",
+            "Implement 3D Secure: Additional authentication layer",
+            "Monitor for fraud: Set up fraud detection rules",
+            "Handle disputes: Implement chargeback management",
+            "Secure webhooks: Verify webhook signatures"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "email-services",
+      "title": "Email Services",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Transactional Emails"
+        },
+        {
+          "type": "paragraph",
+          "text": "Transactional emails are triggered by user actions and are essential for user engagement, notifications, and business processes."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// SendGrid integration\nconst sgMail = require('@sendgrid/mail');\nsgMail.setApiKey(process.env.SENDGRID_API_KEY);\n\nclass EmailService {\n  async sendWelcomeEmail(userEmail, userName) {\n    const msg = {\n      to: userEmail,\n      from: 'noreply@yourapp.com',\n      templateId: 'd-1234567890abcdef', // SendGrid template ID\n      dynamicTemplateData: {\n        name: userName,\n        loginUrl: 'https://yourapp.com/login'\n      }\n    };\n    \n    try {\n      await sgMail.send(msg);\n      console.log('Welcome email sent successfully');\n    } catch (error) {\n      console.error('Failed to send welcome email:', error);\n      throw error;\n    }\n  }\n  \n  async sendPasswordResetEmail(userEmail, resetToken) {\n    const resetUrl = `https://yourapp.com/reset-password?token=${resetToken}`;\n    \n    const msg = {\n      to: userEmail,\n      from: 'security@yourapp.com',\n      subject: 'Reset Your Password',\n      html: `\n        <h2>Password Reset Request</h2>\n        <p>Click the link below to reset your password:</p>\n        <a href=\"${resetUrl}\">Reset Password</a>\n        <p>This link expires in 1 hour.</p>\n      `\n    };\n    \n    return await sgMail.send(msg);\n  }\n  \n  async sendOrderConfirmation(order) {\n    const msg = {\n      to: order.customerEmail,\n      from: 'orders@yourapp.com',\n      templateId: 'd-order-confirmation',\n      dynamicTemplateData: {\n        orderNumber: order.id,\n        items: order.items,\n        total: order.total,\n        shippingAddress: order.shippingAddress\n      }\n    };\n    \n    return await sgMail.send(msg);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Mailgun Integration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Mailgun integration\nconst Mailgun = require('mailgun.js');\nconst formData = require('form-data');\nconst mailgun = new Mailgun(formData);\n\nconst mg = mailgun.client({\n  username: 'api',\n  key: process.env.MAILGUN_API_KEY,\n  url: 'https://api.mailgun.net' // or 'https://api.eu.mailgun.net' for EU\n});\n\nclass MailgunService {\n  constructor() {\n    this.domain = process.env.MAILGUN_DOMAIN;\n  }\n  \n  async sendEmail(options) {\n    const emailData = {\n      from: options.from || `noreply@${this.domain}`,\n      to: options.to,\n      subject: options.subject,\n      html: options.html,\n      text: options.text\n    };\n    \n    try {\n      const result = await mg.messages.create(this.domain, emailData);\n      return result;\n    } catch (error) {\n      console.error('Mailgun send error:', error);\n      throw error;\n    }\n  }\n  \n  async sendBulkEmail(recipients, template) {\n    const emailData = {\n      from: `newsletter@${this.domain}`,\n      to: recipients,\n      subject: template.subject,\n      html: template.html,\n      'recipient-variables': recipients.reduce((acc, email) => {\n        acc[email] = { email };\n        return acc;\n      }, {})\n    };\n    \n    return await mg.messages.create(this.domain, emailData);\n  }\n  \n  // Handle webhooks\n  verifyWebhook(signature, token, timestamp) {\n    const crypto = require('crypto');\n    const hmac = crypto.createHmac('sha256', process.env.MAILGUN_WEBHOOK_KEY);\n    hmac.update(timestamp + token);\n    const digest = hmac.digest('hex');\n    return digest === signature;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Email Templates"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Email template management\nclass EmailTemplateManager {\n  constructor() {\n    this.templates = {\n      welcome: {\n        subject: 'Welcome to {{appName}}!',\n        html: `\n          <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n            <h1>Welcome {{userName}}!</h1>\n            <p>Thank you for joining {{appName}}. We're excited to have you on board.</p>\n            <div style=\"background: #f5f5f5; padding: 20px; margin: 20px 0;\">\n              <h3>Next Steps:</h3>\n              <ul>\n                <li>Complete your profile</li>\n                <li>Explore our features</li>\n                <li>Connect with other users</li>\n              </ul>\n            </div>\n            <a href=\"{{dashboardUrl}}\" style=\"background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">Get Started</a>\n          </div>\n        `\n      },\n      orderConfirmation: {\n        subject: 'Order Confirmation #{{orderNumber}}',\n        html: `\n          <div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;\">\n            <h1>Order Confirmed!</h1>\n            <p>Thank you for your order. Here are the details:</p>\n            <div style=\"border: 1px solid #ddd; padding: 15px; margin: 15px 0;\">\n              <h3>Order #{{orderNumber}}</h3>\n              <p><strong>Total:</strong> ${{total}}</p>\n              <p><strong>Estimated Delivery:</strong> {{deliveryDate}}</p>\n            </div>\n            {{#items}}\n            <div style=\"display: flex; border-bottom: 1px solid #eee; padding: 10px 0;\">\n              <div>{{name}} - Qty: {{quantity}} - ${{price}}</div>\n            </div>\n            {{/items}}\n          </div>\n        `\n      }\n    };\n  }\n  \n  renderTemplate(templateName, data) {\n    const template = this.templates[templateName];\n    if (!template) {\n      throw new Error(`Template ${templateName} not found`);\n    }\n    \n    let html = template.html;\n    let subject = template.subject;\n    \n    // Simple template replacement\n    Object.keys(data).forEach(key => {\n      const regex = new RegExp(`{{${key}}}`, 'g');\n      html = html.replace(regex, data[key] || '');\n      subject = subject.replace(regex, data[key] || '');\n    });\n    \n    return { subject, html };\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Delivery Tracking"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Bounce handling: Track and manage email bounces",
+            "Delivery confirmation: Monitor successful deliveries",
+            "Open tracking: Track when emails are opened",
+            "Click tracking: Monitor link clicks in emails",
+            "Unsubscribe management: Handle opt-out requests",
+            "Spam compliance: Follow CAN-SPAM and GDPR rules"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cloud-services",
+      "title": "Cloud Services",
+      "content": [
+        {
+          "type": "heading",
+          "text": "AWS Integration"
+        },
+        {
+          "type": "paragraph",
+          "text": "Amazon Web Services provides comprehensive cloud infrastructure services including storage, compute, databases, and more."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// AWS SDK v3 integration\nconst { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');\nconst { getSignedUrl } = require('@aws-sdk/s3-request-presigner');\n\nclass AWSService {\n  constructor() {\n    this.s3Client = new S3Client({\n      region: process.env.AWS_REGION,\n      credentials: {\n        accessKeyId: process.env.AWS_ACCESS_KEY_ID,\n        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY\n      }\n    });\n    this.bucketName = process.env.S3_BUCKET_NAME;\n  }\n  \n  // Upload file to S3\n  async uploadFile(file, key) {\n    const uploadParams = {\n      Bucket: this.bucketName,\n      Key: key,\n      Body: file.buffer,\n      ContentType: file.mimetype,\n      ACL: 'private' // or 'public-read' for public files\n    };\n    \n    try {\n      const result = await this.s3Client.send(new PutObjectCommand(uploadParams));\n      return {\n        success: true,\n        key: key,\n        url: `https://${this.bucketName}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`\n      };\n    } catch (error) {\n      console.error('S3 upload error:', error);\n      throw error;\n    }\n  }\n  \n  // Generate presigned URL for secure file access\n  async getSignedUrl(key, expiresIn = 3600) {\n    const command = new GetObjectCommand({\n      Bucket: this.bucketName,\n      Key: key\n    });\n    \n    return await getSignedUrl(this.s3Client, command, { expiresIn });\n  }\n  \n  // Upload endpoint\n  setupFileUpload(app) {\n    const multer = require('multer');\n    const upload = multer({ \n      storage: multer.memoryStorage(),\n      limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit\n    });\n    \n    app.post('/api/upload', upload.single('file'), async (req, res) => {\n      if (!req.file) {\n        return res.status(400).json({ error: 'No file provided' });\n      }\n      \n      try {\n        const key = `uploads/${Date.now()}-${req.file.originalname}`;\n        const result = await this.uploadFile(req.file, key);\n        res.json(result);\n      } catch (error) {\n        res.status(500).json({ error: 'Upload failed' });\n      }\n    });\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Google Cloud Platform"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Google Cloud Storage integration\nconst { Storage } = require('@google-cloud/storage');\n\nclass GCPService {\n  constructor() {\n    this.storage = new Storage({\n      projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,\n      keyFilename: process.env.GOOGLE_CLOUD_KEY_FILE\n    });\n    this.bucketName = process.env.GCS_BUCKET_NAME;\n  }\n  \n  async uploadToGCS(file, destination) {\n    const bucket = this.storage.bucket(this.bucketName);\n    const fileUpload = bucket.file(destination);\n    \n    const blobStream = fileUpload.createWriteStream({\n      metadata: {\n        contentType: file.mimetype\n      }\n    });\n    \n    return new Promise((resolve, reject) => {\n      blobStream.on('error', reject);\n      blobStream.on('finish', () => {\n        resolve({\n          success: true,\n          url: `https://storage.googleapis.com/${this.bucketName}/${destination}`\n        });\n      });\n      blobStream.end(file.buffer);\n    });\n  }\n  \n  // Generate signed URL\n  async getSignedUrl(fileName, action = 'read', expires = Date.now() + 15 * 60 * 1000) {\n    const options = {\n      version: 'v4',\n      action: action,\n      expires: expires\n    };\n    \n    const [url] = await this.storage\n      .bucket(this.bucketName)\n      .file(fileName)\n      .getSignedUrl(options);\n    \n    return url;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Serverless Functions"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// AWS Lambda function example\nexports.handler = async (event, context) => {\n  try {\n    const { httpMethod, path, body } = event;\n    \n    // Parse request body\n    const requestBody = body ? JSON.parse(body) : {};\n    \n    // Route handling\n    switch (httpMethod) {\n      case 'GET':\n        return handleGet(path);\n      case 'POST':\n        return handlePost(path, requestBody);\n      default:\n        return {\n          statusCode: 405,\n          body: JSON.stringify({ error: 'Method not allowed' })\n        };\n    }\n  } catch (error) {\n    console.error('Lambda error:', error);\n    return {\n      statusCode: 500,\n      body: JSON.stringify({ error: 'Internal server error' })\n    };\n  }\n};\n\nconst handleGet = (path) => {\n  return {\n    statusCode: 200,\n    headers: {\n      'Content-Type': 'application/json',\n      'Access-Control-Allow-Origin': '*'\n    },\n    body: JSON.stringify({ message: 'Hello from Lambda!' })\n  };\n};\n\n// Vercel serverless function\n// api/hello.js\nexport default function handler(req, res) {\n  if (req.method !== 'POST') {\n    return res.status(405).json({ error: 'Method not allowed' });\n  }\n  \n  const { name } = req.body;\n  \n  res.status(200).json({\n    message: `Hello ${name}!`,\n    timestamp: new Date().toISOString()\n  });\n}"
+        }
+      ]
+    },
+    {
+      "id": "monitoring-tools",
+      "title": "Monitoring & Analytics",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Application Performance Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "APM tools help monitor application performance, track errors, and gain insights into user behavior and system health."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Sentry error tracking integration\nconst Sentry = require('@sentry/node');\nconst Tracing = require('@sentry/tracing');\n\nSentry.init({\n  dsn: process.env.SENTRY_DSN,\n  environment: process.env.NODE_ENV,\n  integrations: [\n    new Sentry.Integrations.Http({ tracing: true }),\n    new Tracing.Integrations.Express({ app }),\n  ],\n  tracesSampleRate: 1.0,\n});\n\n// Custom error handling\nclass ErrorHandler {\n  static captureException(error, context = {}) {\n    Sentry.withScope((scope) => {\n      // Add context information\n      scope.setTag('component', context.component);\n      scope.setContext('additional_info', context);\n      \n      if (context.user) {\n        scope.setUser({\n          id: context.user.id,\n          email: context.user.email\n        });\n      }\n      \n      Sentry.captureException(error);\n    });\n  }\n  \n  static captureMessage(message, level = 'info', context = {}) {\n    Sentry.withScope((scope) => {\n      scope.setContext('message_context', context);\n      Sentry.captureMessage(message, level);\n    });\n  }\n}\n\n// Usage in Express middleware\napp.use(Sentry.Handlers.requestHandler());\napp.use(Sentry.Handlers.tracingHandler());\n\n// Your routes here...\n\napp.use(Sentry.Handlers.errorHandler());\n\n// Custom error middleware\napp.use((error, req, res, next) => {\n  ErrorHandler.captureException(error, {\n    component: 'express_middleware',\n    url: req.url,\n    method: req.method,\n    user: req.user\n  });\n  \n  res.status(500).json({ error: 'Internal server error' });\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Analytics Integration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Google Analytics 4 server-side tracking\nconst { BetaAnalyticsDataClient } = require('@google-analytics/data');\n\nclass AnalyticsService {\n  constructor() {\n    this.analyticsDataClient = new BetaAnalyticsDataClient({\n      keyFilename: process.env.GOOGLE_ANALYTICS_KEY_FILE\n    });\n    this.propertyId = process.env.GA4_PROPERTY_ID;\n  }\n  \n  // Track server-side events\n  async trackEvent(eventName, parameters = {}) {\n    const measurement_id = process.env.GA4_MEASUREMENT_ID;\n    const api_secret = process.env.GA4_API_SECRET;\n    \n    const payload = {\n      client_id: parameters.client_id || 'server-side',\n      events: [{\n        name: eventName,\n        params: parameters\n      }]\n    };\n    \n    try {\n      const response = await fetch(\n        `https://www.google-analytics.com/mp/collect?measurement_id=${measurement_id}&api_secret=${api_secret}`,\n        {\n          method: 'POST',\n          body: JSON.stringify(payload)\n        }\n      );\n      \n      return response.ok;\n    } catch (error) {\n      console.error('GA4 tracking error:', error);\n      return false;\n    }\n  }\n  \n  // Get analytics data\n  async getAnalyticsData(startDate, endDate) {\n    const [response] = await this.analyticsDataClient.runReport({\n      property: `properties/${this.propertyId}`,\n      dateRanges: [{\n        startDate: startDate,\n        endDate: endDate\n      }],\n      dimensions: [{\n        name: 'country'\n      }],\n      metrics: [{\n        name: 'activeUsers'\n      }]\n    });\n    \n    return response;\n  }\n}\n\n// Custom analytics tracking\nclass CustomAnalytics {\n  constructor() {\n    this.events = [];\n  }\n  \n  track(event, properties = {}) {\n    const trackingData = {\n      event: event,\n      properties: {\n        ...properties,\n        timestamp: new Date().toISOString(),\n        session_id: this.getSessionId(),\n        user_agent: properties.user_agent\n      }\n    };\n    \n    // Store locally\n    this.events.push(trackingData);\n    \n    // Send to analytics service\n    this.sendToAnalytics(trackingData);\n  }\n  \n  async sendToAnalytics(data) {\n    try {\n      // Send to your analytics endpoint\n      await fetch('/api/analytics/track', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify(data)\n      });\n    } catch (error) {\n      console.error('Analytics send error:', error);\n    }\n  }\n  \n  getSessionId() {\n    // Generate or retrieve session ID\n    return 'session_' + Date.now();\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Log Aggregation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Winston logger with multiple transports\nconst winston = require('winston');\nconst { ElasticsearchTransport } = require('winston-elasticsearch');\n\nconst logger = winston.createLogger({\n  format: winston.format.combine(\n    winston.format.timestamp(),\n    winston.format.errors({ stack: true }),\n    winston.format.json()\n  ),\n  transports: [\n    // Console logging\n    new winston.transports.Console({\n      format: winston.format.combine(\n        winston.format.colorize(),\n        winston.format.simple()\n      )\n    }),\n    \n    // File logging\n    new winston.transports.File({\n      filename: 'logs/error.log',\n      level: 'error',\n      maxsize: 5242880, // 5MB\n      maxFiles: 5\n    }),\n    \n    new winston.transports.File({\n      filename: 'logs/combined.log',\n      maxsize: 5242880,\n      maxFiles: 5\n    }),\n    \n    // Elasticsearch logging\n    new ElasticsearchTransport({\n      level: 'info',\n      clientOpts: {\n        node: process.env.ELASTICSEARCH_URL,\n        auth: {\n          username: process.env.ELASTICSEARCH_USERNAME,\n          password: process.env.ELASTICSEARCH_PASSWORD\n        }\n      },\n      index: 'app-logs'\n    })\n  ]\n});\n\n// Structured logging helpers\nclass Logger {\n  static info(message, meta = {}) {\n    logger.info(message, { ...meta, level: 'info' });\n  }\n  \n  static error(message, error = null, meta = {}) {\n    logger.error(message, {\n      ...meta,\n      error: error ? {\n        message: error.message,\n        stack: error.stack,\n        name: error.name\n      } : null,\n      level: 'error'\n    });\n  }\n  \n  static warn(message, meta = {}) {\n    logger.warn(message, { ...meta, level: 'warn' });\n  }\n  \n  // Request logging middleware\n  static requestLogger() {\n    return (req, res, next) => {\n      const start = Date.now();\n      \n      res.on('finish', () => {\n        const duration = Date.now() - start;\n        \n        Logger.info('HTTP Request', {\n          method: req.method,\n          url: req.url,\n          status: res.statusCode,\n          duration: duration,\n          userAgent: req.get('user-agent'),\n          ip: req.ip,\n          userId: req.user?.id\n        });\n      });\n      \n      next();\n    };\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "social-media-apis",
+      "title": "Social Media APIs",
+      "content": [
+        {
+          "type": "heading",
+          "text": "OAuth2 Social Login"
+        },
+        {
+          "type": "paragraph",
+          "text": "Social login integration allows users to authenticate using their existing social media accounts, improving user experience and reducing friction."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Passport.js social authentication\nconst passport = require('passport');\nconst GoogleStrategy = require('passport-google-oauth20').Strategy;\nconst FacebookStrategy = require('passport-facebook').Strategy;\nconst GitHubStrategy = require('passport-github2').Strategy;\n\n// Google OAuth strategy\npassport.use(new GoogleStrategy({\n  clientID: process.env.GOOGLE_CLIENT_ID,\n  clientSecret: process.env.GOOGLE_CLIENT_SECRET,\n  callbackURL: '/auth/google/callback'\n}, async (accessToken, refreshToken, profile, done) => {\n  try {\n    // Check if user exists\n    let user = await User.findOne({ googleId: profile.id });\n    \n    if (user) {\n      return done(null, user);\n    }\n    \n    // Create new user\n    user = await User.create({\n      googleId: profile.id,\n      name: profile.displayName,\n      email: profile.emails[0].value,\n      avatar: profile.photos[0].value,\n      provider: 'google'\n    });\n    \n    done(null, user);\n  } catch (error) {\n    done(error, null);\n  }\n}));\n\n// GitHub OAuth strategy\npassport.use(new GitHubStrategy({\n  clientID: process.env.GITHUB_CLIENT_ID,\n  clientSecret: process.env.GITHUB_CLIENT_SECRET,\n  callbackURL: '/auth/github/callback'\n}, async (accessToken, refreshToken, profile, done) => {\n  try {\n    let user = await User.findOne({ githubId: profile.id });\n    \n    if (!user) {\n      user = await User.create({\n        githubId: profile.id,\n        username: profile.username,\n        name: profile.displayName,\n        email: profile.emails?.[0]?.value,\n        avatar: profile.photos[0].value,\n        provider: 'github'\n      });\n    }\n    \n    done(null, user);\n  } catch (error) {\n    done(error, null);\n  }\n}));\n\n// Routes\napp.get('/auth/google', \n  passport.authenticate('google', { scope: ['profile', 'email'] })\n);\n\napp.get('/auth/google/callback',\n  passport.authenticate('google', { failureRedirect: '/login' }),\n  (req, res) => {\n    // Successful authentication\n    res.redirect('/dashboard');\n  }\n);\n\napp.get('/auth/github',\n  passport.authenticate('github', { scope: ['user:email'] })\n);\n\napp.get('/auth/github/callback',\n  passport.authenticate('github', { failureRedirect: '/login' }),\n  (req, res) => {\n    res.redirect('/dashboard');\n  }\n);"
+        },
+        {
+          "type": "heading",
+          "text": "Twitter API Integration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Twitter API v2 integration\nconst { TwitterApi } = require('twitter-api-v2');\n\nclass TwitterService {\n  constructor() {\n    this.client = new TwitterApi({\n      appKey: process.env.TWITTER_API_KEY,\n      appSecret: process.env.TWITTER_API_SECRET,\n      accessToken: process.env.TWITTER_ACCESS_TOKEN,\n      accessSecret: process.env.TWITTER_ACCESS_SECRET,\n    });\n  }\n  \n  async postTweet(text) {\n    try {\n      const tweet = await this.client.v2.tweet(text);\n      return tweet;\n    } catch (error) {\n      console.error('Twitter post error:', error);\n      throw error;\n    }\n  }\n  \n  async getUserTweets(username, maxResults = 10) {\n    try {\n      const user = await this.client.v2.userByUsername(username);\n      const tweets = await this.client.v2.userTimeline(user.data.id, {\n        max_results: maxResults,\n        'tweet.fields': ['created_at', 'author_id', 'public_metrics']\n      });\n      \n      return tweets.data;\n    } catch (error) {\n      console.error('Twitter fetch error:', error);\n      throw error;\n    }\n  }\n  \n  async searchTweets(query, maxResults = 10) {\n    try {\n      const tweets = await this.client.v2.search(query, {\n        max_results: maxResults,\n        'tweet.fields': ['created_at', 'author_id', 'public_metrics']\n      });\n      \n      return tweets.data;\n    } catch (error) {\n      console.error('Twitter search error:', error);\n      throw error;\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Facebook Graph API"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Facebook Graph API integration\nclass FacebookService {\n  constructor() {\n    this.accessToken = process.env.FACEBOOK_ACCESS_TOKEN;\n    this.apiVersion = 'v18.0';\n    this.baseUrl = `https://graph.facebook.com/${this.apiVersion}`;\n  }\n  \n  async makeRequest(endpoint, method = 'GET', data = null) {\n    const url = `${this.baseUrl}${endpoint}`;\n    const options = {\n      method,\n      headers: {\n        'Authorization': `Bearer ${this.accessToken}`,\n        'Content-Type': 'application/json'\n      }\n    };\n    \n    if (data && method !== 'GET') {\n      options.body = JSON.stringify(data);\n    }\n    \n    try {\n      const response = await fetch(url, options);\n      return await response.json();\n    } catch (error) {\n      console.error('Facebook API error:', error);\n      throw error;\n    }\n  }\n  \n  async getUserProfile(userId) {\n    return await this.makeRequest(`/${userId}?fields=id,name,email,picture`);\n  }\n  \n  async postToPage(pageId, message) {\n    return await this.makeRequest(\n      `/${pageId}/feed`,\n      'POST',\n      { message }\n    );\n  }\n  \n  async getPageInsights(pageId, metrics) {\n    const metricsParam = metrics.join(',');\n    return await this.makeRequest(\n      `/${pageId}/insights?metric=${metricsParam}`\n    );\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the recommended way to handle Stripe webhooks?",
+      "options": [
+        "Process them immediately without verification",
+        "Verify webhook signatures and handle events asynchronously",
+        "Only log webhook data",
+        "Forward webhooks to frontend"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Stripe webhooks should be verified using the webhook signature to ensure authenticity, and events should be handled asynchronously to prevent timeouts."
+    },
+    {
+      "id": 2,
+      "question": "What does PCI DSS compliance require for payment processing?",
+      "options": [
+        "Store credit card data in encrypted format",
+        "Never store credit card data directly, use tokenization",
+        "Only validate credit card numbers",
+        "Store payment data in cookies"
+      ],
+      "correctAnswer": 1,
+      "explanation": "PCI DSS requires that you never store sensitive payment data directly. Instead, use tokenization to store secure tokens that represent payment methods."
+    },
+    {
+      "id": 3,
+      "question": "What is the purpose of email templates in transactional emails?",
+      "options": [
+        "To make emails look prettier",
+        "To ensure consistent branding and dynamic content insertion",
+        "To reduce email size",
+        "To avoid spam filters"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Email templates ensure consistent branding across all communications and allow dynamic content insertion while maintaining professional appearance."
+    },
+    {
+      "id": 4,
+      "question": "What is a presigned URL in cloud storage?",
+      "options": [
+        "A permanent public URL",
+        "A temporary URL that grants time-limited access to private resources",
+        "An encrypted URL",
+        "A URL that requires authentication headers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Presigned URLs provide temporary, time-limited access to private cloud storage resources without requiring the user to have AWS credentials."
+    },
+    {
+      "id": 5,
+      "question": "What is the main advantage of serverless functions?",
+      "options": [
+        "They run faster than traditional servers",
+        "Auto-scaling and pay-per-use billing with no server management",
+        "They provide unlimited storage",
+        "They are always cheaper than servers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Serverless functions automatically scale based on demand and you only pay for actual execution time, with no server infrastructure to manage."
+    },
+    {
+      "id": 6,
+      "question": "What should you track with Application Performance Monitoring (APM)?",
+      "options": [
+        "Only server uptime",
+        "Response times, error rates, throughput, and user experience metrics",
+        "Only database queries",
+        "Only frontend performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "APM should track comprehensive metrics including response times, error rates, throughput, database performance, and user experience to identify bottlenecks."
+    },
+    {
+      "id": 7,
+      "question": "What is OAuth2 used for in social media integrations?",
+      "options": [
+        "Data encryption",
+        "Secure authorization without sharing passwords",
+        "API rate limiting",
+        "Content moderation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "OAuth2 allows secure authorization by letting users grant access to their accounts without sharing their actual passwords with third-party applications."
+    },
+    {
+      "id": 8,
+      "question": "What is the purpose of webhook signature verification?",
+      "options": [
+        "To encrypt webhook payload",
+        "To ensure webhooks come from legitimate sources and haven't been tampered with",
+        "To compress webhook data",
+        "To format webhook responses"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Webhook signature verification ensures that incoming webhooks are authentic and from the expected source, preventing malicious webhook attacks."
+    },
+    {
+      "id": 9,
+      "question": "Why should you use structured logging?",
+      "options": [
+        "To make logs smaller",
+        "To enable easier searching, filtering, and analysis of log data",
+        "To encrypt log content",
+        "To reduce logging overhead"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Structured logging uses consistent formats (like JSON) that make it easier to search, filter, and analyze log data programmatically."
+    },
+    {
+      "id": 10,
+      "question": "What is the benefit of using CDN for file storage?",
+      "options": [
+        "Cheaper storage costs",
+        "Global distribution and faster content delivery",
+        "Better security",
+        "Unlimited storage capacity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CDNs distribute content across multiple geographic locations, reducing latency and improving load times for users worldwide."
+    },
+    {
+      "id": 11,
+      "question": "How should you handle API rate limits from third-party services?",
+      "options": [
+        "Ignore them and retry immediately",
+        "Implement exponential backoff and respect rate limit headers",
+        "Switch to a different service",
+        "Cache all responses permanently"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Proper rate limit handling includes exponential backoff, respecting rate limit headers, and implementing retry logic to avoid being blocked."
+    },
+    {
+      "id": 12,
+      "question": "What is the purpose of environment variables in third-party integrations?",
+      "options": [
+        "To make code run faster",
+        "To securely store sensitive configuration like API keys",
+        "To reduce code size",
+        "To improve debugging"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Environment variables keep sensitive information like API keys and secrets out of source code and allow different configurations for different environments."
+    },
+    {
+      "id": 13,
+      "question": "What should you consider when integrating with social media APIs?",
+      "options": [
+        "Only the response format",
+        "Rate limits, privacy policies, data retention, and API versioning",
+        "Only authentication methods",
+        "Only the request format"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Social media API integration requires consideration of rate limits, privacy compliance, data retention policies, and handling of API version changes."
+    },
+    {
+      "id": 14,
+      "question": "What is the recommended approach for handling third-party service failures?",
+      "options": [
+        "Crash the application",
+        "Implement graceful degradation and fallback mechanisms",
+        "Retry indefinitely",
+        "Ignore the errors"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Applications should gracefully handle third-party service failures with fallback mechanisms, retry logic, and degraded functionality rather than complete failure."
+    },
+    {
+      "id": 15,
+      "question": "Why is it important to monitor third-party service integrations?",
+      "options": [
+        "To reduce costs only",
+        "To detect failures, performance issues, and ensure SLA compliance",
+        "To improve security only",
+        "To reduce bandwidth usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Monitoring third-party integrations helps detect failures early, track performance, ensure SLA compliance, and maintain overall application reliability."
+    }
+  ]
+} 

@@ -1,0 +1,293 @@
+{
+  "title": "Error Handling & Monitoring",
+  "description": "Master comprehensive error handling and monitoring strategies including centralized error tracking, health monitoring, performance monitoring, user experience analytics, and incident response procedures for robust production systems",
+  "sections": [
+    {
+      "id": "error-tracking",
+      "title": "Error Tracking & Centralized Logging",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Centralized Error Tracking"
+        },
+        {
+          "type": "paragraph",
+          "text": "Centralized error tracking collects, aggregates, and analyzes errors from across your application stack, providing unified visibility into system health and issues."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Error Aggregation: Group similar errors together for easier analysis",
+            "Stack Trace Capture: Full error context with source code references",
+            "Error Context: Request data, user information, environment details",
+            "Error Reporting: Real-time notifications and alerting",
+            "Error Trends: Track error rates and patterns over time"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Error Handling Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Comprehensive Error Handling System\nconst winston = require('winston');\nconst Sentry = require('@sentry/node');\nconst { v4: uuidv4 } = require('uuid');\n\n// Initialize Sentry for error tracking\nSentry.init({\n  dsn: process.env.SENTRY_DSN,\n  environment: process.env.NODE_ENV,\n  tracesSampleRate: 1.0,\n});\n\n// Custom Error Classes\nclass ApplicationError extends Error {\n  constructor(message, statusCode = 500, code = 'INTERNAL_ERROR', context = {}) {\n    super(message);\n    this.name = this.constructor.name;\n    this.statusCode = statusCode;\n    this.code = code;\n    this.context = context;\n    this.timestamp = new Date().toISOString();\n    this.id = uuidv4();\n    \n    Error.captureStackTrace(this, this.constructor);\n  }\n}\n\nclass ValidationError extends ApplicationError {\n  constructor(message, field = null, value = null) {\n    super(message, 400, 'VALIDATION_ERROR', { field, value });\n  }\n}\n\nclass NotFoundError extends ApplicationError {\n  constructor(resource = 'Resource') {\n    super(`${resource} not found`, 404, 'NOT_FOUND', { resource });\n  }\n}\n\n// Error Logger\nclass ErrorLogger {\n  constructor() {\n    this.logger = winston.createLogger({\n      level: 'info',\n      format: winston.format.combine(\n        winston.format.timestamp(),\n        winston.format.errors({ stack: true }),\n        winston.format.json()\n      ),\n      transports: [\n        new winston.transports.File({ \n          filename: 'logs/error.log', \n          level: 'error' \n        }),\n        new winston.transports.Console()\n      ]\n    });\n  }\n\n  logError(error, context = {}) {\n    const errorInfo = {\n      id: error.id || uuidv4(),\n      name: error.name,\n      message: error.message,\n      stack: error.stack,\n      statusCode: error.statusCode || 500,\n      code: error.code || 'UNKNOWN_ERROR',\n      timestamp: error.timestamp || new Date().toISOString(),\n      context: { ...error.context, ...context },\n      environment: process.env.NODE_ENV\n    };\n\n    // Log to Winston\n    this.logger.error('Application Error', errorInfo);\n\n    // Send to Sentry for tracking\n    Sentry.withScope((scope) => {\n      scope.setTag('errorCode', errorInfo.code);\n      scope.setLevel('error');\n      scope.setContext('errorDetails', {\n        id: errorInfo.id,\n        statusCode: errorInfo.statusCode,\n        context: errorInfo.context\n      });\n      Sentry.captureException(error);\n    });\n\n    return errorInfo.id;\n  }\n}\n\nconst errorLogger = new ErrorLogger();\n\n// Express Error Handling Middleware\nconst errorHandler = (error, req, res, next) => {\n  const requestContext = {\n    requestId: req.requestId,\n    method: req.method,\n    url: req.url,\n    userAgent: req.get('User-Agent'),\n    ip: req.ip,\n    userId: req.user?.id\n  };\n\n  const errorId = errorLogger.logError(error, requestContext);\n  const statusCode = error.statusCode || 500;\n  \n  res.status(statusCode).json({\n    error: {\n      id: errorId,\n      message: error.message,\n      code: error.code || 'INTERNAL_ERROR',\n      timestamp: new Date().toISOString()\n    }\n  });\n};\n\nmodule.exports = {\n  ApplicationError,\n  ValidationError,\n  NotFoundError,\n  errorLogger,\n  errorHandler\n};"
+        }
+      ]
+    },
+    {
+      "id": "health-monitoring",
+      "title": "Health Monitoring & Service Checks",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Service Health Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "Health monitoring continuously checks the status of your services and dependencies, ensuring early detection of issues before they impact users."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Health Checks: Regular verification of service functionality",
+            "Dependency Monitoring: Track external service availability",
+            "Uptime Monitoring: Continuous availability tracking",
+            "Alerting Systems: Automated notifications for issues",
+            "Circuit Breakers: Prevent cascading failures"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Health Check Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Health Monitoring System\nconst express = require('express');\nconst axios = require('axios');\n\nclass HealthMonitor {\n  constructor() {\n    this.checks = new Map();\n    this.results = new Map();\n  }\n\n  registerCheck(name, checkFn, options = {}) {\n    this.checks.set(name, {\n      fn: checkFn,\n      interval: options.interval || 30000,\n      timeout: options.timeout || 5000,\n      critical: options.critical || false,\n      consecutive_failures: 0\n    });\n  }\n\n  async runCheck(name) {\n    const check = this.checks.get(name);\n    if (!check) return;\n\n    const startTime = Date.now();\n    let result = {\n      name,\n      status: 'healthy',\n      message: 'OK',\n      duration: 0,\n      timestamp: new Date().toISOString()\n    };\n\n    try {\n      const checkResult = await Promise.race([\n        check.fn(),\n        new Promise((_, reject) => \n          setTimeout(() => reject(new Error('Timeout')), check.timeout)\n        )\n      ]);\n      \n      result.duration = Date.now() - startTime;\n      result.details = checkResult || {};\n      check.consecutive_failures = 0;\n      \n    } catch (error) {\n      result.status = 'unhealthy';\n      result.message = error.message;\n      result.duration = Date.now() - startTime;\n      check.consecutive_failures++;\n    }\n\n    this.results.set(name, result);\n    return result;\n  }\n\n  getHealthStatus() {\n    const results = Array.from(this.results.values());\n    const unhealthy = results.filter(r => r.status === 'unhealthy').length;\n    \n    return {\n      status: unhealthy === 0 ? 'healthy' : 'degraded',\n      timestamp: new Date().toISOString(),\n      checks: results,\n      summary: {\n        total: results.length,\n        healthy: results.length - unhealthy,\n        unhealthy\n      }\n    };\n  }\n}\n\n// Health Check Functions\nconst healthChecks = {\n  database: async () => {\n    // Database connectivity check\n    const connection = await mysql.createConnection({\n      host: process.env.DB_HOST,\n      user: process.env.DB_USER,\n      password: process.env.DB_PASSWORD,\n      database: process.env.DB_NAME\n    });\n    \n    const [rows] = await connection.execute('SELECT 1 as healthy');\n    await connection.end();\n    return { connected: true };\n  },\n  \n  redis: async () => {\n    // Redis connectivity check\n    const client = redis.createClient();\n    await client.connect();\n    await client.ping();\n    await client.disconnect();\n    return { connected: true };\n  },\n  \n  externalApi: async () => {\n    // External API check\n    const response = await axios.get('https://api.external.com/health', {\n      timeout: 3000\n    });\n    return { status: response.status };\n  }\n};\n\n// Initialize health monitor\nconst healthMonitor = new HealthMonitor();\n\n// Register checks\nhealthMonitor.registerCheck('database', healthChecks.database, {\n  critical: true,\n  interval: 30000\n});\n\nhealthMonitor.registerCheck('redis', healthChecks.redis, {\n  critical: true,\n  interval: 30000\n});\n\nhealthMonitor.registerCheck('external-api', healthChecks.externalApi, {\n  critical: false,\n  interval: 60000\n});\n\n// Health endpoints\nconst app = express();\n\napp.get('/health', (req, res) => {\n  const health = healthMonitor.getHealthStatus();\n  const statusCode = health.status === 'healthy' ? 200 : 503;\n  res.status(statusCode).json(health);\n});\n\nmodule.exports = { healthMonitor, app };"
+        }
+      ]
+    },
+    {
+      "id": "performance-monitoring",
+      "title": "Performance Monitoring & Metrics",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Performance Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "Performance monitoring tracks response times, throughput, resource utilization, and identifies bottlenecks in your application."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Response Time Tracking: Monitor API endpoint performance",
+            "Throughput Monitoring: Track requests per second",
+            "Resource Utilization: CPU, memory, disk usage monitoring",
+            "Bottleneck Detection: Identify performance constraints",
+            "Performance Alerts: Automated notifications for degradation"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Performance Metrics Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Performance Monitoring with Prometheus\nconst prometheus = require('prom-client');\nconst express = require('express');\n\n// Create a Registry\nconst register = new prometheus.Registry();\n\n// Metrics\nconst httpRequestDuration = new prometheus.Histogram({\n  name: 'http_request_duration_seconds',\n  help: 'Duration of HTTP requests in seconds',\n  labelNames: ['method', 'route', 'status_code'],\n  buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]\n});\n\nconst httpRequestsTotal = new prometheus.Counter({\n  name: 'http_requests_total',\n  help: 'Total number of HTTP requests',\n  labelNames: ['method', 'route', 'status_code']\n});\n\nconst activeConnections = new prometheus.Gauge({\n  name: 'active_connections',\n  help: 'Number of active connections'\n});\n\nconst memoryUsage = new prometheus.Gauge({\n  name: 'memory_usage_bytes',\n  help: 'Memory usage in bytes',\n  labelNames: ['type']\n});\n\n// Register metrics\nregister.registerMetric(httpRequestDuration);\nregister.registerMetric(httpRequestsTotal);\nregister.registerMetric(activeConnections);\nregister.registerMetric(memoryUsage);\n\n// Performance middleware\nconst performanceMiddleware = (req, res, next) => {\n  const startTime = Date.now();\n  \n  // Track active connections\n  activeConnections.inc();\n  \n  res.on('finish', () => {\n    const duration = (Date.now() - startTime) / 1000;\n    const route = req.route ? req.route.path : req.path;\n    \n    // Record metrics\n    httpRequestDuration\n      .labels(req.method, route, res.statusCode)\n      .observe(duration);\n    \n    httpRequestsTotal\n      .labels(req.method, route, res.statusCode)\n      .inc();\n    \n    activeConnections.dec();\n  });\n  \n  next();\n};\n\n// Memory monitoring\nsetInterval(() => {\n  const usage = process.memoryUsage();\n  memoryUsage.labels('rss').set(usage.rss);\n  memoryUsage.labels('heapTotal').set(usage.heapTotal);\n  memoryUsage.labels('heapUsed').set(usage.heapUsed);\n  memoryUsage.labels('external').set(usage.external);\n}, 10000);\n\n// Metrics endpoint\nconst app = express();\napp.use(performanceMiddleware);\n\napp.get('/metrics', async (req, res) => {\n  res.set('Content-Type', register.contentType);\n  res.end(await register.metrics());\n});\n\nmodule.exports = { app, performanceMiddleware };"
+        }
+      ]
+    },
+    {
+      "id": "user-experience-monitoring",
+      "title": "User Experience Monitoring",
+      "content": [
+        {
+          "type": "heading",
+          "text": "User Experience Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "User experience monitoring focuses on how users interact with your application, tracking error rates, page load times, and conversion metrics."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Error Rates: Track frontend and backend error occurrences",
+            "Page Load Times: Monitor client-side performance",
+            "User Journey Tracking: Follow user interactions",
+            "Conversion Funnel Analysis: Identify drop-off points",
+            "Real User Monitoring (RUM): Actual user performance data"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "UX Monitoring Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// User Experience Monitoring\nclass UXMonitor {\n  constructor() {\n    this.events = [];\n    this.sessionId = this.generateSessionId();\n    this.userId = null;\n  }\n\n  generateSessionId() {\n    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);\n  }\n\n  setUserId(userId) {\n    this.userId = userId;\n  }\n\n  trackPageLoad(page, loadTime) {\n    this.track('page_load', {\n      page,\n      loadTime,\n      timestamp: Date.now()\n    });\n  }\n\n  trackUserAction(action, element, context = {}) {\n    this.track('user_action', {\n      action,\n      element,\n      context,\n      timestamp: Date.now()\n    });\n  }\n\n  trackError(error, context = {}) {\n    this.track('error', {\n      message: error.message,\n      stack: error.stack,\n      context,\n      timestamp: Date.now()\n    });\n  }\n\n  track(eventType, eventData) {\n    const event = {\n      type: eventType,\n      sessionId: this.sessionId,\n      userId: this.userId,\n      data: eventData,\n      userAgent: navigator.userAgent,\n      url: window.location.href,\n      timestamp: Date.now()\n    };\n\n    this.events.push(event);\n    this.sendEvent(event);\n  }\n\n  async sendEvent(event) {\n    try {\n      await fetch('/api/analytics/events', {\n        method: 'POST',\n        headers: {\n          'Content-Type': 'application/json'\n        },\n        body: JSON.stringify(event)\n      });\n    } catch (error) {\n      console.warn('Failed to send analytics event:', error);\n    }\n  }\n\n  // Performance observer for Core Web Vitals\n  observeWebVitals() {\n    // Largest Contentful Paint (LCP)\n    new PerformanceObserver((entryList) => {\n      const entries = entryList.getEntries();\n      const lastEntry = entries[entries.length - 1];\n      this.track('web_vital', {\n        name: 'LCP',\n        value: lastEntry.startTime,\n        timestamp: Date.now()\n      });\n    }).observe({ entryTypes: ['largest-contentful-paint'] });\n\n    // First Input Delay (FID)\n    new PerformanceObserver((entryList) => {\n      const entries = entryList.getEntries();\n      entries.forEach(entry => {\n        this.track('web_vital', {\n          name: 'FID',\n          value: entry.processingStart - entry.startTime,\n          timestamp: Date.now()\n        });\n      });\n    }).observe({ entryTypes: ['first-input'] });\n\n    // Cumulative Layout Shift (CLS)\n    let clsValue = 0;\n    new PerformanceObserver((entryList) => {\n      const entries = entryList.getEntries();\n      entries.forEach(entry => {\n        if (!entry.hadRecentInput) {\n          clsValue += entry.value;\n        }\n      });\n      this.track('web_vital', {\n        name: 'CLS',\n        value: clsValue,\n        timestamp: Date.now()\n      });\n    }).observe({ entryTypes: ['layout-shift'] });\n  }\n}\n\n// Initialize UX monitoring\nconst uxMonitor = new UXMonitor();\n\n// Auto-track page loads\nwindow.addEventListener('load', () => {\n  const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;\n  uxMonitor.trackPageLoad(window.location.pathname, loadTime);\n});\n\n// Auto-track errors\nwindow.addEventListener('error', (event) => {\n  uxMonitor.trackError(event.error, {\n    filename: event.filename,\n    lineno: event.lineno,\n    colno: event.colno\n  });\n});\n\n// Start observing web vitals\nuxMonitor.observeWebVitals();\n\nmodule.exports = { UXMonitor, uxMonitor };"
+        }
+      ]
+    },
+    {
+      "id": "incident-response",
+      "title": "Incident Response & Recovery",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Incident Response"
+        },
+        {
+          "type": "paragraph",
+          "text": "Incident response involves systematic procedures for detecting, responding to, and recovering from system failures and security incidents."
+        },
+        {
+          "type": "list",
+          "items": [
+            "On-call Procedures: 24/7 incident response team",
+            "Escalation Processes: Defined escalation paths and timelines",
+            "Post-mortem Analysis: Learn from incidents to prevent recurrence",
+            "Prevention Strategies: Proactive measures to reduce incidents",
+            "Communication Plans: Keep stakeholders informed during incidents"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Incident Management System"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Incident Management System\nclass IncidentManager {\n  constructor() {\n    this.incidents = new Map();\n    this.escalationRules = new Map();\n    this.notificationChannels = new Map();\n  }\n\n  createIncident(alert, severity = 'medium') {\n    const incident = {\n      id: this.generateIncidentId(),\n      title: alert.title || 'System Alert',\n      description: alert.message,\n      severity,\n      status: 'open',\n      createdAt: new Date().toISOString(),\n      updatedAt: new Date().toISOString(),\n      assignedTo: null,\n      escalationLevel: 0,\n      timeline: [{\n        timestamp: new Date().toISOString(),\n        action: 'created',\n        details: 'Incident created from alert',\n        author: 'system'\n      }],\n      metadata: alert.metadata || {}\n    };\n\n    this.incidents.set(incident.id, incident);\n    this.notifyIncident(incident);\n    \n    // Start escalation timer for high severity\n    if (severity === 'high' || severity === 'critical') {\n      this.startEscalationTimer(incident.id);\n    }\n\n    return incident;\n  }\n\n  updateIncident(incidentId, updates, author = 'system') {\n    const incident = this.incidents.get(incidentId);\n    if (!incident) return null;\n\n    const previousStatus = incident.status;\n    Object.assign(incident, updates);\n    incident.updatedAt = new Date().toISOString();\n\n    // Add timeline entry\n    incident.timeline.push({\n      timestamp: new Date().toISOString(),\n      action: 'updated',\n      details: `Status changed from ${previousStatus} to ${incident.status}`,\n      author,\n      changes: updates\n    });\n\n    return incident;\n  }\n\n  resolveIncident(incidentId, resolution, author) {\n    const incident = this.updateIncident(incidentId, {\n      status: 'resolved',\n      resolvedAt: new Date().toISOString(),\n      resolution\n    }, author);\n\n    if (incident) {\n      this.schedulePostMortem(incident);\n    }\n\n    return incident;\n  }\n\n  escalateIncident(incidentId) {\n    const incident = this.incidents.get(incidentId);\n    if (!incident || incident.status === 'resolved') return;\n\n    incident.escalationLevel++;\n    incident.updatedAt = new Date().toISOString();\n    \n    incident.timeline.push({\n      timestamp: new Date().toISOString(),\n      action: 'escalated',\n      details: `Escalated to level ${incident.escalationLevel}`,\n      author: 'system'\n    });\n\n    // Notify escalation team\n    this.notifyEscalation(incident);\n  }\n\n  async notifyIncident(incident) {\n    // Send notifications to various channels\n    const message = {\n      title: `🚨 New Incident: ${incident.title}`,\n      text: incident.description,\n      severity: incident.severity,\n      incidentId: incident.id,\n      timestamp: incident.createdAt\n    };\n\n    // Send to Slack, email, SMS etc.\n    await this.sendSlackNotification(message);\n  }\n\n  async sendSlackNotification(message) {\n    const webhook = process.env.SLACK_INCIDENT_WEBHOOK;\n    if (!webhook) return;\n\n    try {\n      await fetch(webhook, {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({\n          text: message.title,\n          attachments: [{\n            color: this.getSeverityColor(message.severity),\n            fields: [\n              { title: 'Severity', value: message.severity, short: true },\n              { title: 'Incident ID', value: message.incidentId, short: true },\n              { title: 'Description', value: message.text, short: false }\n            ],\n            timestamp: message.timestamp\n          }]\n        })\n      });\n    } catch (error) {\n      console.error('Failed to send Slack notification:', error);\n    }\n  }\n\n  getSeverityColor(severity) {\n    const colors = {\n      'low': 'good',\n      'medium': 'warning',\n      'high': 'danger',\n      'critical': '#ff0000'\n    };\n    return colors[severity] || 'warning';\n  }\n\n  generateIncidentId() {\n    const timestamp = Date.now().toString(36);\n    const random = Math.random().toString(36).substr(2, 5);\n    return `INC-${timestamp}-${random}`.toUpperCase();\n  }\n}\n\n// Initialize incident manager\nconst incidentManager = new IncidentManager();\n\nmodule.exports = { IncidentManager, incidentManager };"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the primary purpose of centralized error tracking?",
+      "options": [
+        "To fix errors automatically",
+        "To collect, aggregate, and analyze errors from across the application stack",
+        "To prevent errors from occurring",
+        "To reduce application performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Centralized error tracking collects errors from all parts of your application into one place, aggregates similar errors, and provides tools for analysis, helping developers understand and fix issues more effectively."
+    },
+    {
+      "id": 2,
+      "question": "What should a health check endpoint return when a critical dependency is down?",
+      "options": [
+        "200 status code with healthy status",
+        "503 status code with unhealthy status",
+        "404 status code",
+        "500 status code"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Health check endpoints should return a 503 (Service Unavailable) status code when critical dependencies are down, indicating the service is not ready to handle requests."
+    },
+    {
+      "id": 3,
+      "question": "What is the benefit of using custom error classes in error handling?",
+      "options": [
+        "They make errors disappear",
+        "They provide structured error information with consistent properties and context",
+        "They prevent all errors from occurring",
+        "They automatically fix application bugs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Custom error classes provide structured, consistent error information including status codes, error codes, context data, and timestamps, making error handling and debugging more systematic."
+    },
+    {
+      "id": 4,
+      "question": "What are the Core Web Vitals that should be monitored for user experience?",
+      "options": [
+        "CPU, Memory, and Disk usage",
+        "Largest Contentful Paint (LCP), First Input Delay (FID), and Cumulative Layout Shift (CLS)",
+        "Response time, Throughput, and Error rate",
+        "Page views, Session duration, and Bounce rate"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Core Web Vitals are Google's metrics for user experience: LCP measures loading performance, FID measures interactivity, and CLS measures visual stability."
+    },
+    {
+      "id": 5,
+      "question": "What is the purpose of an incident escalation process?",
+      "options": [
+        "To make incidents more complex",
+        "To ensure critical issues get appropriate attention and resources within defined timeframes",
+        "To create more paperwork",
+        "To blame team members for failures"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Incident escalation ensures that unresolved issues get escalated to higher levels of expertise and authority within defined timeframes, preventing critical issues from being ignored."
+    },
+    {
+      "id": 6,
+      "question": "Why should error messages be different in development vs production?",
+      "options": [
+        "To confuse developers",
+        "To hide sensitive information in production while providing detailed debugging info in development",
+        "To reduce application size",
+        "To improve performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Production error messages should hide sensitive information like stack traces and internal details to prevent security issues, while development environments can show full details for debugging."
+    },
+    {
+      "id": 7,
+      "question": "What is the purpose of a circuit breaker pattern in monitoring?",
+      "options": [
+        "To break electrical circuits",
+        "To prevent cascading failures by stopping calls to failing services",
+        "To monitor network traffic",
+        "To restart failed services automatically"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The circuit breaker pattern monitors service calls and automatically stops sending requests to failing services, preventing cascading failures and allowing time for recovery."
+    },
+    {
+      "id": 8,
+      "question": "What metrics should be tracked for performance monitoring?",
+      "options": [
+        "Only error rates",
+        "Response time, throughput, resource utilization, and error rates",
+        "Only CPU usage",
+        "Only database queries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Comprehensive performance monitoring should track response times, throughput (requests per second), resource utilization (CPU, memory, disk), and error rates to identify performance bottlenecks."
+    },
+    {
+      "id": 9,
+      "question": "What is Real User Monitoring (RUM)?",
+      "options": [
+        "Monitoring fake users",
+        "Collecting performance data from actual users' browsers and devices",
+        "Monitoring user authentication",
+        "Tracking user passwords"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Real User Monitoring (RUM) collects performance and user experience data from actual users' browsers and devices, providing insights into real-world application performance."
+    },
+    {
+      "id": 10,
+      "question": "What should be included in a post-mortem analysis?",
+      "options": [
+        "Only who was responsible for the incident",
+        "Root cause analysis, timeline of events, impact assessment, and prevention measures",
+        "Only the cost of the incident",
+        "Only technical details"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A comprehensive post-mortem should include root cause analysis, detailed timeline, impact assessment, lessons learned, and specific action items to prevent similar incidents."
+    }
+  ]
+} 

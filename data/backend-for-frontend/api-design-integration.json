@@ -1,0 +1,487 @@
+{
+  "title": "API Design & Integration",
+  "description": "Master API design principles, RESTful services, GraphQL, versioning strategies, and frontend integration patterns for modern web applications",
+  "sections": [
+    {
+      "id": "restful-api-principles",
+      "title": "RESTful API Principles",
+      "content": [
+        {
+          "type": "heading",
+          "text": "REST Architecture"
+        },
+        {
+          "type": "paragraph",
+          "text": "REST (Representational State Transfer) is an architectural style for designing networked applications. It defines a set of constraints that make APIs scalable, stateless, and cacheable."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Stateless: Each request contains all information needed to process it",
+            "Client-Server: Separation of concerns between client and server",
+            "Cacheable: Responses should be cacheable when appropriate",
+            "Uniform Interface: Consistent resource identification and manipulation",
+            "Layered System: Architecture can have multiple layers",
+            "Code on Demand: Optional constraint for downloadable code"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "HTTP Methods"
+        },
+        {
+          "type": "list",
+          "items": [
+            "GET: Retrieve data, safe and idempotent",
+            "POST: Create new resources, not idempotent",
+            "PUT: Update/replace entire resource, idempotent",
+            "PATCH: Partial update of resource, not guaranteed idempotent",
+            "DELETE: Remove resource, idempotent",
+            "HEAD: Get headers only, like GET but without body",
+            "OPTIONS: Get allowed methods for resource"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// RESTful API examples\n// GET /api/users - Get all users\n// GET /api/users/123 - Get specific user\n// POST /api/users - Create new user\n// PUT /api/users/123 - Update entire user\n// PATCH /api/users/123 - Partial user update\n// DELETE /api/users/123 - Delete user"
+        },
+        {
+          "type": "heading",
+          "text": "HTTP Status Codes"
+        },
+        {
+          "type": "list",
+          "items": [
+            "200 OK: Successful GET, PUT, PATCH",
+            "201 Created: Successful POST",
+            "204 No Content: Successful DELETE",
+            "400 Bad Request: Invalid request format",
+            "401 Unauthorized: Authentication required",
+            "403 Forbidden: Access denied",
+            "404 Not Found: Resource doesn't exist",
+            "409 Conflict: Resource conflict",
+            "422 Unprocessable Entity: Validation errors",
+            "500 Internal Server Error: Server error"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Resource Naming Conventions"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use nouns, not verbs: /users not /getUsers",
+            "Use plural nouns: /users not /user",
+            "Use kebab-case: /user-profiles not /userProfiles",
+            "Hierarchical structure: /users/123/posts/456",
+            "Avoid deep nesting: Maximum 2-3 levels",
+            "Use query parameters for filtering: /users?status=active"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "graphql-fundamentals",
+      "title": "GraphQL Fundamentals",
+      "content": [
+        {
+          "type": "heading",
+          "text": "What is GraphQL"
+        },
+        {
+          "type": "paragraph",
+          "text": "GraphQL is a query language and runtime for APIs that provides a complete description of data, gives clients the power to ask for exactly what they need, and enables powerful developer tools."
+        },
+        {
+          "type": "heading",
+          "text": "GraphQL vs REST"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Single endpoint vs multiple endpoints",
+            "Client specifies data requirements vs fixed data structure",
+            "Strong type system vs varying response schemas",
+            "Real-time subscriptions built-in vs separate WebSocket setup",
+            "Over-fetching/under-fetching solved vs potential data waste",
+            "Introspection and tooling vs manual documentation"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Schema Definition"
+        },
+        {
+          "type": "code",
+          "language": "graphql",
+          "text": "type User {\n  id: ID!\n  name: String!\n  email: String!\n  posts: [Post!]!\n}\n\ntype Post {\n  id: ID!\n  title: String!\n  content: String!\n  author: User!\n  createdAt: DateTime!\n}\n\ntype Query {\n  user(id: ID!): User\n  users(limit: Int, offset: Int): [User!]!\n  post(id: ID!): Post\n}\n\ntype Mutation {\n  createUser(input: CreateUserInput!): User!\n  updateUser(id: ID!, input: UpdateUserInput!): User!\n  deleteUser(id: ID!): Boolean!\n}\n\ntype Subscription {\n  userCreated: User!\n  postUpdated(userId: ID!): Post!\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Queries vs Mutations vs Subscriptions"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Queries: Read operations, safe and idempotent",
+            "Mutations: Write operations, can have side effects",
+            "Subscriptions: Real-time updates, WebSocket-based"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "graphql",
+          "text": "# Query example\nquery GetUser($id: ID!) {\n  user(id: $id) {\n    id\n    name\n    email\n    posts {\n      id\n      title\n      createdAt\n    }\n  }\n}\n\n# Mutation example\nmutation CreatePost($input: CreatePostInput!) {\n  createPost(input: $input) {\n    id\n    title\n    author {\n      name\n    }\n  }\n}\n\n# Subscription example\nsubscription OnPostCreated {\n  postCreated {\n    id\n    title\n    author {\n      name\n    }\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Resolvers"
+        },
+        {
+          "type": "paragraph",
+          "text": "Resolvers are functions that handle GraphQL operations. Each field in a GraphQL schema has a corresponding resolver function."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const resolvers = {\n  Query: {\n    user: async (parent, { id }, context) => {\n      return await context.db.user.findById(id);\n    },\n    users: async (parent, { limit, offset }, context) => {\n      return await context.db.user.findMany({ limit, offset });\n    }\n  },\n  Mutation: {\n    createUser: async (parent, { input }, context) => {\n      return await context.db.user.create(input);\n    }\n  },\n  User: {\n    posts: async (parent, args, context) => {\n      return await context.db.post.findByAuthorId(parent.id);\n    }\n  }\n};"
+        }
+      ]
+    },
+    {
+      "id": "api-versioning",
+      "title": "API Versioning",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Versioning Strategies"
+        },
+        {
+          "type": "list",
+          "items": [
+            "URL Versioning: /api/v1/users, /api/v2/users",
+            "Header Versioning: Accept: application/vnd.api+json;version=1",
+            "Query Parameter: /api/users?version=1",
+            "Media Type Versioning: Accept: application/vnd.myapi.v1+json",
+            "Subdomain Versioning: v1.api.example.com"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Best Practices"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use semantic versioning: Major.Minor.Patch",
+            "Only increment major version for breaking changes",
+            "Maintain backward compatibility when possible",
+            "Provide clear migration paths",
+            "Document version differences thoroughly",
+            "Set deprecation timelines"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express.js API versioning example\nconst express = require('express');\nconst app = express();\n\n// URL versioning\napp.use('/api/v1', require('./routes/v1'));\napp.use('/api/v2', require('./routes/v2'));\n\n// Header versioning middleware\napp.use((req, res, next) => {\n  const version = req.headers['api-version'] || 'v1';\n  req.apiVersion = version;\n  next();\n});\n\n// Version-specific logic\napp.get('/api/users', (req, res) => {\n  if (req.apiVersion === 'v2') {\n    // New response format\n    res.json({ users: [], meta: { total: 0 } });\n  } else {\n    // Legacy format\n    res.json([]);\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Backward Compatibility"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Additive changes: New optional fields, new endpoints",
+            "Default values: Provide defaults for new required fields",
+            "Field aliasing: Support old field names alongside new ones",
+            "Gradual migration: Phase out old features slowly",
+            "Version negotiation: Let clients specify preferred version"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Deprecation Handling"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Deprecation headers: Sunset: Sat, 31 Dec 2024 23:59:59 GMT",
+            "Warning messages in responses",
+            "Documentation updates with migration guides",
+            "Email notifications to API consumers",
+            "Gradual feature removal timeline"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "request-response-patterns",
+      "title": "Request/Response Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Pagination"
+        },
+        {
+          "type": "paragraph",
+          "text": "Pagination is essential for handling large datasets efficiently and providing good user experience."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Offset-based: ?page=2&limit=20 or ?offset=20&limit=20",
+            "Cursor-based: ?after=cursor_value&limit=20",
+            "Page-based: ?page=2&per_page=20",
+            "Time-based: ?since=2024-01-01&until=2024-01-31"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Offset-based pagination response\n{\n  \"data\": [...],\n  \"pagination\": {\n    \"page\": 2,\n    \"per_page\": 20,\n    \"total\": 150,\n    \"total_pages\": 8,\n    \"has_next\": true,\n    \"has_prev\": true\n  }\n}\n\n// Cursor-based pagination response\n{\n  \"data\": [...],\n  \"pagination\": {\n    \"next_cursor\": \"eyJpZCI6MTAwfQ==\",\n    \"prev_cursor\": \"eyJpZCI6ODZ9\",\n    \"has_next\": true,\n    \"has_prev\": true\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Filtering and Sorting"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Query parameters for filtering and sorting\n// GET /api/users?status=active&role=admin&sort=created_at&order=desc\n\n// Complex filtering with operators\n// GET /api/products?price[gte]=100&price[lte]=500&category[in]=electronics,books\n\n// Express.js filtering example\napp.get('/api/users', (req, res) => {\n  const { status, role, sort = 'id', order = 'asc' } = req.query;\n  \n  let query = db.users.createQuery();\n  \n  if (status) query = query.where('status', status);\n  if (role) query = query.where('role', role);\n  \n  query = query.orderBy(sort, order);\n  \n  const users = await query.execute();\n  res.json(users);\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Bulk Operations"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Bulk create\nPOST /api/users/bulk\n{\n  \"users\": [\n    { \"name\": \"John\", \"email\": \"john@example.com\" },\n    { \"name\": \"Jane\", \"email\": \"jane@example.com\" }\n  ]\n}\n\n// Bulk update\nPATCH /api/users/bulk\n{\n  \"updates\": [\n    { \"id\": 1, \"status\": \"active\" },\n    { \"id\": 2, \"status\": \"inactive\" }\n  ]\n}\n\n// Bulk delete\nDELETE /api/users/bulk\n{\n  \"ids\": [1, 2, 3]\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Error Handling"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Consistent error response format\n{\n  \"error\": {\n    \"code\": \"VALIDATION_ERROR\",\n    \"message\": \"Request validation failed\",\n    \"details\": [\n      {\n        \"field\": \"email\",\n        \"message\": \"Email is required\",\n        \"code\": \"REQUIRED\"\n      },\n      {\n        \"field\": \"age\",\n        \"message\": \"Age must be between 18 and 120\",\n        \"code\": \"OUT_OF_RANGE\"\n      }\n    ],\n    \"timestamp\": \"2024-01-15T10:30:00Z\",\n    \"request_id\": \"req_12345\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "api-documentation",
+      "title": "API Documentation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "OpenAPI/Swagger"
+        },
+        {
+          "type": "paragraph",
+          "text": "OpenAPI Specification (formerly Swagger) is a standard for describing REST APIs. It provides a contract-first approach to API development."
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "text": "openapi: 3.0.3\ninfo:\n  title: User API\n  version: 1.0.0\n  description: API for managing users\npaths:\n  /users:\n    get:\n      summary: Get all users\n      parameters:\n        - name: page\n          in: query\n          schema:\n            type: integer\n            default: 1\n        - name: limit\n          in: query\n          schema:\n            type: integer\n            default: 20\n      responses:\n        '200':\n          description: Successful response\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  data:\n                    type: array\n                    items:\n                      $ref: '#/components/schemas/User'\n                  pagination:\n                    $ref: '#/components/schemas/Pagination'\ncomponents:\n  schemas:\n    User:\n      type: object\n      properties:\n        id:\n          type: integer\n        name:\n          type: string\n        email:\n          type: string\n          format: email"
+        },
+        {
+          "type": "heading",
+          "text": "API Contracts"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Define clear input/output schemas",
+            "Specify required vs optional fields",
+            "Document error responses",
+            "Include example requests/responses",
+            "Version your API contracts",
+            "Use contract testing to ensure compliance"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Integration Testing"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Jest API integration test\ndescribe('User API', () => {\n  test('GET /api/users returns paginated users', async () => {\n    const response = await request(app)\n      .get('/api/users')\n      .query({ page: 1, limit: 10 })\n      .expect(200);\n\n    expect(response.body).toMatchObject({\n      data: expect.arrayContaining([\n        expect.objectContaining({\n          id: expect.any(Number),\n          name: expect.any(String),\n          email: expect.stringMatching(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/)\n        })\n      ]),\n      pagination: expect.objectContaining({\n        page: 1,\n        per_page: 10,\n        total: expect.any(Number)\n      })\n    });\n  });\n\n  test('POST /api/users creates new user', async () => {\n    const userData = {\n      name: 'John Doe',\n      email: 'john@example.com'\n    };\n\n    const response = await request(app)\n      .post('/api/users')\n      .send(userData)\n      .expect(201);\n\n    expect(response.body).toMatchObject({\n      id: expect.any(Number),\n      ...userData\n    });\n  });\n});"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "Which HTTP method should be used to partially update a resource?",
+      "options": ["PUT", "PATCH", "POST", "UPDATE"],
+      "correctAnswer": 1,
+      "explanation": "PATCH is used for partial updates of a resource, while PUT is used for replacing the entire resource."
+    },
+    {
+      "id": 2,
+      "question": "What HTTP status code should be returned when a POST request successfully creates a resource?",
+      "options": ["200 OK", "201 Created", "202 Accepted", "204 No Content"],
+      "correctAnswer": 1,
+      "explanation": "201 Created indicates that a POST request has successfully created a new resource."
+    },
+    {
+      "id": 3,
+      "question": "What is the main advantage of GraphQL over REST?",
+      "options": [
+        "GraphQL is faster",
+        "Clients can request exactly the data they need",
+        "GraphQL doesn't need a schema",
+        "GraphQL is easier to cache"
+      ],
+      "correctAnswer": 1,
+      "explanation": "GraphQL allows clients to specify exactly what data they need, avoiding over-fetching and under-fetching issues common with REST APIs."
+    },
+    {
+      "id": 4,
+      "question": "In RESTful API design, which URL pattern is correct for getting a specific user's posts?",
+      "options": [
+        "/getPosts?userId=123",
+        "/users/123/posts",
+        "/posts/user/123",
+        "/users/posts/123"
+      ],
+      "correctAnswer": 1,
+      "explanation": "RESTful URLs should use hierarchical structure with nouns. /users/123/posts clearly shows the relationship between user and their posts."
+    },
+    {
+      "id": 5,
+      "question": "What is the difference between PUT and PATCH HTTP methods?",
+      "options": [
+        "PUT is for creating, PATCH is for updating",
+        "PUT replaces entire resource, PATCH updates partially",
+        "PUT is idempotent, PATCH is not",
+        "They are exactly the same"
+      ],
+      "correctAnswer": 1,
+      "explanation": "PUT replaces the entire resource with the provided data, while PATCH applies partial modifications to the resource."
+    },
+    {
+      "id": 6,
+      "question": "Which pagination approach is better for real-time data?",
+      "options": [
+        "Offset-based pagination",
+        "Cursor-based pagination",
+        "Page-based pagination",
+        "Time-based pagination"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cursor-based pagination is better for real-time data as it doesn't suffer from the 'shifting data' problem when new items are added."
+    },
+    {
+      "id": 7,
+      "question": "What should be included in a well-structured API error response?",
+      "options": [
+        "Only the error message",
+        "Error code, message, and details",
+        "Just the HTTP status code",
+        "Only internal error details"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A good error response includes error code, human-readable message, detailed validation errors, timestamp, and request ID for tracking."
+    },
+    {
+      "id": 8,
+      "question": "In GraphQL, what are resolvers?",
+      "options": [
+        "Functions that validate queries",
+        "Functions that fetch data for each field",
+        "Database connection pools",
+        "Query optimization tools"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Resolvers are functions that fetch the actual data for each field in a GraphQL query. Each field in the schema has a corresponding resolver."
+    },
+    {
+      "id": 9,
+      "question": "Which API versioning strategy is most commonly recommended?",
+      "options": [
+        "Query parameters",
+        "URL versioning",
+        "Header versioning",
+        "Subdomain versioning"
+      ],
+      "correctAnswer": 1,
+      "explanation": "URL versioning (/api/v1/) is most commonly recommended as it's explicit, easy to implement, and works well with caching and routing."
+    },
+    {
+      "id": 10,
+      "question": "What is the purpose of the OPTIONS HTTP method?",
+      "options": [
+        "To update optional fields",
+        "To get allowed methods for a resource",
+        "To set configuration options",
+        "To delete optional data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "OPTIONS is used to determine which HTTP methods are allowed for a specific resource, often used in CORS preflight requests."
+    },
+    {
+      "id": 11,
+      "question": "What does idempotent mean in the context of HTTP methods?",
+      "options": [
+        "The method is very fast",
+        "Multiple identical requests have the same effect as a single request",
+        "The method requires authentication",
+        "The method can only be called once"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Idempotent means that making multiple identical requests has the same effect as making a single request. GET, PUT, and DELETE are idempotent."
+    },
+    {
+      "id": 12,
+      "question": "In GraphQL, what is the difference between a query and a mutation?",
+      "options": [
+        "Queries are faster than mutations",
+        "Queries read data, mutations modify data",
+        "Mutations can only create data",
+        "There is no difference"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Queries are used for reading data (like GET in REST), while mutations are used for writing/modifying data (like POST, PUT, PATCH in REST)."
+    },
+    {
+      "id": 13,
+      "question": "What HTTP status code should be returned for a validation error?",
+      "options": ["400 Bad Request", "422 Unprocessable Entity", "500 Internal Server Error", "401 Unauthorized"],
+      "correctAnswer": 1,
+      "explanation": "422 Unprocessable Entity is specifically for validation errors where the request is well-formed but contains semantic errors."
+    },
+    {
+      "id": 14,
+      "question": "What is the main benefit of OpenAPI/Swagger specification?",
+      "options": [
+        "It makes APIs faster",
+        "It provides interactive documentation and code generation",
+        "It handles authentication automatically",
+        "It optimizes database queries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "OpenAPI specification provides interactive documentation, enables code generation for clients/servers, and serves as a contract between frontend and backend teams."
+    },
+    {
+      "id": 15,
+      "question": "Which approach is best for handling bulk operations in REST APIs?",
+      "options": [
+        "Multiple individual requests",
+        "Single request with array of operations",
+        "Using GraphQL instead",
+        "Bulk operations are not possible in REST"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A single request with an array of operations is more efficient than multiple individual requests, reducing network overhead and allowing for transactional behavior."
+    }
+  ]
+} 

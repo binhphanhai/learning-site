@@ -31,7 +31,7 @@ export interface LearningContent {
 
 export function getAvailableContent(): string[] {
   const dataDirectory = path.join(process.cwd(), "data");
-  const sections = ["basic-knowledge", "to-be-senior", "frontend-roadmap"];
+  const sections = ["basic-knowledge", "to-be-senior", "frontend-roadmap", "backend-for-frontend"];
   const allContent: string[] = [];
 
   sections.forEach((section) => {
@@ -51,7 +51,7 @@ export function getAvailableContent(): string[] {
 export function getContentBySlug(slug: string): LearningContent | null {
   try {
     const dataDirectory = path.join(process.cwd(), "data");
-    const sections = ["basic-knowledge", "to-be-senior", "frontend-roadmap"];
+    const sections = ["basic-knowledge", "to-be-senior", "frontend-roadmap", "backend-for-frontend"];
 
     for (const section of sections) {
       const fullPath = path.join(dataDirectory, section, `${slug}.json`);

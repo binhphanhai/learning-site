@@ -351,7 +351,7 @@ export default function LearningPage({
                 onClick={({ key }) => setSelectedSection(key as string)}
                 className="border-0 bg-gray-50 dark:bg-dark-surface"
                 style={{
-                  height: "calc(100vh - 220px)",
+                  height: "calc(100vh - 240px)",
                   borderRight: "none",
                   padding: "12px",
                 }}
@@ -407,7 +407,7 @@ export default function LearningPage({
             <Content
               ref={contentScrollRef}
               className="bg-white dark:bg-dark-bg"
-              style={{ height: 'calc(100vh - 150px)', overflow: "auto" }}
+              style={{ height: 'calc(100vh - 170px)', overflow: "auto" }}
             >
               <div className="p-8 max-w-4xl">
                 {currentSection && (
@@ -444,7 +444,7 @@ export default function LearningPage({
       children: (
         <div
           className="bg-gray-50 dark:bg-dark-bg py-8"
-          style={{ height: "calc(100vh - 150px)", overflow: "auto", paddingBottom: 40 }}
+          style={{ height: "calc(100vh - 170px)", overflow: "auto", paddingBottom: 40 }}
         >
           <div className="max-w-4xl mx-auto px-6">
             {/* Progress Card */}

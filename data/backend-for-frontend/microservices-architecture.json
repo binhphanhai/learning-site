@@ -1,0 +1,298 @@
+{
+  "title": "Microservices Architecture",
+  "description": "Learn microservices architecture patterns, service decomposition, inter-service communication, and how to build scalable distributed systems that work seamlessly with frontend applications.",
+  "sections": [
+    {
+      "id": "service-decomposition",
+      "title": "Service Decomposition",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Domain-Driven Design (DDD)"
+        },
+        {
+          "type": "paragraph",
+          "text": "DDD helps identify service boundaries by organizing services around business domains rather than technical concerns."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Example: E-commerce domain decomposition\n\n// User Service - handles user management\nconst userService = {\n  endpoints: [\n    'POST /users',\n    'GET /users/:id',\n    'PUT /users/:id',\n    'DELETE /users/:id'\n  ],\n  database: 'users_db',\n  responsibilities: ['user registration', 'authentication', 'profile management']\n};\n\n// Product Service - handles product catalog\nconst productService = {\n  endpoints: [\n    'GET /products',\n    'GET /products/:id',\n    'POST /products',\n    'PUT /products/:id'\n  ],\n  database: 'products_db',\n  responsibilities: ['product catalog', 'inventory management', 'pricing']\n};\n\n// Order Service - handles order processing\nconst orderService = {\n  endpoints: [\n    'POST /orders',\n    'GET /orders/:id',\n    'PUT /orders/:id/status'\n  ],\n  database: 'orders_db',\n  responsibilities: ['order creation', 'order tracking', 'order fulfillment']\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Service Boundaries"
+        },
+        {
+          "type": "paragraph",
+          "text": "Defining clear service boundaries is crucial for maintainability and scalability."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Each service should have a single responsibility",
+            "Services should be loosely coupled",
+            "Data should not be shared directly between services",
+            "Services should communicate through well-defined APIs",
+            "Each service should own its data and business logic"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Bad: Shared database across services\n// userService.js\nconst getUser = async (id) => {\n  return await sharedDB.query('SELECT * FROM users WHERE id = ?', [id]);\n};\n\n// orderService.js - directly accessing user data\nconst createOrder = async (orderData) => {\n  const user = await sharedDB.query('SELECT * FROM users WHERE id = ?', [orderData.userId]);\n  // This creates tight coupling!\n};\n\n// Good: Service communication through APIs\n// userService.js\nconst userService = {\n  async getUser(id) {\n    return await userDB.query('SELECT * FROM users WHERE id = ?', [id]);\n  }\n};\n\n// orderService.js - calling user service API\nconst createOrder = async (orderData) => {\n  const userResponse = await fetch(`http://user-service/users/${orderData.userId}`);\n  const user = await userResponse.json();\n  \n  if (!user) {\n    throw new Error('User not found');\n  }\n  \n  const order = await orderDB.create(orderData);\n  return order;\n};"
+        }
+      ]
+    },
+    {
+      "id": "inter-service-communication",
+      "title": "Inter-Service Communication",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Synchronous Communication"
+        },
+        {
+          "type": "paragraph",
+          "text": "Direct service-to-service API calls using HTTP/REST or gRPC."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// HTTP/REST communication with error handling\nclass ServiceClient {\n  constructor(baseUrl, timeout = 5000) {\n    this.baseUrl = baseUrl;\n    this.timeout = timeout;\n  }\n  \n  async get(endpoint, options = {}) {\n    const controller = new AbortController();\n    const timeoutId = setTimeout(() => controller.abort(), this.timeout);\n    \n    try {\n      const response = await fetch(`${this.baseUrl}${endpoint}`, {\n        ...options,\n        signal: controller.signal,\n        headers: {\n          'Content-Type': 'application/json',\n          ...options.headers\n        }\n      });\n      \n      clearTimeout(timeoutId);\n      \n      if (!response.ok) {\n        throw new Error(`HTTP ${response.status}: ${response.statusText}`);\n      }\n      \n      return await response.json();\n    } catch (error) {\n      clearTimeout(timeoutId);\n      if (error.name === 'AbortError') {\n        throw new Error('Request timeout');\n      }\n      throw error;\n    }\n  }\n}\n\n// Usage in order service\nconst userClient = new ServiceClient('http://user-service:3001');\nconst productClient = new ServiceClient('http://product-service:3002');\n\nconst createOrder = async (orderData) => {\n  try {\n    // Validate user exists\n    const user = await userClient.get(`/users/${orderData.userId}`);\n    \n    // Validate products exist and get prices\n    const products = await Promise.all(\n      orderData.items.map(item => \n        productClient.get(`/products/${item.productId}`)\n      )\n    );\n    \n    const totalAmount = products.reduce((sum, product, index) => \n      sum + (product.price * orderData.items[index].quantity), 0\n    );\n    \n    const order = await orderDB.create({\n      ...orderData,\n      totalAmount,\n      status: 'pending'\n    });\n    \n    return order;\n  } catch (error) {\n    console.error('Order creation failed:', error);\n    throw new Error('Unable to create order');\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Asynchronous Communication"
+        },
+        {
+          "type": "paragraph",
+          "text": "Event-driven communication using message queues and pub/sub patterns."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Message queue implementation with Redis\nconst Redis = require('ioredis');\nconst redis = new Redis(process.env.REDIS_URL);\n\nclass MessageQueue {\n  static async publish(channel, message) {\n    const messageWithMetadata = {\n      id: generateId(),\n      timestamp: Date.now(),\n      data: message,\n      source: process.env.SERVICE_NAME\n    };\n    \n    await redis.lpush(channel, JSON.stringify(messageWithMetadata));\n    await redis.publish(`${channel}_notification`, 'new_message');\n  }\n  \n  static async subscribe(channel, handler) {\n    const processMessages = async () => {\n      while (true) {\n        try {\n          const message = await redis.brpop(channel, 1);\n          if (message) {\n            const parsedMessage = JSON.parse(message[1]);\n            await handler(parsedMessage);\n          }\n        } catch (error) {\n          console.error(`Error processing message from ${channel}:`, error);\n          await new Promise(resolve => setTimeout(resolve, 1000));\n        }\n      }\n    };\n    \n    processMessages();\n  }\n}\n\n// Order service publishes events\nconst createOrder = async (orderData) => {\n  const order = await orderDB.create(orderData);\n  \n  // Publish event for other services\n  await MessageQueue.publish('order_events', {\n    type: 'ORDER_CREATED',\n    orderId: order.id,\n    userId: order.userId,\n    items: order.items,\n    totalAmount: order.totalAmount\n  });\n  \n  return order;\n};\n\n// Inventory service subscribes to order events\nMessageQueue.subscribe('order_events', async (message) => {\n  if (message.data.type === 'ORDER_CREATED') {\n    console.log('Processing order for inventory update:', message.data.orderId);\n    \n    // Update inventory\n    for (const item of message.data.items) {\n      await inventoryDB.updateStock(item.productId, -item.quantity);\n    }\n    \n    // Publish inventory updated event\n    await MessageQueue.publish('inventory_events', {\n      type: 'INVENTORY_UPDATED',\n      orderId: message.data.orderId,\n      items: message.data.items\n    });\n  }\n});"
+        }
+      ]
+    },
+    {
+      "id": "service-discovery",
+      "title": "Service Discovery & Load Balancing",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Service Registry Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Services register themselves and discover other services dynamically."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Simple service registry implementation\nclass ServiceRegistry {\n  constructor() {\n    this.services = new Map();\n    this.healthCheckInterval = 30000; // 30 seconds\n    this.startHealthChecks();\n  }\n  \n  register(serviceName, serviceInfo) {\n    if (!this.services.has(serviceName)) {\n      this.services.set(serviceName, []);\n    }\n    \n    const serviceInstance = {\n      ...serviceInfo,\n      id: generateId(),\n      registeredAt: Date.now(),\n      lastHealthCheck: Date.now(),\n      healthy: true\n    };\n    \n    this.services.get(serviceName).push(serviceInstance);\n    console.log(`Service registered: ${serviceName}`, serviceInstance);\n    \n    return serviceInstance.id;\n  }\n  \n  discover(serviceName) {\n    const instances = this.services.get(serviceName) || [];\n    return instances.filter(instance => instance.healthy);\n  }\n  \n  getHealthyInstance(serviceName) {\n    const instances = this.discover(serviceName);\n    if (instances.length === 0) {\n      throw new Error(`No healthy instances of ${serviceName} found`);\n    }\n    \n    // Simple round-robin load balancing\n    const index = Math.floor(Math.random() * instances.length);\n    return instances[index];\n  }\n  \n  async startHealthChecks() {\n    setInterval(async () => {\n      for (const [serviceName, instances] of this.services) {\n        for (const instance of instances) {\n          try {\n            const response = await fetch(`${instance.url}/health`, {\n              timeout: 5000\n            });\n            instance.healthy = response.ok;\n            instance.lastHealthCheck = Date.now();\n          } catch (error) {\n            instance.healthy = false;\n            console.warn(`Health check failed for ${serviceName}:`, instance.url);\n          }\n        }\n      }\n    }, this.healthCheckInterval);\n  }\n}\n\n// Usage in services\nconst registry = new ServiceRegistry();\n\n// Service registration on startup\nconst startService = async () => {\n  const serviceInfo = {\n    url: `http://localhost:${process.env.PORT}`,\n    port: process.env.PORT,\n    version: process.env.SERVICE_VERSION || '1.0.0'\n  };\n  \n  const instanceId = registry.register(process.env.SERVICE_NAME, serviceInfo);\n  \n  // Health check endpoint\n  app.get('/health', (req, res) => {\n    res.json({ status: 'healthy', timestamp: Date.now() });\n  });\n  \n  console.log(`${process.env.SERVICE_NAME} started with instance ID: ${instanceId}`);\n};\n\n// Service discovery in client\nconst callUserService = async (endpoint) => {\n  const instance = registry.getHealthyInstance('user-service');\n  const response = await fetch(`${instance.url}${endpoint}`);\n  return response.json();\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Circuit Breaker Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Prevent cascading failures by stopping calls to unhealthy services."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class CircuitBreaker {\n  constructor(threshold = 5, timeout = 60000, monitoringPeriod = 10000) {\n    this.threshold = threshold; // failures before opening\n    this.timeout = timeout; // time before trying again\n    this.monitoringPeriod = monitoringPeriod;\n    this.failureCount = 0;\n    this.lastFailureTime = null;\n    this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN\n  }\n  \n  async call(fn, ...args) {\n    if (this.state === 'OPEN') {\n      if (Date.now() - this.lastFailureTime > this.timeout) {\n        this.state = 'HALF_OPEN';\n        console.log('Circuit breaker is now HALF_OPEN');\n      } else {\n        throw new Error('Circuit breaker is OPEN');\n      }\n    }\n    \n    try {\n      const result = await fn(...args);\n      this.onSuccess();\n      return result;\n    } catch (error) {\n      this.onFailure();\n      throw error;\n    }\n  }\n  \n  onSuccess() {\n    this.failureCount = 0;\n    if (this.state === 'HALF_OPEN') {\n      this.state = 'CLOSED';\n      console.log('Circuit breaker is now CLOSED');\n    }\n  }\n  \n  onFailure() {\n    this.failureCount++;\n    this.lastFailureTime = Date.now();\n    \n    if (this.failureCount >= this.threshold) {\n      this.state = 'OPEN';\n      console.log('Circuit breaker is now OPEN');\n    }\n  }\n  \n  getState() {\n    return {\n      state: this.state,\n      failureCount: this.failureCount,\n      lastFailureTime: this.lastFailureTime\n    };\n  }\n}\n\n// Usage with service calls\nconst userServiceBreaker = new CircuitBreaker(3, 30000);\n\nconst getUserWithCircuitBreaker = async (userId) => {\n  try {\n    return await userServiceBreaker.call(async () => {\n      const response = await fetch(`http://user-service/users/${userId}`);\n      if (!response.ok) {\n        throw new Error(`HTTP ${response.status}`);\n      }\n      return response.json();\n    });\n  } catch (error) {\n    console.error('User service call failed:', error.message);\n    \n    // Fallback to cached data or default response\n    const cachedUser = await getCachedUser(userId);\n    if (cachedUser) {\n      return cachedUser;\n    }\n    \n    return { id: userId, name: 'Unknown User', email: 'unknown@example.com' };\n  }\n};"
+        }
+      ]
+    },
+    {
+      "id": "data-consistency",
+      "title": "Data Consistency Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Saga Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Manage distributed transactions across multiple services using compensating actions."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Orchestrator-based Saga implementation\nclass OrderSaga {\n  constructor() {\n    this.steps = [\n      { name: 'validatePayment', service: 'payment-service', compensate: 'refundPayment' },\n      { name: 'reserveInventory', service: 'inventory-service', compensate: 'releaseInventory' },\n      { name: 'createOrder', service: 'order-service', compensate: 'cancelOrder' },\n      { name: 'sendNotification', service: 'notification-service', compensate: 'sendCancellationNotification' }\n    ];\n  }\n  \n  async execute(orderData) {\n    const sagaId = generateId();\n    const completedSteps = [];\n    \n    try {\n      console.log(`Starting saga ${sagaId} for order`);\n      \n      for (const step of this.steps) {\n        console.log(`Executing step: ${step.name}`);\n        \n        const result = await this.executeStep(step, orderData, sagaId);\n        completedSteps.push({ step, result });\n        \n        console.log(`Step ${step.name} completed successfully`);\n      }\n      \n      console.log(`Saga ${sagaId} completed successfully`);\n      return { success: true, sagaId, completedSteps };\n      \n    } catch (error) {\n      console.error(`Saga ${sagaId} failed at step:`, error.message);\n      \n      // Execute compensating actions in reverse order\n      await this.compensate(completedSteps.reverse(), sagaId);\n      \n      throw new Error(`Saga ${sagaId} failed and compensated`);\n    }\n  }\n  \n  async executeStep(step, orderData, sagaId) {\n    const response = await fetch(`http://${step.service}/${step.name}`, {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ ...orderData, sagaId })\n    });\n    \n    if (!response.ok) {\n      throw new Error(`Step ${step.name} failed: ${response.statusText}`);\n    }\n    \n    return await response.json();\n  }\n  \n  async compensate(completedSteps, sagaId) {\n    console.log(`Starting compensation for saga ${sagaId}`);\n    \n    for (const { step, result } of completedSteps) {\n      try {\n        console.log(`Compensating step: ${step.name}`);\n        \n        await fetch(`http://${step.service}/${step.compensate}`, {\n          method: 'POST',\n          headers: { 'Content-Type': 'application/json' },\n          body: JSON.stringify({ result, sagaId })\n        });\n        \n        console.log(`Compensation for ${step.name} completed`);\n      } catch (error) {\n        console.error(`Compensation failed for ${step.name}:`, error.message);\n        // Log for manual intervention\n      }\n    }\n  }\n}\n\n// Usage in order processing\nconst orderSaga = new OrderSaga();\n\napp.post('/orders', async (req, res) => {\n  try {\n    const result = await orderSaga.execute(req.body);\n    res.json(result);\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Event Sourcing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Store events rather than current state to maintain audit trail and enable replay."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Event store implementation\nclass EventStore {\n  constructor() {\n    this.events = new Map(); // aggregateId -> events[]\n  }\n  \n  async saveEvents(aggregateId, events, expectedVersion) {\n    const existingEvents = this.events.get(aggregateId) || [];\n    \n    if (existingEvents.length !== expectedVersion) {\n      throw new Error('Concurrency conflict');\n    }\n    \n    const eventsWithMetadata = events.map((event, index) => ({\n      ...event,\n      id: generateId(),\n      aggregateId,\n      version: expectedVersion + index + 1,\n      timestamp: Date.now()\n    }));\n    \n    this.events.set(aggregateId, [...existingEvents, ...eventsWithMetadata]);\n    \n    // Publish events to event bus\n    for (const event of eventsWithMetadata) {\n      await this.publishEvent(event);\n    }\n    \n    return eventsWithMetadata;\n  }\n  \n  async getEvents(aggregateId, fromVersion = 0) {\n    const events = this.events.get(aggregateId) || [];\n    return events.filter(event => event.version > fromVersion);\n  }\n  \n  async publishEvent(event) {\n    // Publish to message queue or event bus\n    await MessageQueue.publish('domain_events', event);\n  }\n}\n\n// Order aggregate with event sourcing\nclass Order {\n  constructor(id) {\n    this.id = id;\n    this.version = 0;\n    this.items = [];\n    this.status = 'draft';\n    this.totalAmount = 0;\n    this.uncommittedEvents = [];\n  }\n  \n  static fromEvents(events) {\n    const order = new Order(events[0].aggregateId);\n    \n    for (const event of events) {\n      order.applyEvent(event);\n    }\n    \n    order.uncommittedEvents = [];\n    return order;\n  }\n  \n  addItem(productId, quantity, price) {\n    const event = {\n      type: 'ITEM_ADDED',\n      data: { productId, quantity, price }\n    };\n    \n    this.applyEvent(event);\n    this.uncommittedEvents.push(event);\n  }\n  \n  confirm() {\n    if (this.status !== 'draft') {\n      throw new Error('Order cannot be confirmed');\n    }\n    \n    const event = {\n      type: 'ORDER_CONFIRMED',\n      data: { confirmedAt: Date.now() }\n    };\n    \n    this.applyEvent(event);\n    this.uncommittedEvents.push(event);\n  }\n  \n  applyEvent(event) {\n    switch (event.type) {\n      case 'ITEM_ADDED':\n        this.items.push(event.data);\n        this.totalAmount += event.data.quantity * event.data.price;\n        break;\n      case 'ORDER_CONFIRMED':\n        this.status = 'confirmed';\n        break;\n    }\n    \n    this.version++;\n  }\n  \n  getUncommittedEvents() {\n    return this.uncommittedEvents;\n  }\n  \n  markEventsAsCommitted() {\n    this.uncommittedEvents = [];\n  }\n}\n\n// Repository pattern with event store\nclass OrderRepository {\n  constructor(eventStore) {\n    this.eventStore = eventStore;\n  }\n  \n  async save(order) {\n    const events = order.getUncommittedEvents();\n    if (events.length === 0) return;\n    \n    await this.eventStore.saveEvents(\n      order.id,\n      events,\n      order.version - events.length\n    );\n    \n    order.markEventsAsCommitted();\n  }\n  \n  async getById(id) {\n    const events = await this.eventStore.getEvents(id);\n    if (events.length === 0) {\n      throw new Error('Order not found');\n    }\n    \n    return Order.fromEvents(events);\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "frontend-integration",
+      "title": "Frontend Integration Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Backend for Frontend (BFF) Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Create dedicated backend services tailored for specific frontend applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// BFF for mobile app\nclass MobileBFF {\n  constructor() {\n    this.userService = new ServiceClient('http://user-service');\n    this.productService = new ServiceClient('http://product-service');\n    this.orderService = new ServiceClient('http://order-service');\n  }\n  \n  // Aggregated endpoint for mobile dashboard\n  async getDashboard(userId) {\n    try {\n      const [user, recentOrders, recommendations] = await Promise.all([\n        this.userService.get(`/users/${userId}`),\n        this.orderService.get(`/orders?userId=${userId}&limit=5`),\n        this.productService.get(`/products/recommendations/${userId}`)\n      ]);\n      \n      // Transform data for mobile consumption\n      return {\n        user: {\n          id: user.id,\n          name: user.name,\n          avatar: user.avatar\n        },\n        recentOrders: recentOrders.map(order => ({\n          id: order.id,\n          status: order.status,\n          total: order.totalAmount,\n          itemCount: order.items.length\n        })),\n        recommendations: recommendations.slice(0, 10).map(product => ({\n          id: product.id,\n          name: product.name,\n          price: product.price,\n          image: product.thumbnailUrl\n        }))\n      };\n    } catch (error) {\n      console.error('Dashboard aggregation failed:', error);\n      throw new Error('Unable to load dashboard');\n    }\n  }\n  \n  // Simplified order creation for mobile\n  async createQuickOrder(userId, productId, quantity) {\n    try {\n      const [user, product] = await Promise.all([\n        this.userService.get(`/users/${userId}`),\n        this.productService.get(`/products/${productId}`)\n      ]);\n      \n      const orderData = {\n        userId,\n        items: [{ productId, quantity, price: product.price }],\n        shippingAddress: user.defaultAddress,\n        paymentMethod: user.defaultPaymentMethod\n      };\n      \n      const order = await this.orderService.post('/orders', orderData);\n      \n      // Return simplified response for mobile\n      return {\n        orderId: order.id,\n        status: order.status,\n        estimatedDelivery: order.estimatedDelivery,\n        total: order.totalAmount\n      };\n    } catch (error) {\n      console.error('Quick order creation failed:', error);\n      throw new Error('Unable to create order');\n    }\n  }\n}\n\n// BFF for web app (different data requirements)\nclass WebBFF {\n  constructor() {\n    this.userService = new ServiceClient('http://user-service');\n    this.productService = new ServiceClient('http://product-service');\n    this.orderService = new ServiceClient('http://order-service');\n    this.analyticsService = new ServiceClient('http://analytics-service');\n  }\n  \n  // Detailed dashboard for web\n  async getDashboard(userId) {\n    const [user, orders, analytics, products] = await Promise.all([\n      this.userService.get(`/users/${userId}`),\n      this.orderService.get(`/orders?userId=${userId}&limit=20`),\n      this.analyticsService.get(`/users/${userId}/stats`),\n      this.productService.get('/products/trending')\n    ]);\n    \n    return {\n      user,\n      orders,\n      analytics,\n      trendingProducts: products\n    };\n  }\n}\n\n// Express routes for BFF\nconst mobileBFF = new MobileBFF();\nconst webBFF = new WebBFF();\n\n// Mobile API endpoints\napp.get('/mobile/dashboard/:userId', async (req, res) => {\n  try {\n    const dashboard = await mobileBFF.getDashboard(req.params.userId);\n    res.json(dashboard);\n  } catch (error) {\n    res.status(500).json({ error: error.message });\n  }\n});\n\napp.post('/mobile/quick-order', async (req, res) => {\n  try {\n    const { userId, productId, quantity } = req.body;\n    const order = await mobileBFF.createQuickOrder(userId, productId, quantity);\n    res.json(order);\n  } catch (error) {\n    res.status(500).json({ error: error.message });\n  }\n});\n\n// Web API endpoints\napp.get('/web/dashboard/:userId', async (req, res) => {\n  try {\n    const dashboard = await webBFF.getDashboard(req.params.userId);\n    res.json(dashboard);\n  } catch (error) {\n    res.status(500).json({ error: error.message });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "API Gateway Pattern"
+        },
+        {
+          "type": "paragraph",
+          "text": "Single entry point for all client requests with routing, authentication, and rate limiting."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// API Gateway implementation\nclass APIGateway {\n  constructor() {\n    this.routes = new Map();\n    this.middleware = [];\n    this.serviceRegistry = new ServiceRegistry();\n  }\n  \n  addRoute(pattern, serviceName, options = {}) {\n    this.routes.set(pattern, {\n      serviceName,\n      ...options\n    });\n  }\n  \n  use(middleware) {\n    this.middleware.push(middleware);\n  }\n  \n  async handleRequest(req, res) {\n    try {\n      // Apply middleware\n      for (const middleware of this.middleware) {\n        await middleware(req, res);\n      }\n      \n      // Find matching route\n      const route = this.findRoute(req.path);\n      if (!route) {\n        return res.status(404).json({ error: 'Route not found' });\n      }\n      \n      // Rate limiting\n      if (route.rateLimit) {\n        const allowed = await this.checkRateLimit(req, route.rateLimit);\n        if (!allowed) {\n          return res.status(429).json({ error: 'Rate limit exceeded' });\n        }\n      }\n      \n      // Load balancing\n      const serviceInstance = this.serviceRegistry.getHealthyInstance(route.serviceName);\n      \n      // Proxy request\n      const response = await this.proxyRequest(req, serviceInstance, route);\n      \n      // Transform response if needed\n      if (route.responseTransform) {\n        response.data = route.responseTransform(response.data);\n      }\n      \n      res.status(response.status).json(response.data);\n      \n    } catch (error) {\n      console.error('Gateway error:', error);\n      res.status(500).json({ error: 'Internal server error' });\n    }\n  }\n  \n  findRoute(path) {\n    for (const [pattern, route] of this.routes) {\n      if (this.matchPath(pattern, path)) {\n        return route;\n      }\n    }\n    return null;\n  }\n  \n  matchPath(pattern, path) {\n    const regex = new RegExp(pattern.replace(/:\\w+/g, '([^/]+)'));\n    return regex.test(path);\n  }\n  \n  async proxyRequest(req, serviceInstance, route) {\n    const targetUrl = `${serviceInstance.url}${req.path}`;\n    \n    const response = await fetch(targetUrl, {\n      method: req.method,\n      headers: {\n        ...req.headers,\n        'X-Gateway-Request-ID': generateId()\n      },\n      body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined\n    });\n    \n    return {\n      status: response.status,\n      data: await response.json()\n    };\n  }\n  \n  async checkRateLimit(req, limit) {\n    const key = `rate_limit:${req.ip}:${req.path}`;\n    const current = await redis.get(key) || 0;\n    \n    if (current >= limit.requests) {\n      return false;\n    }\n    \n    await redis.incr(key);\n    await redis.expire(key, limit.windowMs / 1000);\n    \n    return true;\n  }\n}\n\n// Gateway setup\nconst gateway = new APIGateway();\n\n// Middleware\ngateway.use(async (req, res) => {\n  // Authentication\n  if (req.headers.authorization) {\n    const token = req.headers.authorization.replace('Bearer ', '');\n    req.user = await verifyToken(token);\n  }\n});\n\ngateway.use(async (req, res) => {\n  // Request logging\n  console.log(`${req.method} ${req.path} - ${req.ip}`);\n});\n\n// Route configuration\ngateway.addRoute('/api/users/:id', 'user-service', {\n  requireAuth: true,\n  rateLimit: { requests: 100, windowMs: 60000 }\n});\n\ngateway.addRoute('/api/products.*', 'product-service', {\n  rateLimit: { requests: 200, windowMs: 60000 }\n});\n\ngateway.addRoute('/api/orders.*', 'order-service', {\n  requireAuth: true,\n  rateLimit: { requests: 50, windowMs: 60000 }\n});\n\n// Start gateway\nconst app = express();\napp.use(express.json());\napp.use('*', (req, res) => gateway.handleRequest(req, res));\n\napp.listen(3000, () => {\n  console.log('API Gateway listening on port 3000');\n});"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main principle of Domain-Driven Design (DDD) in microservices?",
+      "options": [
+        "Organize services around technical concerns",
+        "Organize services around business domains",
+        "Use the same database for all services",
+        "Minimize the number of services"
+      ],
+      "correctAnswer": 1,
+      "explanation": "DDD organizes services around business domains rather than technical concerns, ensuring that each service has a clear business purpose and boundaries."
+    },
+    {
+      "id": 2,
+      "question": "What is the Circuit Breaker pattern used for?",
+      "options": [
+        "Load balancing between services",
+        "Preventing cascading failures by stopping calls to unhealthy services",
+        "Encrypting communication between services",
+        "Caching service responses"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Circuit Breaker pattern prevents cascading failures by monitoring service calls and stopping requests to services that are failing, allowing them time to recover."
+    },
+    {
+      "id": 3,
+      "question": "What is the main advantage of asynchronous communication in microservices?",
+      "options": [
+        "It's faster than synchronous communication",
+        "It reduces coupling and improves resilience",
+        "It's easier to implement",
+        "It uses less bandwidth"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Asynchronous communication reduces coupling between services and improves resilience by allowing services to continue operating even if other services are temporarily unavailable."
+    },
+    {
+      "id": 4,
+      "question": "What is the Saga pattern used for?",
+      "options": [
+        "Service discovery",
+        "Managing distributed transactions across multiple services",
+        "Load balancing",
+        "Caching data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The Saga pattern manages distributed transactions across multiple services by coordinating a sequence of operations and providing compensating actions for rollback."
+    },
+    {
+      "id": 5,
+      "question": "What is the Backend for Frontend (BFF) pattern?",
+      "options": [
+        "A single backend service for all frontends",
+        "Dedicated backend services tailored for specific frontend applications",
+        "A frontend framework for backend development",
+        "A database pattern for frontend data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "BFF creates dedicated backend services tailored for specific frontend applications (mobile, web, etc.), allowing optimization for each client's specific needs."
+    },
+    {
+      "id": 6,
+      "question": "What is the primary purpose of an API Gateway?",
+      "options": [
+        "To store data for microservices",
+        "To provide a single entry point for all client requests",
+        "To replace all microservices",
+        "To handle database connections"
+      ],
+      "correctAnswer": 1,
+      "explanation": "An API Gateway serves as a single entry point for all client requests, handling routing, authentication, rate limiting, and other cross-cutting concerns."
+    },
+    {
+      "id": 7,
+      "question": "What is Event Sourcing?",
+      "options": [
+        "A way to source events from external systems",
+        "Storing events rather than current state",
+        "A method for event-driven programming",
+        "A technique for event handling in frontend"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Event Sourcing stores events (what happened) rather than current state, providing a complete audit trail and enabling features like replay and time travel."
+    },
+    {
+      "id": 8,
+      "question": "What is the main challenge of data consistency in microservices?",
+      "options": [
+        "Services share the same database",
+        "Each service owns its data, making ACID transactions impossible across services",
+        "Data is stored in multiple formats",
+        "Services are too fast"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Since each service owns its data and they can't share databases, traditional ACID transactions across services become impossible, requiring patterns like Saga for distributed transactions."
+    },
+    {
+      "id": 9,
+      "question": "What is service discovery?",
+      "options": [
+        "Finding bugs in services",
+        "The mechanism for services to find and communicate with each other",
+        "Monitoring service performance",
+        "Documenting service APIs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Service discovery is the mechanism that allows services to find and communicate with each other dynamically, often using service registries."
+    },
+    {
+      "id": 10,
+      "question": "What is the difference between orchestration and choreography in microservices?",
+      "options": [
+        "Orchestration is for databases, choreography is for APIs",
+        "Orchestration has a central coordinator, choreography is decentralized",
+        "Choreography is faster than orchestration",
+        "They are the same thing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Orchestration uses a central coordinator to manage the workflow, while choreography is decentralized with services reacting to events without a central coordinator."
+    }
+  ]
+} 

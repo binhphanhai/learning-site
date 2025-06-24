@@ -1,0 +1,445 @@
+{
+  "title": "Caching Strategies",
+  "description": "Master caching strategies for modern web applications including client-side, server-side, CDN, and application-level caching with cache invalidation patterns",
+  "sections": [
+    {
+      "id": "client-side-caching",
+      "title": "Client-Side Caching",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Browser Cache"
+        },
+        {
+          "type": "paragraph",
+          "text": "Browser caching is the first line of defense for improving application performance. It stores resources locally in the user's browser to avoid repeated network requests."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Memory Cache: Fastest, stores resources in RAM during session",
+            "Disk Cache: Persistent storage on user's hard drive",
+            "HTTP Cache: Controlled by HTTP headers like Cache-Control, ETag",
+            "Service Worker Cache: Programmable cache for PWAs and offline functionality"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "HTTP Cache Headers"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Cache-Control examples\nresponse.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour\nresponse.setHeader('Cache-Control', 'private, no-cache'); // No caching\nresponse.setHeader('Cache-Control', 'public, immutable, max-age=31536000'); // 1 year\n\n// ETag for conditional requests\nconst etag = generateETag(content);\nresponse.setHeader('ETag', etag);\nif (request.headers['if-none-match'] === etag) {\n  response.status(304).end(); // Not Modified\n} else {\n  response.send(content);\n}\n\n// Last-Modified header\nresponse.setHeader('Last-Modified', new Date().toUTCString());"
+        },
+        {
+          "type": "heading",
+          "text": "Local Storage Strategies"
+        },
+        {
+          "type": "list",
+          "items": [
+            "localStorage: Persistent storage, synchronous API, 5-10MB limit",
+            "sessionStorage: Session-scoped storage, cleared on tab close",
+            "IndexedDB: Asynchronous database, unlimited storage with user permission",
+            "Cache API: Service Worker cache for network resources"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// localStorage caching with expiration\nclass LocalStorageCache {\n  set(key, value, ttl = 3600000) { // 1 hour default\n    const item = {\n      value,\n      timestamp: Date.now(),\n      ttl\n    };\n    localStorage.setItem(key, JSON.stringify(item));\n  }\n\n  get(key) {\n    const item = localStorage.getItem(key);\n    if (!item) return null;\n\n    const parsed = JSON.parse(item);\n    if (Date.now() - parsed.timestamp > parsed.ttl) {\n      localStorage.removeItem(key);\n      return null;\n    }\n    return parsed.value;\n  }\n}\n\n// IndexedDB caching\nclass IndexedDBCache {\n  async set(key, value) {\n    const db = await this.openDB();\n    const tx = db.transaction('cache', 'readwrite');\n    await tx.store.put({ key, value, timestamp: Date.now() });\n  }\n\n  async get(key) {\n    const db = await this.openDB();\n    const tx = db.transaction('cache', 'readonly');\n    return await tx.store.get(key);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Service Workers"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Service Worker caching strategies\nself.addEventListener('fetch', event => {\n  if (event.request.url.includes('/api/')) {\n    // Network First strategy for API calls\n    event.respondWith(\n      fetch(event.request)\n        .then(response => {\n          const responseClone = response.clone();\n          caches.open('api-cache').then(cache => {\n            cache.put(event.request, responseClone);\n          });\n          return response;\n        })\n        .catch(() => {\n          return caches.match(event.request);\n        })\n    );\n  } else {\n    // Cache First strategy for static assets\n    event.respondWith(\n      caches.match(event.request)\n        .then(response => {\n          return response || fetch(event.request);\n        })\n    );\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Cache Invalidation"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Version-based: Add version query parameter to URLs",
+            "Hash-based: Use file content hash in filename",
+            "Time-based: Set appropriate TTL values",
+            "Manual: Programmatic cache clearing",
+            "Event-based: Invalidate on specific events"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "server-side-caching",
+      "title": "Server-Side Caching",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Redis Caching"
+        },
+        {
+          "type": "paragraph",
+          "text": "Redis is an in-memory data structure store used as a database, cache, and message broker. It's ideal for caching due to its speed and rich data types."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const redis = require('redis');\nconst client = redis.createClient();\n\n// Basic caching with TTL\nasync function getCachedData(key) {\n  const cached = await client.get(key);\n  if (cached) {\n    return JSON.parse(cached);\n  }\n  return null;\n}\n\nasync function setCachedData(key, data, ttl = 3600) {\n  await client.setex(key, ttl, JSON.stringify(data));\n}\n\n// Cache-aside pattern\nasync function getUserById(id) {\n  const cacheKey = `user:${id}`;\n  \n  // Try cache first\n  let user = await getCachedData(cacheKey);\n  if (user) {\n    console.log('Cache hit');\n    return user;\n  }\n  \n  // Cache miss - fetch from database\n  console.log('Cache miss');\n  user = await database.users.findById(id);\n  \n  // Store in cache\n  await setCachedData(cacheKey, user, 1800); // 30 minutes\n  \n  return user;\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Memcached"
+        },
+        {
+          "type": "paragraph",
+          "text": "Memcached is a distributed memory caching system. It's simpler than Redis but very effective for basic key-value caching."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const memcached = require('memcached');\nconst mc = new memcached('localhost:11211');\n\n// Simple caching wrapper\nclass MemcachedCache {\n  async get(key) {\n    return new Promise((resolve, reject) => {\n      mc.get(key, (err, data) => {\n        if (err) reject(err);\n        else resolve(data);\n      });\n    });\n  }\n\n  async set(key, value, ttl = 3600) {\n    return new Promise((resolve, reject) => {\n      mc.set(key, value, ttl, (err) => {\n        if (err) reject(err);\n        else resolve();\n      });\n    });\n  }\n\n  async del(key) {\n    return new Promise((resolve, reject) => {\n      mc.del(key, (err) => {\n        if (err) reject(err);\n        else resolve();\n      });\n    });\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "In-Memory Caching"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Simple in-memory cache with LRU eviction\nclass LRUCache {\n  constructor(maxSize = 100) {\n    this.maxSize = maxSize;\n    this.cache = new Map();\n  }\n\n  get(key) {\n    if (this.cache.has(key)) {\n      // Move to end (most recently used)\n      const value = this.cache.get(key);\n      this.cache.delete(key);\n      this.cache.set(key, value);\n      return value;\n    }\n    return null;\n  }\n\n  set(key, value) {\n    if (this.cache.has(key)) {\n      this.cache.delete(key);\n    } else if (this.cache.size >= this.maxSize) {\n      // Remove least recently used (first item)\n      const firstKey = this.cache.keys().next().value;\n      this.cache.delete(firstKey);\n    }\n    this.cache.set(key, value);\n  }\n\n  clear() {\n    this.cache.clear();\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Database Query Caching"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Query result caching with Sequelize\nconst { QueryTypes } = require('sequelize');\n\nclass DatabaseCache {\n  constructor(sequelize, cache) {\n    this.sequelize = sequelize;\n    this.cache = cache;\n  }\n\n  async query(sql, options = {}) {\n    const cacheKey = this.generateCacheKey(sql, options);\n    \n    // Check cache first\n    let result = await this.cache.get(cacheKey);\n    if (result) {\n      return result;\n    }\n\n    // Execute query\n    result = await this.sequelize.query(sql, {\n      type: QueryTypes.SELECT,\n      ...options\n    });\n\n    // Cache result\n    await this.cache.set(cacheKey, result, 600); // 10 minutes\n    return result;\n  }\n\n  generateCacheKey(sql, options) {\n    return `query:${Buffer.from(sql + JSON.stringify(options)).toString('base64')}`;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "cdn-caching",
+      "title": "CDN Caching",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Content Delivery Networks"
+        },
+        {
+          "type": "paragraph",
+          "text": "CDNs distribute content across multiple geographic locations to reduce latency and improve performance by serving content from the nearest edge server."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Edge Servers: Geographically distributed servers",
+            "Origin Server: Primary server with original content",
+            "Cache Hit: Content served from edge server",
+            "Cache Miss: Content fetched from origin server",
+            "TTL: Time To Live for cached content"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Static Asset Optimization"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CDN configuration example\nconst cdnConfig = {\n  // Static assets with long TTL\n  '/static/js/*': {\n    'Cache-Control': 'public, max-age=31536000, immutable', // 1 year\n    'Content-Encoding': 'gzip'\n  },\n  '/static/css/*': {\n    'Cache-Control': 'public, max-age=31536000, immutable',\n    'Content-Encoding': 'gzip'\n  },\n  '/static/images/*': {\n    'Cache-Control': 'public, max-age=2592000', // 30 days\n    'Vary': 'Accept-Encoding'\n  },\n  // HTML files with shorter TTL\n  '*.html': {\n    'Cache-Control': 'public, max-age=300', // 5 minutes\n    'ETag': 'auto'\n  }\n};\n\n// Webpack configuration for asset hashing\nmodule.exports = {\n  output: {\n    filename: '[name].[contenthash].js',\n    chunkFilename: '[name].[contenthash].chunk.js'\n  },\n  optimization: {\n    splitChunks: {\n      chunks: 'all',\n      cacheGroups: {\n        vendor: {\n          test: /[\\\\/]node_modules[\\\\/]/,\n          name: 'vendors',\n          chunks: 'all'\n        }\n      }\n    }\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Cache Headers"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Cache-Control: public - Can be cached by any cache",
+            "Cache-Control: private - Only cached by browser",
+            "Cache-Control: no-cache - Must revalidate before use",
+            "Cache-Control: no-store - Never cache",
+            "Cache-Control: immutable - Content never changes",
+            "Vary: Accept-Encoding - Cache varies by encoding"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express.js CDN cache middleware\nfunction setCacheHeaders(req, res, next) {\n  const url = req.url;\n  \n  if (url.match(/\\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)) {\n    // Static assets - long cache\n    res.setHeader('Cache-Control', 'public, max-age=31536000');\n    res.setHeader('Expires', new Date(Date.now() + 31536000000).toUTCString());\n  } else if (url.match(/\\.(html|htm)$/)) {\n    // HTML files - short cache\n    res.setHeader('Cache-Control', 'public, max-age=300');\n  } else if (url.startsWith('/api/')) {\n    // API responses - conditional caching\n    res.setHeader('Cache-Control', 'private, max-age=60');\n  }\n  \n  next();\n}"
+        },
+        {
+          "type": "heading",
+          "text": "CDN Purging"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CloudFlare CDN purge example\nconst cloudflare = require('cloudflare');\n\nclass CDNManager {\n  constructor(apiToken, zoneId) {\n    this.cf = cloudflare({ token: apiToken });\n    this.zoneId = zoneId;\n  }\n\n  async purgeAll() {\n    return await this.cf.zones.purgeCache(this.zoneId, {\n      purge_everything: true\n    });\n  }\n\n  async purgeFiles(files) {\n    return await this.cf.zones.purgeCache(this.zoneId, {\n      files: files\n    });\n  }\n\n  async purgeTags(tags) {\n    return await this.cf.zones.purgeCache(this.zoneId, {\n      tags: tags\n    });\n  }\n}\n\n// Usage\nconst cdn = new CDNManager('api-token', 'zone-id');\n\n// Purge specific files after deployment\nconst filesToPurge = [\n  'https://example.com/app.js',\n  'https://example.com/styles.css'\n];\nawait cdn.purgeFiles(filesToPurge);"
+        }
+      ]
+    },
+    {
+      "id": "application-level-caching",
+      "title": "Application-Level Caching",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Response Caching"
+        },
+        {
+          "type": "paragraph",
+          "text": "Response caching stores the entire HTTP response to avoid recomputing expensive operations for identical requests."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express.js response caching middleware\nconst responseCache = (duration = 300) => {\n  const cache = new Map();\n  \n  return (req, res, next) => {\n    const key = req.originalUrl;\n    const cached = cache.get(key);\n    \n    if (cached && Date.now() - cached.timestamp < duration * 1000) {\n      res.set(cached.headers);\n      return res.status(cached.status).send(cached.body);\n    }\n    \n    // Override res.send to cache response\n    const originalSend = res.send;\n    res.send = function(body) {\n      cache.set(key, {\n        status: res.statusCode,\n        headers: res.getHeaders(),\n        body: body,\n        timestamp: Date.now()\n      });\n      originalSend.call(this, body);\n    };\n    \n    next();\n  };\n};\n\n// Usage\napp.get('/api/popular-posts', responseCache(600), (req, res) => {\n  // Expensive operation\n  const posts = getPopularPosts();\n  res.json(posts);\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Computed Value Caching"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Memoization for expensive computations\nclass ComputationCache {\n  constructor() {\n    this.cache = new Map();\n  }\n\n  memoize(fn, keyGenerator = (...args) => JSON.stringify(args)) {\n    return (...args) => {\n      const key = keyGenerator(...args);\n      \n      if (this.cache.has(key)) {\n        console.log('Cache hit for:', key);\n        return this.cache.get(key);\n      }\n      \n      console.log('Cache miss for:', key);\n      const result = fn(...args);\n      this.cache.set(key, result);\n      return result;\n    };\n  }\n\n  clear() {\n    this.cache.clear();\n  }\n}\n\n// Usage\nconst cache = new ComputationCache();\n\nconst expensiveCalculation = cache.memoize((n) => {\n  console.log('Calculating for:', n);\n  return Array.from({length: n}, (_, i) => i * i).reduce((a, b) => a + b, 0);\n});\n\nconsole.log(expensiveCalculation(1000)); // Calculates\nconsole.log(expensiveCalculation(1000)); // Uses cache"
+        },
+        {
+          "type": "heading",
+          "text": "Fragment Caching"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// React component caching\nimport { memo, useMemo } from 'react';\n\n// Memoized component\nconst ExpensiveComponent = memo(({ data, options }) => {\n  const processedData = useMemo(() => {\n    return data.map(item => {\n      // Expensive processing\n      return processData(item, options);\n    });\n  }, [data, options]);\n\n  return (\n    <div>\n      {processedData.map(item => (\n        <div key={item.id}>{item.name}</div>\n      ))}\n    </div>\n  );\n});\n\n// Server-side fragment caching\nclass FragmentCache {\n  constructor() {\n    this.fragments = new Map();\n  }\n\n  getFragment(key) {\n    return this.fragments.get(key);\n  }\n\n  setFragment(key, html, ttl = 300) {\n    this.fragments.set(key, {\n      html,\n      expires: Date.now() + ttl * 1000\n    });\n  }\n\n  isExpired(key) {\n    const fragment = this.fragments.get(key);\n    return !fragment || Date.now() > fragment.expires;\n  }\n}\n\n// Usage in template rendering\nconst fragmentCache = new FragmentCache();\n\nfunction renderUserProfile(userId) {\n  const cacheKey = `user-profile-${userId}`;\n  \n  if (!fragmentCache.isExpired(cacheKey)) {\n    return fragmentCache.getFragment(cacheKey).html;\n  }\n  \n  const html = generateUserProfileHTML(userId);\n  fragmentCache.setFragment(cacheKey, html, 600);\n  return html;\n}"
+        }
+      ]
+    },
+    {
+      "id": "cache-invalidation",
+      "title": "Cache Invalidation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "TTL Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Time-To-Live (TTL) is the simplest cache invalidation strategy where cached data expires after a specified duration."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Fixed TTL: Same expiration time for all items",
+            "Sliding TTL: Expiration extends on access",
+            "Adaptive TTL: TTL based on data characteristics",
+            "Randomized TTL: Prevents cache stampede"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "class TTLCache {\n  constructor() {\n    this.cache = new Map();\n    this.timers = new Map();\n  }\n\n  set(key, value, ttl = 3600) {\n    // Clear existing timer\n    if (this.timers.has(key)) {\n      clearTimeout(this.timers.get(key));\n    }\n\n    // Set value\n    this.cache.set(key, value);\n\n    // Set expiration timer\n    const timer = setTimeout(() => {\n      this.cache.delete(key);\n      this.timers.delete(key);\n    }, ttl * 1000);\n\n    this.timers.set(key, timer);\n  }\n\n  get(key) {\n    return this.cache.get(key);\n  }\n\n  delete(key) {\n    if (this.timers.has(key)) {\n      clearTimeout(this.timers.get(key));\n      this.timers.delete(key);\n    }\n    this.cache.delete(key);\n  }\n\n  // Sliding TTL - extends expiration on access\n  getWithSliding(key, ttl = 3600) {\n    const value = this.cache.get(key);\n    if (value) {\n      // Reset TTL on access\n      this.set(key, value, ttl);\n    }\n    return value;\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Cache Busting"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Version-based cache busting\nclass VersionedCache {\n  constructor() {\n    this.cache = new Map();\n    this.version = 1;\n  }\n\n  getKey(key) {\n    return `v${this.version}:${key}`;\n  }\n\n  set(key, value, ttl) {\n    this.cache.set(this.getKey(key), value);\n  }\n\n  get(key) {\n    return this.cache.get(this.getKey(key));\n  }\n\n  invalidateAll() {\n    this.version++;\n    // Old version entries will be unreachable\n    console.log(`Cache invalidated, new version: ${this.version}`);\n  }\n}\n\n// Tag-based invalidation\nclass TaggedCache {\n  constructor() {\n    this.cache = new Map();\n    this.tags = new Map(); // tag -> Set of keys\n    this.keyTags = new Map(); // key -> Set of tags\n  }\n\n  set(key, value, tags = []) {\n    this.cache.set(key, value);\n    \n    // Update tag mappings\n    this.keyTags.set(key, new Set(tags));\n    tags.forEach(tag => {\n      if (!this.tags.has(tag)) {\n        this.tags.set(tag, new Set());\n      }\n      this.tags.get(tag).add(key);\n    });\n  }\n\n  get(key) {\n    return this.cache.get(key);\n  }\n\n  invalidateByTag(tag) {\n    const keys = this.tags.get(tag);\n    if (keys) {\n      keys.forEach(key => {\n        this.cache.delete(key);\n        this.keyTags.delete(key);\n      });\n      this.tags.delete(tag);\n    }\n  }\n}\n\n// Usage\nconst cache = new TaggedCache();\ncache.set('user:123', userData, ['user', 'profile']);\ncache.set('user:456', userData2, ['user', 'profile']);\n\n// Invalidate all user-related cache\ncache.invalidateByTag('user');"
+        },
+        {
+          "type": "heading",
+          "text": "Real-time Invalidation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Event-driven cache invalidation\nconst EventEmitter = require('events');\n\nclass EventDrivenCache extends EventEmitter {\n  constructor() {\n    super();\n    this.cache = new Map();\n    this.setupEventListeners();\n  }\n\n  setupEventListeners() {\n    this.on('user:updated', (userId) => {\n      this.invalidatePattern(`user:${userId}*`);\n    });\n\n    this.on('post:created', (postId) => {\n      this.invalidatePattern('posts:*');\n      this.invalidatePattern('feed:*');\n    });\n  }\n\n  set(key, value) {\n    this.cache.set(key, value);\n  }\n\n  get(key) {\n    return this.cache.get(key);\n  }\n\n  invalidatePattern(pattern) {\n    const regex = new RegExp(pattern.replace('*', '.*'));\n    const keysToDelete = [];\n    \n    for (const key of this.cache.keys()) {\n      if (regex.test(key)) {\n        keysToDelete.push(key);\n      }\n    }\n    \n    keysToDelete.forEach(key => this.cache.delete(key));\n    console.log(`Invalidated ${keysToDelete.length} cache entries matching ${pattern}`);\n  }\n}\n\n// Usage\nconst cache = new EventDrivenCache();\n\n// When user is updated\nfunction updateUser(userId, data) {\n  // Update user in database\n  database.users.update(userId, data);\n  \n  // Trigger cache invalidation\n  cache.emit('user:updated', userId);\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Cache Warming"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Proactive cache warming\nclass WarmingCache {\n  constructor() {\n    this.cache = new Map();\n    this.warmingQueue = [];\n    this.isWarming = false;\n  }\n\n  async warmCache(keys) {\n    console.log('Starting cache warming...');\n    \n    for (const key of keys) {\n      if (!this.cache.has(key)) {\n        const value = await this.fetchData(key);\n        this.cache.set(key, value);\n        console.log(`Warmed cache for key: ${key}`);\n      }\n    }\n    \n    console.log('Cache warming completed');\n  }\n\n  async fetchData(key) {\n    // Simulate data fetching\n    return new Promise(resolve => {\n      setTimeout(() => resolve(`data-for-${key}`), 100);\n    });\n  }\n\n  // Periodic cache warming\n  startPeriodicWarming(keys, interval = 3600000) { // 1 hour\n    setInterval(() => {\n      this.warmCache(keys);\n    }, interval);\n  }\n\n  // Predictive warming based on access patterns\n  recordAccess(key) {\n    // Track access patterns\n    const now = Date.now();\n    this.accessLog = this.accessLog || new Map();\n    \n    if (!this.accessLog.has(key)) {\n      this.accessLog.set(key, []);\n    }\n    \n    this.accessLog.get(key).push(now);\n    \n    // Predict next access and warm related data\n    this.predictAndWarm(key);\n  }\n\n  predictAndWarm(key) {\n    // Simple prediction: warm related keys\n    const relatedKeys = this.getRelatedKeys(key);\n    relatedKeys.forEach(relatedKey => {\n      if (!this.cache.has(relatedKey)) {\n        this.queueForWarming(relatedKey);\n      }\n    });\n  }\n\n  getRelatedKeys(key) {\n    // Define relationships between keys\n    if (key.startsWith('user:')) {\n      const userId = key.split(':')[1];\n      return [`user:${userId}:posts`, `user:${userId}:profile`];\n    }\n    return [];\n  }\n\n  queueForWarming(key) {\n    if (!this.warmingQueue.includes(key)) {\n      this.warmingQueue.push(key);\n      this.processWarmingQueue();\n    }\n  }\n\n  async processWarmingQueue() {\n    if (this.isWarming || this.warmingQueue.length === 0) {\n      return;\n    }\n\n    this.isWarming = true;\n    \n    while (this.warmingQueue.length > 0) {\n      const key = this.warmingQueue.shift();\n      const value = await this.fetchData(key);\n      this.cache.set(key, value);\n    }\n    \n    this.isWarming = false;\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "Which HTTP header indicates that a resource should never be cached?",
+      "options": ["Cache-Control: no-cache", "Cache-Control: no-store", "Cache-Control: private", "Cache-Control: max-age=0"],
+      "correctAnswer": 1,
+      "explanation": "Cache-Control: no-store prevents any caching, while no-cache allows caching but requires revalidation before use."
+    },
+    {
+      "id": 2,
+      "question": "What is the main difference between localStorage and sessionStorage?",
+      "options": [
+        "localStorage is faster",
+        "sessionStorage persists across browser sessions, localStorage doesn't",
+        "localStorage persists across browser sessions, sessionStorage doesn't",
+        "They have different storage limits"
+      ],
+      "correctAnswer": 2,
+      "explanation": "localStorage persists until explicitly cleared, while sessionStorage is cleared when the tab/window is closed."
+    },
+    {
+      "id": 3,
+      "question": "What is the cache-aside pattern?",
+      "options": [
+        "Cache is updated automatically by the database",
+        "Application manages cache explicitly, checking cache first then database",
+        "Cache is cleared periodically",
+        "Cache stores only frequently accessed data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "In cache-aside pattern, the application code manages the cache by checking cache first, then fetching from database on cache miss and updating the cache."
+    },
+    {
+      "id": 4,
+      "question": "What is the main advantage of CDN caching?",
+      "options": [
+        "Reduces server load",
+        "Improves security",
+        "Reduces latency by serving content from geographically closer servers",
+        "Increases storage capacity"
+      ],
+      "correctAnswer": 2,
+      "explanation": "CDNs serve content from edge servers that are geographically closer to users, reducing network latency and improving load times."
+    },
+    {
+      "id": 5,
+      "question": "What does TTL stand for in caching?",
+      "options": ["Time To Load", "Time To Live", "Total Transfer Limit", "Time To Lock"],
+      "correctAnswer": 1,
+      "explanation": "TTL (Time To Live) specifies how long cached data should be considered valid before it expires."
+    },
+    {
+      "id": 6,
+      "question": "What is the purpose of ETag headers?",
+      "options": [
+        "To encrypt cache data",
+        "To enable conditional requests and avoid transferring unchanged data",
+        "To set cache expiration time",
+        "To identify cache servers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "ETag headers enable conditional requests. If the ETag matches, the server returns 304 Not Modified, avoiding unnecessary data transfer."
+    },
+    {
+      "id": 7,
+      "question": "What is cache stampede?",
+      "options": [
+        "When cache size exceeds limits",
+        "When multiple requests try to regenerate the same expired cache entry simultaneously",
+        "When cache servers crash",
+        "When cache data becomes corrupted"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cache stampede occurs when multiple requests simultaneously try to regenerate the same expired cache entry, causing unnecessary load on the backend."
+    },
+    {
+      "id": 8,
+      "question": "Which caching strategy is best for frequently changing data?",
+      "options": ["Long TTL caching", "Short TTL caching", "Immutable caching", "No caching"],
+      "correctAnswer": 1,
+      "explanation": "Short TTL caching allows for frequent updates while still providing some performance benefits for rapidly changing data."
+    },
+    {
+      "id": 9,
+      "question": "What is the difference between Redis and Memcached?",
+      "options": [
+        "Redis only stores strings, Memcached supports complex data types",
+        "Redis supports complex data types and persistence, Memcached is simpler key-value store",
+        "Memcached is faster than Redis",
+        "They are exactly the same"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Redis supports complex data types (lists, sets, hashes) and persistence, while Memcached is a simpler key-value store focused on simplicity and speed."
+    },
+    {
+      "id": 10,
+      "question": "What does 'Cache-Control: immutable' indicate?",
+      "options": [
+        "Cache can be modified",
+        "Cache content will never change and doesn't need revalidation",
+        "Cache requires authentication",
+        "Cache is private to the user"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cache-Control: immutable tells browsers that the cached resource will never change and doesn't need revalidation, even if the user refreshes the page."
+    },
+    {
+      "id": 11,
+      "question": "What is the LRU eviction policy?",
+      "options": [
+        "Least Recently Used items are removed first",
+        "Largest items are removed first",
+        "Random items are removed",
+        "Oldest items are removed first"
+      ],
+      "correctAnswer": 0,
+      "explanation": "LRU (Least Recently Used) eviction removes the items that haven't been accessed for the longest time when cache space is needed."
+    },
+    {
+      "id": 12,
+      "question": "What is cache warming?",
+      "options": [
+        "Heating up cache servers",
+        "Proactively loading data into cache before it's requested",
+        "Clearing expired cache entries",
+        "Optimizing cache performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cache warming involves proactively loading frequently accessed data into cache before users request it, improving response times."
+    },
+    {
+      "id": 13,
+      "question": "Which Service Worker caching strategy is best for API calls?",
+      "options": ["Cache First", "Network First", "Cache Only", "Network Only"],
+      "correctAnswer": 1,
+      "explanation": "Network First strategy tries to fetch fresh data from the network first, falling back to cache if the network fails, which is ideal for dynamic API data."
+    },
+    {
+      "id": 14,
+      "question": "What is fragment caching?",
+      "options": [
+        "Caching small pieces of data",
+        "Caching parts of web pages or UI components",
+        "Caching database fragments",
+        "Caching network packets"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Fragment caching involves caching portions of web pages or UI components, allowing for granular cache control and better performance."
+    },
+    {
+      "id": 15,
+      "question": "What happens when you set 'Cache-Control: no-cache'?",
+      "options": [
+        "The response is never cached",
+        "The response can be cached but must be revalidated before use",
+        "The response is cached for 1 hour",
+        "The response is cached privately"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Cache-Control: no-cache allows caching but requires the client to revalidate with the server before using the cached response."
+    }
+  ]
+} 

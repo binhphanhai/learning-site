@@ -1,0 +1,353 @@
+{
+  "title": "Testing Backend Services",
+  "description": "Master comprehensive testing strategies for backend services including API testing, mock services, load testing, security testing, and production monitoring to ensure reliable and robust backend systems",
+  "sections": [
+    {
+      "id": "api-testing",
+      "title": "API Testing & Test Automation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "API Testing Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "API testing ensures your backend services work correctly by testing endpoints, data validation, error handling, and integration points systematically."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Unit Tests: Test individual functions and components in isolation",
+            "Integration Tests: Test API endpoints and database interactions",
+            "Contract Testing: Ensure API contracts between services are maintained",
+            "End-to-End Tests: Test complete user workflows across services",
+            "Regression Testing: Prevent breaking changes in existing functionality"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "API Testing Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Comprehensive API Testing Suite\nconst request = require('supertest');\nconst app = require('../app');\nconst { expect } = require('chai');\nconst sinon = require('sinon');\nconst jwt = require('jsonwebtoken');\n\n// Test Database Setup\nconst testDb = require('../config/test-database');\n\ndescribe('User API Tests', () => {\n  let authToken;\n  let testUser;\n\n  beforeEach(async () => {\n    // Setup test database\n    await testDb.clean();\n    await testDb.seed();\n    \n    // Create test user and auth token\n    testUser = {\n      id: 1,\n      email: 'test@example.com',\n      name: 'Test User'\n    };\n    \n    authToken = jwt.sign(testUser, process.env.JWT_SECRET);\n  });\n\n  afterEach(async () => {\n    // Cleanup\n    await testDb.clean();\n    sinon.restore();\n  });\n\n  describe('GET /api/users', () => {\n    it('should return list of users with valid auth', async () => {\n      const response = await request(app)\n        .get('/api/users')\n        .set('Authorization', `Bearer ${authToken}`)\n        .expect(200);\n\n      expect(response.body).to.have.property('users');\n      expect(response.body.users).to.be.an('array');\n      expect(response.body.users.length).to.be.greaterThan(0);\n    });\n\n    it('should return 401 without auth token', async () => {\n      const response = await request(app)\n        .get('/api/users')\n        .expect(401);\n\n      expect(response.body).to.have.property('error');\n      expect(response.body.error.code).to.equal('UNAUTHORIZED');\n    });\n\n    it('should handle pagination correctly', async () => {\n      const response = await request(app)\n        .get('/api/users?page=1&limit=5')\n        .set('Authorization', `Bearer ${authToken}`)\n        .expect(200);\n\n      expect(response.body).to.have.property('pagination');\n      expect(response.body.pagination.page).to.equal(1);\n      expect(response.body.pagination.limit).to.equal(5);\n    });\n  });\n\n  describe('POST /api/users', () => {\n    it('should create user with valid data', async () => {\n      const newUser = {\n        email: 'newuser@example.com',\n        name: 'New User',\n        password: 'securePassword123'\n      };\n\n      const response = await request(app)\n        .post('/api/users')\n        .set('Authorization', `Bearer ${authToken}`)\n        .send(newUser)\n        .expect(201);\n\n      expect(response.body).to.have.property('user');\n      expect(response.body.user.email).to.equal(newUser.email);\n      expect(response.body.user).to.not.have.property('password');\n    });\n\n    it('should validate required fields', async () => {\n      const invalidUser = {\n        name: 'No Email User'\n      };\n\n      const response = await request(app)\n        .post('/api/users')\n        .set('Authorization', `Bearer ${authToken}`)\n        .send(invalidUser)\n        .expect(400);\n\n      expect(response.body.error.code).to.equal('VALIDATION_ERROR');\n      expect(response.body.error.context.field).to.equal('email');\n    });\n\n    it('should prevent duplicate emails', async () => {\n      const duplicateUser = {\n        email: 'test@example.com', // Already exists\n        name: 'Duplicate User',\n        password: 'password123'\n      };\n\n      const response = await request(app)\n        .post('/api/users')\n        .set('Authorization', `Bearer ${authToken}`)\n        .send(duplicateUser)\n        .expect(400);\n\n      expect(response.body.error.code).to.equal('VALIDATION_ERROR');\n      expect(response.body.error.message).to.include('already exists');\n    });\n  });\n\n  describe('PUT /api/users/:id', () => {\n    it('should update user with valid data', async () => {\n      const updateData = {\n        name: 'Updated Name'\n      };\n\n      const response = await request(app)\n        .put(`/api/users/${testUser.id}`)\n        .set('Authorization', `Bearer ${authToken}`)\n        .send(updateData)\n        .expect(200);\n\n      expect(response.body.user.name).to.equal(updateData.name);\n    });\n\n    it('should return 404 for non-existent user', async () => {\n      const response = await request(app)\n        .put('/api/users/99999')\n        .set('Authorization', `Bearer ${authToken}`)\n        .send({ name: 'Test' })\n        .expect(404);\n\n      expect(response.body.error.code).to.equal('NOT_FOUND');\n    });\n  });\n\n  describe('DELETE /api/users/:id', () => {\n    it('should delete user successfully', async () => {\n      await request(app)\n        .delete(`/api/users/${testUser.id}`)\n        .set('Authorization', `Bearer ${authToken}`)\n        .expect(204);\n\n      // Verify user is deleted\n      await request(app)\n        .get(`/api/users/${testUser.id}`)\n        .set('Authorization', `Bearer ${authToken}`)\n        .expect(404);\n    });\n  });\n});\n\n// Database Integration Tests\ndescribe('Database Integration Tests', () => {\n  const userService = require('../services/userService');\n  \n  beforeEach(async () => {\n    await testDb.clean();\n  });\n\n  describe('User Service', () => {\n    it('should create user in database', async () => {\n      const userData = {\n        email: 'db@example.com',\n        name: 'DB User',\n        password: 'hashedPassword'\n      };\n\n      const user = await userService.create(userData);\n      \n      expect(user).to.have.property('id');\n      expect(user.email).to.equal(userData.email);\n      expect(user.createdAt).to.be.a('date');\n    });\n\n    it('should handle database constraints', async () => {\n      const userData = {\n        email: 'test@example.com',\n        name: 'Test User'\n      };\n\n      // Create first user\n      await userService.create(userData);\n\n      // Try to create duplicate\n      try {\n        await userService.create(userData);\n        expect.fail('Should have thrown constraint error');\n      } catch (error) {\n        expect(error.code).to.equal('ER_DUP_ENTRY');\n      }\n    });\n  });\n});\n\n// Contract Testing with Pact\nconst { Pact } = require('@pact-foundation/pact');\nconst { like, eachLike } = require('@pact-foundation/pact').Matchers;\n\ndescribe('User Service Contract Tests', () => {\n  const provider = new Pact({\n    consumer: 'Frontend',\n    provider: 'UserService',\n    port: 1234,\n    log: path.resolve(process.cwd(), 'logs', 'pact.log'),\n    dir: path.resolve(process.cwd(), 'pacts'),\n    logLevel: 'INFO'\n  });\n\n  before(() => provider.setup());\n  after(() => provider.finalize());\n\n  describe('GET /users', () => {\n    before(() => {\n      return provider.addInteraction({\n        state: 'users exist',\n        uponReceiving: 'a request for users',\n        withRequest: {\n          method: 'GET',\n          path: '/api/users',\n          headers: {\n            'Authorization': like('Bearer token')\n          }\n        },\n        willRespondWith: {\n          status: 200,\n          headers: {\n            'Content-Type': 'application/json'\n          },\n          body: {\n            users: eachLike({\n              id: like(1),\n              email: like('user@example.com'),\n              name: like('User Name'),\n              createdAt: like('2023-01-01T00:00:00.000Z')\n            })\n          }\n        }\n      });\n    });\n\n    it('should return users', async () => {\n      const response = await request(`http://localhost:1234`)\n        .get('/api/users')\n        .set('Authorization', 'Bearer token')\n        .expect(200);\n\n      expect(response.body.users).to.be.an('array');\n    });\n  });\n});"
+        }
+      ]
+    },
+    {
+      "id": "mock-services",
+      "title": "Mock Services & Test Data Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Service Virtualization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Mock services simulate external dependencies, allowing isolated testing of your backend services without relying on external systems."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Service Virtualization: Create mock versions of external services",
+            "Test Data Management: Consistent and controlled test data",
+            "Environment Isolation: Separate test environments from production",
+            "Dependency Mocking: Mock databases, APIs, and third-party services",
+            "Behavior Simulation: Simulate various response scenarios"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Mock Service Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Mock Service Implementation\nconst nock = require('nock');\nconst sinon = require('sinon');\nconst MockDate = require('mockdate');\n\n// External API Mock\nclass ExternalApiMock {\n  constructor() {\n    this.baseUrl = 'https://api.external-service.com';\n    this.mocks = [];\n  }\n\n  mockGetUser(userId, response = null, status = 200) {\n    const defaultResponse = {\n      id: userId,\n      name: `User ${userId}`,\n      email: `user${userId}@example.com`,\n      status: 'active'\n    };\n\n    const mock = nock(this.baseUrl)\n      .get(`/users/${userId}`)\n      .reply(status, response || defaultResponse);\n\n    this.mocks.push(mock);\n    return mock;\n  }\n\n  mockCreateUser(userData, response = null, status = 201) {\n    const defaultResponse = {\n      id: Math.floor(Math.random() * 1000),\n      ...userData,\n      createdAt: new Date().toISOString()\n    };\n\n    const mock = nock(this.baseUrl)\n      .post('/users', userData)\n      .reply(status, response || defaultResponse);\n\n    this.mocks.push(mock);\n    return mock;\n  }\n\n  mockError(endpoint, errorCode = 500, errorMessage = 'Internal Server Error') {\n    const mock = nock(this.baseUrl)\n      .get(endpoint)\n      .reply(errorCode, {\n        error: {\n          code: errorCode,\n          message: errorMessage\n        }\n      });\n\n    this.mocks.push(mock);\n    return mock;\n  }\n\n  mockTimeout(endpoint, delay = 5000) {\n    const mock = nock(this.baseUrl)\n      .get(endpoint)\n      .delay(delay)\n      .reply(200, { message: 'Delayed response' });\n\n    this.mocks.push(mock);\n    return mock;\n  }\n\n  reset() {\n    nock.cleanAll();\n    this.mocks = [];\n  }\n\n  verify() {\n    return this.mocks.every(mock => mock.isDone());\n  }\n}\n\n// Database Mock\nclass DatabaseMock {\n  constructor() {\n    this.data = new Map();\n    this.sequences = new Map();\n  }\n\n  // Mock table data\n  seed(tableName, data) {\n    this.data.set(tableName, [...data]);\n    return this;\n  }\n\n  // Mock database operations\n  mockQuery(query, result) {\n    return sinon.stub().withArgs(query).resolves(result);\n  }\n\n  // Generate mock data\n  generateUsers(count = 10) {\n    const users = [];\n    for (let i = 1; i <= count; i++) {\n      users.push({\n        id: i,\n        email: `user${i}@example.com`,\n        name: `User ${i}`,\n        createdAt: new Date(2023, 0, i).toISOString(),\n        updatedAt: new Date(2023, 0, i).toISOString()\n      });\n    }\n    return users;\n  }\n\n  generateOrders(userId, count = 5) {\n    const orders = [];\n    for (let i = 1; i <= count; i++) {\n      orders.push({\n        id: i,\n        userId,\n        amount: Math.floor(Math.random() * 1000) + 100,\n        status: ['pending', 'completed', 'cancelled'][Math.floor(Math.random() * 3)],\n        createdAt: new Date(2023, 0, i).toISOString()\n      });\n    }\n    return orders;\n  }\n\n  clear() {\n    this.data.clear();\n    this.sequences.clear();\n  }\n}\n\n// Test Data Factory\nclass TestDataFactory {\n  static createUser(overrides = {}) {\n    return {\n      id: Math.floor(Math.random() * 1000),\n      email: `test${Date.now()}@example.com`,\n      name: 'Test User',\n      password: 'hashedPassword123',\n      role: 'user',\n      status: 'active',\n      createdAt: new Date().toISOString(),\n      updatedAt: new Date().toISOString(),\n      ...overrides\n    };\n  }\n\n  static createProduct(overrides = {}) {\n    return {\n      id: Math.floor(Math.random() * 1000),\n      name: 'Test Product',\n      description: 'A test product description',\n      price: 99.99,\n      category: 'electronics',\n      inStock: true,\n      quantity: 10,\n      createdAt: new Date().toISOString(),\n      ...overrides\n    };\n  }\n\n  static createOrder(userId, overrides = {}) {\n    return {\n      id: Math.floor(Math.random() * 1000),\n      userId,\n      items: [\n        {\n          productId: 1,\n          quantity: 2,\n          price: 99.99\n        }\n      ],\n      total: 199.98,\n      status: 'pending',\n      createdAt: new Date().toISOString(),\n      ...overrides\n    };\n  }\n}\n\n// Usage in tests\ndescribe('Service Tests with Mocks', () => {\n  let externalApiMock;\n  let dbMock;\n  let userService;\n\n  beforeEach(() => {\n    externalApiMock = new ExternalApiMock();\n    dbMock = new DatabaseMock();\n    userService = require('../services/userService');\n  });\n\n  afterEach(() => {\n    externalApiMock.reset();\n    dbMock.clear();\n    sinon.restore();\n  });\n\n  describe('User Service with External API', () => {\n    it('should fetch user from external API', async () => {\n      const userId = 123;\n      const expectedUser = {\n        id: userId,\n        name: 'External User',\n        email: 'external@example.com'\n      };\n\n      externalApiMock.mockGetUser(userId, expectedUser);\n\n      const user = await userService.fetchFromExternal(userId);\n\n      expect(user).to.deep.equal(expectedUser);\n      expect(externalApiMock.verify()).to.be.true;\n    });\n\n    it('should handle external API errors gracefully', async () => {\n      const userId = 123;\n      externalApiMock.mockError(`/users/${userId}`, 404, 'User not found');\n\n      try {\n        await userService.fetchFromExternal(userId);\n        expect.fail('Should have thrown error');\n      } catch (error) {\n        expect(error.message).to.include('User not found');\n      }\n    });\n\n    it('should handle API timeouts', async () => {\n      const userId = 123;\n      externalApiMock.mockTimeout(`/users/${userId}`, 6000);\n\n      try {\n        await userService.fetchFromExternal(userId);\n        expect.fail('Should have thrown timeout error');\n      } catch (error) {\n        expect(error.message).to.include('timeout');\n      }\n    });\n  });\n\n  describe('Database Operations', () => {\n    it('should handle database queries', async () => {\n      const testUsers = dbMock.generateUsers(5);\n      const queryStub = dbMock.mockQuery(\n        'SELECT * FROM users WHERE active = ?',\n        [testUsers]\n      );\n\n      // Mock the database connection\n      const dbConnection = { query: queryStub };\n      sinon.stub(userService, 'getConnection').returns(dbConnection);\n\n      const users = await userService.getActiveUsers();\n\n      expect(users).to.have.length(5);\n      expect(queryStub.calledOnce).to.be.true;\n    });\n  });\n});\n\n// Time-based testing\ndescribe('Time-sensitive Tests', () => {\n  afterEach(() => {\n    MockDate.reset();\n  });\n\n  it('should handle time-based logic', () => {\n    const fixedDate = new Date('2023-01-01T12:00:00Z');\n    MockDate.set(fixedDate);\n\n    const result = someTimeBasedFunction();\n    \n    expect(result.timestamp).to.equal(fixedDate.toISOString());\n  });\n});\n\nmodule.exports = {\n  ExternalApiMock,\n  DatabaseMock,\n  TestDataFactory\n};"
+        }
+      ]
+    },
+    {
+      "id": "load-testing",
+      "title": "Load Testing & Performance Testing",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Performance Testing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Load testing evaluates how your backend services perform under various levels of concurrent users and requests, identifying performance bottlenecks and capacity limits."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Load Testing: Test normal expected load conditions",
+            "Stress Testing: Test beyond normal capacity to find breaking points",
+            "Spike Testing: Test sudden increases in load",
+            "Volume Testing: Test with large amounts of data",
+            "Endurance Testing: Test sustained load over extended periods"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Load Testing Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Load Testing with Artillery.js\n// artillery-config.yml\n/*\nconfig:\n  target: 'http://localhost:3000'\n  phases:\n    - duration: 60\n      arrivalRate: 5\n      name: 'Warm up'\n    - duration: 120\n      arrivalRate: 10\n      name: 'Ramp up load'\n    - duration: 300\n      arrivalRate: 20\n      name: 'Sustained load'\n  payload:\n    path: 'users.csv'\n    fields:\n      - 'email'\n      - 'password'\nscenarios:\n  - name: 'User Authentication Flow'\n    weight: 60\n    flow:\n      - post:\n          url: '/api/auth/login'\n          json:\n            email: '{{ email }}'\n            password: '{{ password }}'\n          capture:\n            - json: '$.token'\n              as: 'authToken'\n      - get:\n          url: '/api/users/profile'\n          headers:\n            Authorization: 'Bearer {{ authToken }}'\n  - name: 'Product Search'\n    weight: 40\n    flow:\n      - get:\n          url: '/api/products'\n          qs:\n            search: 'laptop'\n            limit: 20\n*/\n\n// Load Testing with K6\nconst k6LoadTest = `\nimport http from 'k6/http';\nimport { check, sleep } from 'k6';\nimport { Rate } from 'k6/metrics';\n\n// Custom metrics\nconst errorRate = new Rate('errors');\n\n// Test configuration\nexport let options = {\n  stages: [\n    { duration: '30s', target: 20 }, // Ramp up\n    { duration: '1m', target: 50 },  // Stay at 50 users\n    { duration: '30s', target: 100 }, // Ramp up to 100\n    { duration: '2m', target: 100 },  // Stay at 100\n    { duration: '30s', target: 0 },   // Ramp down\n  ],\n  thresholds: {\n    http_req_duration: ['p(95)<500'], // 95% of requests under 500ms\n    http_req_failed: ['rate<0.01'],   // Error rate under 1%\n    errors: ['rate<0.01'],\n  },\n};\n\nexport default function() {\n  // Test user authentication\n  const loginResponse = http.post('http://localhost:3000/api/auth/login', {\n    email: 'test@example.com',\n    password: 'password123'\n  }, {\n    headers: { 'Content-Type': 'application/json' }\n  });\n\n  const loginSuccess = check(loginResponse, {\n    'login status is 200': (r) => r.status === 200,\n    'login response has token': (r) => r.json('token') !== undefined,\n    'login response time < 200ms': (r) => r.timings.duration < 200,\n  });\n\n  errorRate.add(!loginSuccess);\n\n  if (loginSuccess) {\n    const token = loginResponse.json('token');\n    \n    // Test authenticated endpoints\n    const profileResponse = http.get('http://localhost:3000/api/users/profile', {\n      headers: { 'Authorization': \\`Bearer \\${token}\\` }\n    });\n\n    const profileSuccess = check(profileResponse, {\n      'profile status is 200': (r) => r.status === 200,\n      'profile has user data': (r) => r.json('user') !== undefined,\n    });\n\n    errorRate.add(!profileSuccess);\n\n    // Test product search\n    const searchResponse = http.get('http://localhost:3000/api/products?search=laptop&limit=10');\n    \n    check(searchResponse, {\n      'search status is 200': (r) => r.status === 200,\n      'search returns products': (r) => r.json('products').length > 0,\n    });\n  }\n\n  sleep(1); // Wait 1 second between iterations\n}\n\n// Stress test function\nexport function stressTest() {\n  const response = http.get('http://localhost:3000/api/products');\n  \n  check(response, {\n    'status is 200': (r) => r.status === 200,\n    'response time < 1000ms': (r) => r.timings.duration < 1000,\n  });\n}\n`;\n\n// Node.js Load Testing with Autocannon\nconst autocannon = require('autocannon');\n\nclass LoadTester {\n  constructor(baseUrl) {\n    this.baseUrl = baseUrl;\n  }\n\n  async runLoadTest(options = {}) {\n    const defaultOptions = {\n      url: this.baseUrl,\n      connections: 10,\n      pipelining: 1,\n      duration: 10,\n      headers: {\n        'Content-Type': 'application/json'\n      }\n    };\n\n    const testOptions = { ...defaultOptions, ...options };\n    \n    console.log('Starting load test...');\n    console.log('Options:', testOptions);\n\n    const result = await autocannon(testOptions);\n    \n    this.analyzeResults(result);\n    return result;\n  }\n\n  async runStressTest() {\n    const phases = [\n      { connections: 10, duration: 10 },\n      { connections: 50, duration: 20 },\n      { connections: 100, duration: 30 },\n      { connections: 200, duration: 30 },\n      { connections: 500, duration: 20 }\n    ];\n\n    const results = [];\n    \n    for (const phase of phases) {\n      console.log(`\\nRunning stress test phase: ${phase.connections} connections`);\n      \n      const result = await this.runLoadTest({\n        connections: phase.connections,\n        duration: phase.duration\n      });\n      \n      results.push({\n        connections: phase.connections,\n        ...result\n      });\n      \n      // Wait between phases\n      await new Promise(resolve => setTimeout(resolve, 5000));\n    }\n    \n    return results;\n  }\n\n  analyzeResults(result) {\n    console.log('\\n=== Load Test Results ===');\n    console.log(`Requests: ${result.requests.total}`);\n    console.log(`Duration: ${result.duration}s`);\n    console.log(`RPS: ${result.requests.average}`);\n    console.log(`Latency Average: ${result.latency.average}ms`);\n    console.log(`Latency P99: ${result.latency.p99}ms`);\n    console.log(`Throughput: ${result.throughput.average} bytes/sec`);\n    console.log(`Errors: ${result.errors}`);\n    console.log(`Timeouts: ${result.timeouts}`);\n    \n    // Performance thresholds\n    const thresholds = {\n      maxLatencyP99: 1000, // 1 second\n      minRPS: 100,\n      maxErrorRate: 0.01 // 1%\n    };\n    \n    const errorRate = result.errors / result.requests.total;\n    \n    console.log('\\n=== Threshold Analysis ===');\n    console.log(`P99 Latency: ${result.latency.p99}ms (threshold: ${thresholds.maxLatencyP99}ms) - ${result.latency.p99 <= thresholds.maxLatencyP99 ? 'PASS' : 'FAIL'}`);\n    console.log(`RPS: ${result.requests.average} (threshold: ${thresholds.minRPS}) - ${result.requests.average >= thresholds.minRPS ? 'PASS' : 'FAIL'}`);\n    console.log(`Error Rate: ${(errorRate * 100).toFixed(2)}% (threshold: ${thresholds.maxErrorRate * 100}%) - ${errorRate <= thresholds.maxErrorRate ? 'PASS' : 'FAIL'}`);\n  }\n\n  async runEnduranceTest(durationMinutes = 60) {\n    console.log(`Starting ${durationMinutes}-minute endurance test...`);\n    \n    const result = await this.runLoadTest({\n      connections: 20,\n      duration: durationMinutes * 60,\n      headers: {\n        'Content-Type': 'application/json'\n      }\n    });\n    \n    console.log('\\n=== Endurance Test Completed ===');\n    this.analyzeResults(result);\n    \n    return result;\n  }\n}\n\n// Database Load Testing\nclass DatabaseLoadTester {\n  constructor(dbConnection) {\n    this.db = dbConnection;\n  }\n\n  async testConcurrentReads(concurrency = 50, iterations = 1000) {\n    console.log(`Testing ${concurrency} concurrent reads with ${iterations} iterations each`);\n    \n    const startTime = Date.now();\n    const promises = [];\n    \n    for (let i = 0; i < concurrency; i++) {\n      promises.push(this.runReadTest(iterations));\n    }\n    \n    const results = await Promise.all(promises);\n    const endTime = Date.now();\n    \n    const totalQueries = concurrency * iterations;\n    const duration = (endTime - startTime) / 1000;\n    const qps = totalQueries / duration;\n    \n    console.log(`Total queries: ${totalQueries}`);\n    console.log(`Duration: ${duration}s`);\n    console.log(`QPS: ${qps.toFixed(2)}`);\n    \n    return { totalQueries, duration, qps, results };\n  }\n\n  async runReadTest(iterations) {\n    const results = [];\n    \n    for (let i = 0; i < iterations; i++) {\n      const startTime = Date.now();\n      \n      try {\n        await this.db.query('SELECT * FROM users LIMIT 10');\n        results.push({\n          success: true,\n          duration: Date.now() - startTime\n        });\n      } catch (error) {\n        results.push({\n          success: false,\n          error: error.message,\n          duration: Date.now() - startTime\n        });\n      }\n    }\n    \n    return results;\n  }\n}\n\n// Usage example\nconst loadTester = new LoadTester('http://localhost:3000');\n\n// Run different types of tests\nloadTester.runLoadTest({\n  url: 'http://localhost:3000/api/users',\n  connections: 20,\n  duration: 30\n}).then(result => {\n  console.log('Load test completed');\n});\n\nmodule.exports = { LoadTester, DatabaseLoadTester };"
+        }
+      ]
+    },
+    {
+      "id": "security-testing",
+      "title": "Security Testing & Vulnerability Assessment",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Security Testing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Security testing identifies vulnerabilities in your backend services, ensuring protection against common attacks and security threats."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Vulnerability Scanning: Automated security vulnerability detection",
+            "Penetration Testing: Manual security testing by experts",
+            "Authentication Testing: Verify auth mechanisms work correctly",
+            "Authorization Testing: Ensure proper access controls",
+            "Input Validation Testing: Test against injection attacks"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Security Testing Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Security Testing Suite\nconst request = require('supertest');\nconst app = require('../app');\nconst { expect } = require('chai');\nconst jwt = require('jsonwebtoken');\n\ndescribe('Security Tests', () => {\n  describe('Authentication Security', () => {\n    it('should reject requests without authentication', async () => {\n      const response = await request(app)\n        .get('/api/users/profile')\n        .expect(401);\n\n      expect(response.body.error.code).to.equal('UNAUTHORIZED');\n    });\n\n    it('should reject invalid JWT tokens', async () => {\n      const response = await request(app)\n        .get('/api/users/profile')\n        .set('Authorization', 'Bearer invalid-token')\n        .expect(401);\n\n      expect(response.body.error.code).to.equal('INVALID_TOKEN');\n    });\n\n    it('should reject expired JWT tokens', async () => {\n      const expiredToken = jwt.sign(\n        { userId: 1 },\n        process.env.JWT_SECRET,\n        { expiresIn: '-1h' } // Expired 1 hour ago\n      );\n\n      const response = await request(app)\n        .get('/api/users/profile')\n        .set('Authorization', `Bearer ${expiredToken}`)\n        .expect(401);\n\n      expect(response.body.error.code).to.equal('TOKEN_EXPIRED');\n    });\n\n    it('should prevent brute force attacks', async () => {\n      const loginAttempts = [];\n      \n      // Attempt multiple failed logins\n      for (let i = 0; i < 6; i++) {\n        loginAttempts.push(\n          request(app)\n            .post('/api/auth/login')\n            .send({\n              email: 'test@example.com',\n              password: 'wrongpassword'\n            })\n        );\n      }\n\n      const responses = await Promise.all(loginAttempts);\n      \n      // First few attempts should return 401\n      expect(responses[0].status).to.equal(401);\n      expect(responses[1].status).to.equal(401);\n      \n      // After threshold, should return 429 (Too Many Requests)\n      expect(responses[5].status).to.equal(429);\n      expect(responses[5].body.error.code).to.equal('TOO_MANY_ATTEMPTS');\n    });\n  });\n\n  describe('Input Validation Security', () => {\n    it('should prevent SQL injection attacks', async () => {\n      const maliciousInput = \"'; DROP TABLE users; --\";\n      \n      const response = await request(app)\n        .get(`/api/users/search?name=${encodeURIComponent(maliciousInput)}`)\n        .set('Authorization', `Bearer ${validToken}`)\n        .expect(400);\n\n      expect(response.body.error.code).to.equal('INVALID_INPUT');\n    });\n\n    it('should prevent XSS attacks in input', async () => {\n      const xssPayload = '<script>alert(\"XSS\")</script>';\n      \n      const response = await request(app)\n        .post('/api/users')\n        .set('Authorization', `Bearer ${validToken}`)\n        .send({\n          name: xssPayload,\n          email: 'test@example.com'\n        })\n        .expect(400);\n\n      expect(response.body.error.code).to.equal('INVALID_INPUT');\n    });\n\n    it('should validate file upload security', async () => {\n      const maliciousFile = Buffer.from('<?php echo \"Malicious code\"; ?>');\n      \n      const response = await request(app)\n        .post('/api/upload')\n        .set('Authorization', `Bearer ${validToken}`)\n        .attach('file', maliciousFile, 'malicious.php')\n        .expect(400);\n\n      expect(response.body.error.code).to.equal('INVALID_FILE_TYPE');\n    });\n\n    it('should enforce file size limits', async () => {\n      const largeFile = Buffer.alloc(10 * 1024 * 1024); // 10MB\n      \n      const response = await request(app)\n        .post('/api/upload')\n        .set('Authorization', `Bearer ${validToken}`)\n        .attach('file', largeFile, 'large.txt')\n        .expect(413);\n\n      expect(response.body.error.code).to.equal('FILE_TOO_LARGE');\n    });\n  });\n\n  describe('Authorization Security', () => {\n    let userToken, adminToken;\n\n    beforeEach(() => {\n      userToken = jwt.sign(\n        { userId: 1, role: 'user' },\n        process.env.JWT_SECRET\n      );\n      \n      adminToken = jwt.sign(\n        { userId: 2, role: 'admin' },\n        process.env.JWT_SECRET\n      );\n    });\n\n    it('should prevent unauthorized access to admin endpoints', async () => {\n      const response = await request(app)\n        .get('/api/admin/users')\n        .set('Authorization', `Bearer ${userToken}`)\n        .expect(403);\n\n      expect(response.body.error.code).to.equal('INSUFFICIENT_PERMISSIONS');\n    });\n\n    it('should allow admin access to admin endpoints', async () => {\n      const response = await request(app)\n        .get('/api/admin/users')\n        .set('Authorization', `Bearer ${adminToken}`)\n        .expect(200);\n\n      expect(response.body).to.have.property('users');\n    });\n\n    it('should prevent users from accessing other users data', async () => {\n      const response = await request(app)\n        .get('/api/users/999/profile') // Different user ID\n        .set('Authorization', `Bearer ${userToken}`) // User ID 1\n        .expect(403);\n\n      expect(response.body.error.code).to.equal('ACCESS_DENIED');\n    });\n  });\n\n  describe('Rate Limiting Security', () => {\n    it('should enforce API rate limits', async () => {\n      const requests = [];\n      \n      // Make requests beyond rate limit\n      for (let i = 0; i < 102; i++) {\n        requests.push(\n          request(app)\n            .get('/api/products')\n            .set('Authorization', `Bearer ${validToken}`)\n        );\n      }\n\n      const responses = await Promise.all(requests);\n      \n      // Some requests should be rate limited\n      const rateLimitedResponses = responses.filter(r => r.status === 429);\n      expect(rateLimitedResponses.length).to.be.greaterThan(0);\n    });\n  });\n\n  describe('Data Protection', () => {\n    it('should not expose sensitive data in responses', async () => {\n      const response = await request(app)\n        .get('/api/users/profile')\n        .set('Authorization', `Bearer ${validToken}`)\n        .expect(200);\n\n      expect(response.body.user).to.not.have.property('password');\n      expect(response.body.user).to.not.have.property('passwordHash');\n      expect(response.body.user).to.not.have.property('salt');\n    });\n\n    it('should encrypt sensitive data in transit', async () => {\n      // Test HTTPS enforcement\n      const response = await request(app)\n        .get('/api/users/profile')\n        .set('X-Forwarded-Proto', 'http') // Simulate HTTP request\n        .expect(301); // Should redirect to HTTPS\n\n      expect(response.headers.location).to.match(/^https:/);\n    });\n  });\n});\n\n// Automated Security Scanning\nclass SecurityScanner {\n  constructor(baseUrl) {\n    this.baseUrl = baseUrl;\n    this.vulnerabilities = [];\n  }\n\n  async scanForVulnerabilities() {\n    console.log('Starting security scan...');\n    \n    await this.testCommonVulnerabilities();\n    await this.testAuthenticationFlaws();\n    await this.testInputValidation();\n    await this.testSessionManagement();\n    \n    return this.generateReport();\n  }\n\n  async testCommonVulnerabilities() {\n    // Test for common OWASP Top 10 vulnerabilities\n    const tests = [\n      this.testSQLInjection(),\n      this.testXSS(),\n      this.testCSRF(),\n      this.testInsecureDirectObjectReferences(),\n      this.testSecurityMisconfiguration()\n    ];\n\n    await Promise.all(tests);\n  }\n\n  async testSQLInjection() {\n    const payloads = [\n      \"' OR '1'='1\",\n      \"'; DROP TABLE users; --\",\n      \"' UNION SELECT * FROM users --\"\n    ];\n\n    for (const payload of payloads) {\n      try {\n        const response = await request(this.baseUrl)\n          .get(`/api/users/search?name=${encodeURIComponent(payload)}`);\n        \n        if (response.status === 200 && response.body.users) {\n          this.vulnerabilities.push({\n            type: 'SQL Injection',\n            severity: 'HIGH',\n            endpoint: '/api/users/search',\n            payload,\n            description: 'Endpoint may be vulnerable to SQL injection'\n          });\n        }\n      } catch (error) {\n        // Expected for secure endpoints\n      }\n    }\n  }\n\n  async testXSS() {\n    const xssPayloads = [\n      '<script>alert(\"XSS\")</script>',\n      '<img src=x onerror=alert(\"XSS\")>',\n      'javascript:alert(\"XSS\")'\n    ];\n\n    for (const payload of xssPayloads) {\n      try {\n        const response = await request(this.baseUrl)\n          .post('/api/users')\n          .send({\n            name: payload,\n            email: 'test@example.com'\n          });\n        \n        if (response.status === 201) {\n          this.vulnerabilities.push({\n            type: 'Cross-Site Scripting (XSS)',\n            severity: 'MEDIUM',\n            endpoint: '/api/users',\n            payload,\n            description: 'Endpoint may not properly sanitize input'\n          });\n        }\n      } catch (error) {\n        // Expected for secure endpoints\n      }\n    }\n  }\n\n  generateReport() {\n    const report = {\n      scanDate: new Date().toISOString(),\n      vulnerabilitiesFound: this.vulnerabilities.length,\n      vulnerabilities: this.vulnerabilities,\n      summary: {\n        high: this.vulnerabilities.filter(v => v.severity === 'HIGH').length,\n        medium: this.vulnerabilities.filter(v => v.severity === 'MEDIUM').length,\n        low: this.vulnerabilities.filter(v => v.severity === 'LOW').length\n      }\n    };\n\n    console.log('\\n=== Security Scan Report ===');\n    console.log(`Vulnerabilities found: ${report.vulnerabilitiesFound}`);\n    console.log(`High severity: ${report.summary.high}`);\n    console.log(`Medium severity: ${report.summary.medium}`);\n    console.log(`Low severity: ${report.summary.low}`);\n\n    return report;\n  }\n}\n\nmodule.exports = { SecurityScanner };"
+        }
+      ]
+    },
+    {
+      "id": "production-monitoring",
+      "title": "Production Monitoring & Deployment Testing",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Production Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "Production monitoring ensures your backend services continue to work correctly after deployment through continuous testing and monitoring strategies."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Canary Deployments: Gradual rollout to subset of users",
+            "Blue-Green Deployments: Zero-downtime deployment strategy",
+            "Feature Flags: Control feature rollout and testing",
+            "Synthetic Monitoring: Automated production testing",
+            "Rollback Strategies: Quick recovery from deployment issues"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Production Testing Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Production Monitoring and Testing\nconst axios = require('axios');\nconst cron = require('node-cron');\n\nclass ProductionMonitor {\n  constructor(config) {\n    this.config = config;\n    this.healthChecks = new Map();\n    this.alerts = [];\n  }\n\n  // Synthetic monitoring - automated production tests\n  startSyntheticMonitoring() {\n    console.log('Starting synthetic monitoring...');\n    \n    // Run health checks every 5 minutes\n    cron.schedule('*/5 * * * *', () => {\n      this.runHealthChecks();\n    });\n\n    // Run full synthetic tests every hour\n    cron.schedule('0 * * * *', () => {\n      this.runSyntheticTests();\n    });\n\n    // Run performance tests daily\n    cron.schedule('0 2 * * *', () => {\n      this.runPerformanceTests();\n    });\n  }\n\n  async runHealthChecks() {\n    const checks = [\n      this.checkApiHealth(),\n      this.checkDatabaseHealth(),\n      this.checkExternalServices(),\n      this.checkCacheHealth()\n    ];\n\n    const results = await Promise.allSettled(checks);\n    \n    results.forEach((result, index) => {\n      const checkName = ['API', 'Database', 'External Services', 'Cache'][index];\n      \n      if (result.status === 'rejected') {\n        this.handleHealthCheckFailure(checkName, result.reason);\n      } else {\n        console.log(`✓ ${checkName} health check passed`);\n      }\n    });\n  }\n\n  async checkApiHealth() {\n    const response = await axios.get(`${this.config.apiUrl}/health`, {\n      timeout: 5000\n    });\n    \n    if (response.status !== 200) {\n      throw new Error(`API health check failed: ${response.status}`);\n    }\n    \n    return response.data;\n  }\n\n  async checkDatabaseHealth() {\n    const response = await axios.get(`${this.config.apiUrl}/health/database`, {\n      timeout: 10000\n    });\n    \n    if (response.status !== 200 || !response.data.connected) {\n      throw new Error('Database health check failed');\n    }\n    \n    return response.data;\n  }\n\n  async runSyntheticTests() {\n    console.log('Running synthetic tests...');\n    \n    const testSuites = [\n      this.testUserJourney(),\n      this.testCriticalPaths(),\n      this.testApiEndpoints()\n    ];\n\n    const results = await Promise.allSettled(testSuites);\n    \n    const failures = results.filter(r => r.status === 'rejected');\n    \n    if (failures.length > 0) {\n      await this.alertOnSyntheticTestFailures(failures);\n    }\n  }\n\n  async testUserJourney() {\n    // Test complete user registration and login flow\n    const testUser = {\n      email: `test-${Date.now()}@example.com`,\n      password: 'TestPassword123',\n      name: 'Synthetic Test User'\n    };\n\n    // 1. Register user\n    const registerResponse = await axios.post(\n      `${this.config.apiUrl}/api/auth/register`,\n      testUser,\n      { timeout: 10000 }\n    );\n\n    if (registerResponse.status !== 201) {\n      throw new Error('User registration failed in synthetic test');\n    }\n\n    // 2. Login user\n    const loginResponse = await axios.post(\n      `${this.config.apiUrl}/api/auth/login`,\n      {\n        email: testUser.email,\n        password: testUser.password\n      },\n      { timeout: 10000 }\n    );\n\n    if (loginResponse.status !== 200 || !loginResponse.data.token) {\n      throw new Error('User login failed in synthetic test');\n    }\n\n    const token = loginResponse.data.token;\n\n    // 3. Access protected resource\n    const profileResponse = await axios.get(\n      `${this.config.apiUrl}/api/users/profile`,\n      {\n        headers: { Authorization: `Bearer ${token}` },\n        timeout: 5000\n      }\n    );\n\n    if (profileResponse.status !== 200) {\n      throw new Error('Protected resource access failed in synthetic test');\n    }\n\n    // 4. Cleanup - delete test user\n    await axios.delete(\n      `${this.config.apiUrl}/api/users/${registerResponse.data.user.id}`,\n      {\n        headers: { Authorization: `Bearer ${token}` },\n        timeout: 5000\n      }\n    );\n\n    console.log('✓ User journey synthetic test passed');\n  }\n\n  async testCriticalPaths() {\n    // Test critical business operations\n    const tests = [\n      this.testProductSearch(),\n      this.testOrderProcessing(),\n      this.testPaymentProcessing()\n    ];\n\n    await Promise.all(tests);\n  }\n\n  async testProductSearch() {\n    const response = await axios.get(\n      `${this.config.apiUrl}/api/products?search=test&limit=10`,\n      { timeout: 5000 }\n    );\n\n    if (response.status !== 200 || !Array.isArray(response.data.products)) {\n      throw new Error('Product search failed in synthetic test');\n    }\n  }\n\n  async handleHealthCheckFailure(checkName, error) {\n    console.error(`❌ ${checkName} health check failed:`, error.message);\n    \n    const alert = {\n      type: 'health_check_failure',\n      service: checkName,\n      message: error.message,\n      timestamp: new Date().toISOString(),\n      severity: 'high'\n    };\n\n    await this.sendAlert(alert);\n  }\n\n  async sendAlert(alert) {\n    // Send to monitoring service\n    try {\n      await axios.post(this.config.alertWebhook, {\n        text: `🚨 Production Alert: ${alert.service}`,\n        attachments: [{\n          color: 'danger',\n          fields: [\n            { title: 'Service', value: alert.service, short: true },\n            { title: 'Type', value: alert.type, short: true },\n            { title: 'Message', value: alert.message, short: false },\n            { title: 'Timestamp', value: alert.timestamp, short: true }\n          ]\n        }]\n      });\n    } catch (error) {\n      console.error('Failed to send alert:', error.message);\n    }\n  }\n}\n\n// Canary Deployment Testing\nclass CanaryDeploymentTester {\n  constructor(config) {\n    this.config = config;\n    this.canaryUrl = config.canaryUrl;\n    this.productionUrl = config.productionUrl;\n  }\n\n  async runCanaryTests() {\n    console.log('Starting canary deployment tests...');\n    \n    const tests = [\n      this.compareHealthEndpoints(),\n      this.compareApiResponses(),\n      this.comparePerformance(),\n      this.testNewFeatures()\n    ];\n\n    const results = await Promise.allSettled(tests);\n    \n    const failures = results.filter(r => r.status === 'rejected');\n    \n    if (failures.length === 0) {\n      console.log('✅ All canary tests passed - deployment can proceed');\n      return { success: true, canProceed: true };\n    } else {\n      console.log('❌ Canary tests failed - deployment should be rolled back');\n      return { success: false, canProceed: false, failures };\n    }\n  }\n\n  async compareHealthEndpoints() {\n    const [canaryHealth, prodHealth] = await Promise.all([\n      axios.get(`${this.canaryUrl}/health`),\n      axios.get(`${this.productionUrl}/health`)\n    ]);\n\n    if (canaryHealth.status !== prodHealth.status) {\n      throw new Error('Health endpoint status mismatch between canary and production');\n    }\n  }\n\n  async compareApiResponses() {\n    const testEndpoints = [\n      '/api/products?limit=5',\n      '/api/categories',\n      '/api/health/database'\n    ];\n\n    for (const endpoint of testEndpoints) {\n      const [canaryResponse, prodResponse] = await Promise.all([\n        axios.get(`${this.canaryUrl}${endpoint}`),\n        axios.get(`${this.productionUrl}${endpoint}`)\n      ]);\n\n      // Compare response structure (not exact data which may differ)\n      if (canaryResponse.status !== prodResponse.status) {\n        throw new Error(`Response status mismatch for ${endpoint}`);\n      }\n\n      // Compare response schema\n      const canaryKeys = Object.keys(canaryResponse.data);\n      const prodKeys = Object.keys(prodResponse.data);\n      \n      if (JSON.stringify(canaryKeys.sort()) !== JSON.stringify(prodKeys.sort())) {\n        throw new Error(`Response schema mismatch for ${endpoint}`);\n      }\n    }\n  }\n\n  async comparePerformance() {\n    const testUrl = '/api/products?limit=20';\n    const iterations = 10;\n    \n    const canaryTimes = [];\n    const prodTimes = [];\n\n    // Test canary performance\n    for (let i = 0; i < iterations; i++) {\n      const start = Date.now();\n      await axios.get(`${this.canaryUrl}${testUrl}`);\n      canaryTimes.push(Date.now() - start);\n    }\n\n    // Test production performance\n    for (let i = 0; i < iterations; i++) {\n      const start = Date.now();\n      await axios.get(`${this.productionUrl}${testUrl}`);\n      prodTimes.push(Date.now() - start);\n    }\n\n    const canaryAvg = canaryTimes.reduce((a, b) => a + b) / canaryTimes.length;\n    const prodAvg = prodTimes.reduce((a, b) => a + b) / prodTimes.length;\n\n    // Canary should not be significantly slower (more than 50% slower)\n    if (canaryAvg > prodAvg * 1.5) {\n      throw new Error(`Canary performance degraded: ${canaryAvg}ms vs ${prodAvg}ms`);\n    }\n\n    console.log(`Performance comparison - Canary: ${canaryAvg}ms, Production: ${prodAvg}ms`);\n  }\n}\n\n// Feature Flag Testing\nclass FeatureFlagTester {\n  constructor(featureFlagService) {\n    this.featureFlags = featureFlagService;\n  }\n\n  async testFeatureFlags() {\n    const flags = await this.featureFlags.getAllFlags();\n    \n    for (const flag of flags) {\n      if (flag.enabled && flag.testable) {\n        await this.testFeatureFlag(flag);\n      }\n    }\n  }\n\n  async testFeatureFlag(flag) {\n    console.log(`Testing feature flag: ${flag.name}`);\n    \n    // Test with flag enabled\n    await this.featureFlags.setFlag(flag.name, true);\n    const enabledResult = await this.runFeatureTest(flag);\n    \n    // Test with flag disabled\n    await this.featureFlags.setFlag(flag.name, false);\n    const disabledResult = await this.runFeatureTest(flag);\n    \n    // Restore original state\n    await this.featureFlags.setFlag(flag.name, flag.enabled);\n    \n    return { enabledResult, disabledResult };\n  }\n}\n\nmodule.exports = {\n  ProductionMonitor,\n  CanaryDeploymentTester,\n  FeatureFlagTester\n};"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the primary purpose of API testing?",
+      "options": [
+        "To test the user interface",
+        "To ensure backend services work correctly by testing endpoints, data validation, and error handling",
+        "To test database performance only",
+        "To test frontend components"
+      ],
+      "correctAnswer": 1,
+      "explanation": "API testing focuses on testing backend services by verifying endpoints work correctly, data validation functions properly, error handling is appropriate, and integration points function as expected."
+    },
+    {
+      "id": 2,
+      "question": "What is the difference between unit tests and integration tests for APIs?",
+      "options": [
+        "There is no difference",
+        "Unit tests test individual functions in isolation, integration tests test API endpoints and database interactions",
+        "Unit tests are slower than integration tests",
+        "Integration tests only test the database"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Unit tests focus on testing individual functions and components in isolation, while integration tests verify that API endpoints work correctly with databases and other services."
+    },
+    {
+      "id": 3,
+      "question": "What is contract testing in API development?",
+      "options": [
+        "Testing legal contracts",
+        "Testing that API contracts between services are maintained and compatible",
+        "Testing database contracts",
+        "Testing user contracts"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Contract testing ensures that API contracts (the agreed-upon interface) between different services are maintained, preventing breaking changes that could affect service integration."
+    },
+    {
+      "id": 4,
+      "question": "Why are mock services important in testing?",
+      "options": [
+        "They make tests run faster only",
+        "They simulate external dependencies, allowing isolated testing without relying on external systems",
+        "They are only used for frontend testing",
+        "They replace the need for real testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Mock services simulate external dependencies (APIs, databases, third-party services), enabling isolated testing of your backend services without depending on external systems being available."
+    },
+    {
+      "id": 5,
+      "question": "What should be tested in API endpoint validation?",
+      "options": [
+        "Only successful requests",
+        "Request validation, response format, error handling, and edge cases",
+        "Only error responses",
+        "Only database queries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Comprehensive API testing should cover request validation (required fields, data types), response format verification, proper error handling, and edge cases like invalid data or missing parameters."
+    },
+    {
+      "id": 6,
+      "question": "What is the difference between load testing and stress testing?",
+      "options": [
+        "They are the same thing",
+        "Load testing tests normal expected conditions, stress testing tests beyond normal capacity",
+        "Stress testing is easier than load testing",
+        "Load testing only tests databases"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Load testing evaluates performance under normal expected load conditions, while stress testing pushes the system beyond normal capacity to find breaking points and failure modes."
+    },
+    {
+      "id": 7,
+      "question": "What is the purpose of security testing in backend services?",
+      "options": [
+        "To make the application slower",
+        "To identify vulnerabilities and ensure protection against common attacks",
+        "To test only the user interface",
+        "To increase server costs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Security testing identifies vulnerabilities in backend services, ensuring protection against common attacks like SQL injection, XSS, and ensuring proper authentication and authorization mechanisms."
+    },
+    {
+      "id": 8,
+      "question": "What is synthetic monitoring in production?",
+      "options": [
+        "Monitoring fake data",
+        "Automated testing that continuously runs against production systems to detect issues",
+        "Monitoring only during business hours",
+        "Manual testing by users"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Synthetic monitoring uses automated tests that continuously run against production systems to proactively detect issues before real users are affected."
+    },
+    {
+      "id": 9,
+      "question": "What is a canary deployment?",
+      "options": [
+        "Deploying to bird-related systems",
+        "Gradual rollout of new code to a subset of users to test in production",
+        "Deploying only on weekends",
+        "Rolling back all deployments"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Canary deployment is a strategy where new code is gradually rolled out to a small subset of users first, allowing you to test in production and monitor for issues before full deployment."
+    },
+    {
+      "id": 10,
+      "question": "What should be included in a comprehensive security test?",
+      "options": [
+        "Only password testing",
+        "Authentication, authorization, input validation, and vulnerability scanning",
+        "Only database testing",
+        "Only network testing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Comprehensive security testing should include authentication mechanisms, authorization controls, input validation against injection attacks, and automated vulnerability scanning for common security issues."
+    },
+    {
+      "id": 11,
+      "question": "What is the purpose of test data factories?",
+      "options": [
+        "To delete test data",
+        "To generate consistent, controlled test data for reliable testing",
+        "To slow down tests",
+        "To test only production data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Test data factories generate consistent, controlled test data that ensures tests are reliable, repeatable, and don't depend on external data sources or production data."
+    },
+    {
+      "id": 12,
+      "question": "What is the benefit of using feature flags in testing?",
+      "options": [
+        "They make code more complex",
+        "They allow controlled rollout and testing of features in production",
+        "They slow down the application",
+        "They are only for debugging"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Feature flags allow controlled rollout of features, enabling A/B testing, gradual deployment, and the ability to quickly disable features if issues are detected in production."
+    },
+    {
+      "id": 13,
+      "question": "What is contract testing in microservices?",
+      "options": [
+        "Testing legal contracts",
+        "Testing that service interfaces and contracts between microservices are maintained",
+        "Testing only internal functions",
+        "Testing user contracts"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Contract testing ensures that the interfaces and contracts between microservices are maintained, preventing breaking changes that could affect service integration and communication."
+    },
+    {
+      "id": 14,
+      "question": "What metrics should be monitored during load testing?",
+      "options": [
+        "Only response time",
+        "Response time, throughput, error rate, and resource utilization",
+        "Only error count",
+        "Only database queries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Comprehensive load testing should monitor response times, throughput (requests per second), error rates, and resource utilization (CPU, memory, disk) to identify performance bottlenecks."
+    },
+    {
+      "id": 15,
+      "question": "What is the purpose of rollback strategies in deployment testing?",
+      "options": [
+        "To make deployments permanent",
+        "To quickly recover from deployment issues and restore service",
+        "To slow down deployments",
+        "To test only new features"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Rollback strategies provide a way to quickly recover from deployment issues by restoring the previous working version, minimizing downtime and user impact when problems are detected."
+    }
+  ]
+} 

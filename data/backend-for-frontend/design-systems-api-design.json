@@ -1,0 +1,217 @@
+{
+  "title": "Design Systems & API Design",
+  "description": "Learn to build scalable design system APIs, content management systems, localization, A/B testing frameworks, and configuration management for modern frontend applications.",
+  "sections": [
+    {
+      "id": "design-system-apis",
+      "title": "Design System APIs",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Component Data Models"
+        },
+        {
+          "type": "paragraph",
+          "text": "Design system APIs define how components are structured, configured, and consumed across applications."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Component schema definition\nconst ComponentSchema = {\n  button: {\n    props: {\n      variant: { type: 'string', enum: ['primary', 'secondary', 'ghost'], default: 'primary' },\n      size: { type: 'string', enum: ['sm', 'md', 'lg'], default: 'md' },\n      disabled: { type: 'boolean', default: false },\n      loading: { type: 'boolean', default: false },\n      icon: { type: 'string', optional: true },\n      children: { type: 'string', required: true }\n    },\n    styles: {\n      base: 'px-4 py-2 rounded-md font-medium transition-colors',\n      variants: {\n        primary: 'bg-blue-600 text-white hover:bg-blue-700',\n        secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300',\n        ghost: 'bg-transparent text-blue-600 hover:bg-blue-50'\n      },\n      sizes: {\n        sm: 'px-3 py-1.5 text-sm',\n        md: 'px-4 py-2 text-base',\n        lg: 'px-6 py-3 text-lg'\n      }\n    }\n  }\n};\n\n// Design System API Service\nclass DesignSystemAPI {\n  constructor() {\n    this.components = new Map();\n    this.themes = new Map();\n    this.loadDefaultComponents();\n  }\n  \n  loadDefaultComponents() {\n    Object.entries(ComponentSchema).forEach(([name, schema]) => {\n      this.components.set(name, schema);\n    });\n  }\n  \n  // Get component definition\n  getComponent(name) {\n    const component = this.components.get(name);\n    if (!component) {\n      throw new Error(`Component '${name}' not found`);\n    }\n    return component;\n  }\n  \n  // Get all components\n  getAllComponents() {\n    const components = {};\n    this.components.forEach((schema, name) => {\n      components[name] = schema;\n    });\n    return components;\n  }\n  \n  // Validate component props\n  validateProps(componentName, props) {\n    const component = this.getComponent(componentName);\n    const errors = [];\n    \n    Object.entries(component.props).forEach(([propName, propSchema]) => {\n      const value = props[propName];\n      \n      if (propSchema.required && value === undefined) {\n        errors.push(`Property '${propName}' is required`);\n      }\n      \n      if (value !== undefined && propSchema.enum && !propSchema.enum.includes(value)) {\n        errors.push(`Property '${propName}' must be one of: ${propSchema.enum.join(', ')}`);\n      }\n      \n      if (value !== undefined && propSchema.type === 'boolean' && typeof value !== 'boolean') {\n        errors.push(`Property '${propName}' must be a boolean`);\n      }\n    });\n    \n    return { valid: errors.length === 0, errors };\n  }\n  \n  // Generate component styles\n  generateStyles(componentName, props) {\n    const component = this.getComponent(componentName);\n    const { variant = 'primary', size = 'md' } = props;\n    \n    let classes = component.styles.base;\n    \n    if (component.styles.variants[variant]) {\n      classes += ' ' + component.styles.variants[variant];\n    }\n    \n    if (component.styles.sizes[size]) {\n      classes += ' ' + component.styles.sizes[size];\n    }\n    \n    return classes;\n  }\n}\n\n// Express API endpoints\nconst designSystem = new DesignSystemAPI();\n\napp.get('/api/design-system/components', (req, res) => {\n  res.json(designSystem.getAllComponents());\n});\n\napp.get('/api/design-system/components/:name', (req, res) => {\n  try {\n    const component = designSystem.getComponent(req.params.name);\n    res.json(component);\n  } catch (error) {\n    res.status(404).json({ error: error.message });\n  }\n});\n\napp.post('/api/design-system/validate', (req, res) => {\n  const { component, props } = req.body;\n  try {\n    const validation = designSystem.validateProps(component, props);\n    const styles = validation.valid ? designSystem.generateStyles(component, props) : null;\n    \n    res.json({ validation, styles });\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Theming APIs"
+        },
+        {
+          "type": "paragraph",
+          "text": "Dynamic theming systems that allow runtime theme switching and customization."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Theme management system\nclass ThemeManager {\n  constructor() {\n    this.themes = new Map();\n    this.activeTheme = 'default';\n    this.setupDefaultThemes();\n  }\n  \n  setupDefaultThemes() {\n    const defaultTheme = {\n      colors: {\n        primary: { 50: '#eff6ff', 500: '#3b82f6', 900: '#1e3a8a' },\n        gray: { 50: '#f9fafb', 500: '#6b7280', 900: '#111827' },\n        success: { 500: '#10b981' },\n        error: { 500: '#ef4444' }\n      },\n      spacing: { xs: '0.5rem', sm: '1rem', md: '1.5rem', lg: '2rem', xl: '3rem' },\n      typography: {\n        fontFamily: 'Inter, sans-serif',\n        fontSize: { sm: '0.875rem', base: '1rem', lg: '1.125rem', xl: '1.25rem' }\n      },\n      borderRadius: { sm: '0.25rem', md: '0.5rem', lg: '0.75rem' },\n      shadows: {\n        sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',\n        md: '0 4px 6px -1px rgb(0 0 0 / 0.1)',\n        lg: '0 10px 15px -3px rgb(0 0 0 / 0.1)'\n      }\n    };\n    \n    const darkTheme = {\n      ...defaultTheme,\n      colors: {\n        ...defaultTheme.colors,\n        primary: { 50: '#1e293b', 500: '#60a5fa', 900: '#e2e8f0' },\n        gray: { 50: '#0f172a', 500: '#64748b', 900: '#f1f5f9' }\n      }\n    };\n    \n    this.themes.set('default', defaultTheme);\n    this.themes.set('dark', darkTheme);\n  }\n  \n  getTheme(name = this.activeTheme) {\n    return this.themes.get(name);\n  }\n  \n  setActiveTheme(name) {\n    if (!this.themes.has(name)) {\n      throw new Error(`Theme '${name}' not found`);\n    }\n    this.activeTheme = name;\n    return this.getTheme(name);\n  }\n  \n  createCustomTheme(name, customizations) {\n    const baseTheme = this.getTheme('default');\n    const customTheme = this.deepMerge(baseTheme, customizations);\n    this.themes.set(name, customTheme);\n    return customTheme;\n  }\n  \n  generateCSS(themeName = this.activeTheme) {\n    const theme = this.getTheme(themeName);\n    let css = ':root {\\n';\n    \n    // Generate CSS custom properties\n    Object.entries(theme.colors).forEach(([colorName, shades]) => {\n      if (typeof shades === 'object') {\n        Object.entries(shades).forEach(([shade, value]) => {\n          css += `  --color-${colorName}-${shade}: ${value};\\n`;\n        });\n      } else {\n        css += `  --color-${colorName}: ${shades};\\n`;\n      }\n    });\n    \n    Object.entries(theme.spacing).forEach(([size, value]) => {\n      css += `  --spacing-${size}: ${value};\\n`;\n    });\n    \n    css += '}\\n';\n    return css;\n  }\n  \n  deepMerge(target, source) {\n    const result = { ...target };\n    Object.keys(source).forEach(key => {\n      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {\n        result[key] = this.deepMerge(target[key] || {}, source[key]);\n      } else {\n        result[key] = source[key];\n      }\n    });\n    return result;\n  }\n}\n\n// Theme API endpoints\nconst themeManager = new ThemeManager();\n\napp.get('/api/themes', (req, res) => {\n  const themeNames = Array.from(themeManager.themes.keys());\n  res.json({ themes: themeNames, active: themeManager.activeTheme });\n});\n\napp.get('/api/themes/:name', (req, res) => {\n  try {\n    const theme = themeManager.getTheme(req.params.name);\n    res.json(theme);\n  } catch (error) {\n    res.status(404).json({ error: error.message });\n  }\n});\n\napp.get('/api/themes/:name/css', (req, res) => {\n  try {\n    const css = themeManager.generateCSS(req.params.name);\n    res.setHeader('Content-Type', 'text/css');\n    res.send(css);\n  } catch (error) {\n    res.status(404).json({ error: error.message });\n  }\n});\n\napp.post('/api/themes/custom', (req, res) => {\n  try {\n    const { name, customizations } = req.body;\n    const theme = themeManager.createCustomTheme(name, customizations);\n    res.json({ success: true, theme });\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});"
+        }
+      ]
+    },
+    {
+      "id": "headless-cms",
+      "title": "Headless CMS Integration",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Content Management APIs"
+        },
+        {
+          "type": "paragraph",
+          "text": "Build flexible content management systems that decouple content from presentation."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Headless CMS implementation\nclass HeadlessCMS {\n  constructor() {\n    this.contentTypes = new Map();\n    this.content = new Map();\n    this.versions = new Map();\n    this.setupDefaultContentTypes();\n  }\n  \n  setupDefaultContentTypes() {\n    this.defineContentType('page', {\n      fields: {\n        title: { type: 'string', required: true },\n        slug: { type: 'string', required: true, unique: true },\n        content: { type: 'richtext', required: true },\n        metaTitle: { type: 'string' },\n        metaDescription: { type: 'string' },\n        featuredImage: { type: 'media' },\n        status: { type: 'enum', values: ['draft', 'published', 'archived'], default: 'draft' },\n        publishedAt: { type: 'datetime' }\n      }\n    });\n    \n    this.defineContentType('blog-post', {\n      fields: {\n        title: { type: 'string', required: true },\n        slug: { type: 'string', required: true, unique: true },\n        excerpt: { type: 'text' },\n        content: { type: 'richtext', required: true },\n        author: { type: 'reference', contentType: 'author' },\n        tags: { type: 'array', itemType: 'string' },\n        featuredImage: { type: 'media' },\n        status: { type: 'enum', values: ['draft', 'published'], default: 'draft' },\n        publishedAt: { type: 'datetime' }\n      }\n    });\n  }\n  \n  defineContentType(name, schema) {\n    this.contentTypes.set(name, {\n      ...schema,\n      createdAt: new Date(),\n      updatedAt: new Date()\n    });\n  }\n  \n  // Create content entry\n  async createEntry(contentType, data) {\n    const schema = this.contentTypes.get(contentType);\n    if (!schema) {\n      throw new Error(`Content type '${contentType}' not found`);\n    }\n    \n    // Validate data\n    const validation = this.validateEntry(schema, data);\n    if (!validation.valid) {\n      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);\n    }\n    \n    const entry = {\n      id: this.generateId(),\n      contentType,\n      ...data,\n      createdAt: new Date(),\n      updatedAt: new Date(),\n      version: 1\n    };\n    \n    // Store entry\n    const key = `${contentType}:${entry.id}`;\n    this.content.set(key, entry);\n    \n    // Store version\n    this.versions.set(`${key}:1`, { ...entry });\n    \n    return entry;\n  }\n  \n  // Update content entry\n  async updateEntry(contentType, id, data) {\n    const key = `${contentType}:${id}`;\n    const existing = this.content.get(key);\n    \n    if (!existing) {\n      throw new Error('Entry not found');\n    }\n    \n    const schema = this.contentTypes.get(contentType);\n    const validation = this.validateEntry(schema, { ...existing, ...data });\n    \n    if (!validation.valid) {\n      throw new Error(`Validation failed: ${validation.errors.join(', ')}`);\n    }\n    \n    const updatedEntry = {\n      ...existing,\n      ...data,\n      updatedAt: new Date(),\n      version: existing.version + 1\n    };\n    \n    this.content.set(key, updatedEntry);\n    this.versions.set(`${key}:${updatedEntry.version}`, { ...updatedEntry });\n    \n    return updatedEntry;\n  }\n  \n  // Get content entries\n  async getEntries(contentType, filters = {}) {\n    const entries = [];\n    \n    for (const [key, entry] of this.content) {\n      if (entry.contentType === contentType) {\n        let include = true;\n        \n        // Apply filters\n        Object.entries(filters).forEach(([field, value]) => {\n          if (entry[field] !== value) {\n            include = false;\n          }\n        });\n        \n        if (include) {\n          entries.push(entry);\n        }\n      }\n    }\n    \n    return entries.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));\n  }\n  \n  // Get single entry\n  async getEntry(contentType, id) {\n    const key = `${contentType}:${id}`;\n    return this.content.get(key);\n  }\n  \n  // Get entry by slug\n  async getEntryBySlug(contentType, slug) {\n    for (const [key, entry] of this.content) {\n      if (entry.contentType === contentType && entry.slug === slug) {\n        return entry;\n      }\n    }\n    return null;\n  }\n  \n  validateEntry(schema, data) {\n    const errors = [];\n    \n    Object.entries(schema.fields).forEach(([fieldName, fieldSchema]) => {\n      const value = data[fieldName];\n      \n      if (fieldSchema.required && (value === undefined || value === null)) {\n        errors.push(`Field '${fieldName}' is required`);\n      }\n      \n      if (value !== undefined && fieldSchema.type === 'enum') {\n        if (!fieldSchema.values.includes(value)) {\n          errors.push(`Field '${fieldName}' must be one of: ${fieldSchema.values.join(', ')}`);\n        }\n      }\n    });\n    \n    return { valid: errors.length === 0, errors };\n  }\n  \n  generateId() {\n    return Date.now().toString(36) + Math.random().toString(36).substr(2);\n  }\n}\n\n// CMS API endpoints\nconst cms = new HeadlessCMS();\n\napp.get('/api/cms/content-types', (req, res) => {\n  const types = {};\n  cms.contentTypes.forEach((schema, name) => {\n    types[name] = schema;\n  });\n  res.json(types);\n});\n\napp.get('/api/cms/:contentType', async (req, res) => {\n  try {\n    const entries = await cms.getEntries(req.params.contentType, req.query);\n    res.json({ entries, total: entries.length });\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});\n\napp.get('/api/cms/:contentType/:id', async (req, res) => {\n  try {\n    const entry = await cms.getEntry(req.params.contentType, req.params.id);\n    if (!entry) {\n      return res.status(404).json({ error: 'Entry not found' });\n    }\n    res.json(entry);\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});\n\napp.post('/api/cms/:contentType', async (req, res) => {\n  try {\n    const entry = await cms.createEntry(req.params.contentType, req.body);\n    res.status(201).json(entry);\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});\n\napp.put('/api/cms/:contentType/:id', async (req, res) => {\n  try {\n    const entry = await cms.updateEntry(req.params.contentType, req.params.id, req.body);\n    res.json(entry);\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});"
+        }
+      ]
+    },
+    {
+      "id": "localization",
+      "title": "Internationalization & Localization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Translation Management"
+        },
+        {
+          "type": "paragraph",
+          "text": "Build comprehensive i18n systems for managing translations and locale-specific content."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Internationalization service\nclass I18nService {\n  constructor() {\n    this.translations = new Map();\n    this.locales = new Set(['en', 'es', 'fr', 'de']);\n    this.defaultLocale = 'en';\n    this.fallbackLocale = 'en';\n    this.loadTranslations();\n  }\n  \n  loadTranslations() {\n    // Sample translations\n    const translations = {\n      en: {\n        'common.hello': 'Hello',\n        'common.goodbye': 'Goodbye',\n        'nav.home': 'Home',\n        'nav.about': 'About',\n        'user.profile': 'Profile',\n        'error.notFound': 'Page not found',\n        'message.welcome': 'Welcome, {name}!',\n        'product.price': '{count, plural, =0 {No items} =1 {1 item} other {# items}}'\n      },\n      es: {\n        'common.hello': 'Hola',\n        'common.goodbye': 'Adiós',\n        'nav.home': 'Inicio',\n        'nav.about': 'Acerca de',\n        'user.profile': 'Perfil',\n        'error.notFound': 'Página no encontrada',\n        'message.welcome': '¡Bienvenido, {name}!',\n        'product.price': '{count, plural, =0 {Sin artículos} =1 {1 artículo} other {# artículos}}'\n      },\n      fr: {\n        'common.hello': 'Bonjour',\n        'common.goodbye': 'Au revoir',\n        'nav.home': 'Accueil',\n        'nav.about': 'À propos',\n        'user.profile': 'Profil',\n        'error.notFound': 'Page non trouvée',\n        'message.welcome': 'Bienvenue, {name}!',\n        'product.price': '{count, plural, =0 {Aucun article} =1 {1 article} other {# articles}}'\n      }\n    };\n    \n    Object.entries(translations).forEach(([locale, messages]) => {\n      this.translations.set(locale, messages);\n    });\n  }\n  \n  // Get translation\n  t(key, locale = this.defaultLocale, variables = {}) {\n    let translation = this.translations.get(locale)?.[key];\n    \n    // Fallback to default locale\n    if (!translation && locale !== this.fallbackLocale) {\n      translation = this.translations.get(this.fallbackLocale)?.[key];\n    }\n    \n    // Return key if no translation found\n    if (!translation) {\n      console.warn(`Translation missing for key: ${key} (locale: ${locale})`);\n      return key;\n    }\n    \n    // Handle variable interpolation\n    return this.interpolate(translation, variables);\n  }\n  \n  // Interpolate variables in translation\n  interpolate(text, variables) {\n    return text.replace(/\\{(\\w+)\\}/g, (match, key) => {\n      return variables[key] !== undefined ? variables[key] : match;\n    });\n  }\n  \n  // Handle pluralization\n  plural(key, count, locale = this.defaultLocale) {\n    const translation = this.t(key, locale, { count });\n    \n    // Simple plural rules (you'd use a proper pluralization library in production)\n    if (translation.includes('plural')) {\n      if (count === 0) {\n        return translation.match(/=0 \\{([^}]+)\\}/)?.[1] || translation;\n      } else if (count === 1) {\n        return translation.match(/=1 \\{([^}]+)\\}/)?.[1] || translation;\n      } else {\n        const other = translation.match(/other \\{([^}]+)\\}/)?.[1] || translation;\n        return other.replace('#', count.toString());\n      }\n    }\n    \n    return translation;\n  }\n  \n  // Add translation\n  addTranslation(locale, key, value) {\n    if (!this.translations.has(locale)) {\n      this.translations.set(locale, {});\n    }\n    \n    const translations = this.translations.get(locale);\n    translations[key] = value;\n  }\n  \n  // Get all translations for a locale\n  getTranslations(locale) {\n    return this.translations.get(locale) || {};\n  }\n  \n  // Get missing translations\n  getMissingTranslations(locale) {\n    const baseTranslations = this.translations.get(this.defaultLocale) || {};\n    const localeTranslations = this.translations.get(locale) || {};\n    \n    const missing = [];\n    Object.keys(baseTranslations).forEach(key => {\n      if (!localeTranslations[key]) {\n        missing.push(key);\n      }\n    });\n    \n    return missing;\n  }\n  \n  // Export translations for frontend\n  exportTranslations(locale) {\n    return {\n      locale,\n      messages: this.getTranslations(locale),\n      meta: {\n        completeness: this.getCompleteness(locale),\n        missingKeys: this.getMissingTranslations(locale).length\n      }\n    };\n  }\n  \n  getCompleteness(locale) {\n    const baseKeys = Object.keys(this.translations.get(this.defaultLocale) || {});\n    const localeKeys = Object.keys(this.translations.get(locale) || {});\n    \n    if (baseKeys.length === 0) return 100;\n    \n    const translatedCount = baseKeys.filter(key => localeKeys.includes(key)).length;\n    return Math.round((translatedCount / baseKeys.length) * 100);\n  }\n}\n\n// I18n API endpoints\nconst i18n = new I18nService();\n\napp.get('/api/i18n/locales', (req, res) => {\n  res.json({\n    locales: Array.from(i18n.locales),\n    default: i18n.defaultLocale,\n    fallback: i18n.fallbackLocale\n  });\n});\n\napp.get('/api/i18n/:locale', (req, res) => {\n  const { locale } = req.params;\n  \n  if (!i18n.locales.has(locale)) {\n    return res.status(404).json({ error: 'Locale not found' });\n  }\n  \n  res.json(i18n.exportTranslations(locale));\n});\n\napp.get('/api/i18n/:locale/missing', (req, res) => {\n  const { locale } = req.params;\n  const missing = i18n.getMissingTranslations(locale);\n  \n  res.json({\n    locale,\n    missing,\n    count: missing.length,\n    completeness: i18n.getCompleteness(locale)\n  });\n});\n\napp.post('/api/i18n/:locale', (req, res) => {\n  try {\n    const { locale } = req.params;\n    const { key, value } = req.body;\n    \n    if (!key || !value) {\n      return res.status(400).json({ error: 'Key and value are required' });\n    }\n    \n    i18n.addTranslation(locale, key, value);\n    \n    res.json({\n      success: true,\n      message: `Translation added for ${locale}:${key}`\n    });\n  } catch (error) {\n    res.status(400).json({ error: error.message });\n  }\n});"
+        }
+      ]
+    },
+    {
+      "id": "ab-testing",
+      "title": "A/B Testing & Feature Flags",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Feature Flag System"
+        },
+        {
+          "type": "paragraph",
+          "text": "Implement feature flags and A/B testing for controlled feature rollouts and experimentation."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Feature flag and A/B testing service\nclass FeatureFlagService {\n  constructor() {\n    this.flags = new Map();\n    this.experiments = new Map();\n    this.userSegments = new Map();\n    this.setupDefaultFlags();\n  }\n  \n  setupDefaultFlags() {\n    this.createFlag('new-checkout-flow', {\n      enabled: true,\n      rolloutPercentage: 50,\n      targetSegments: ['premium-users'],\n      rules: [\n        { condition: 'user.country', operator: 'equals', value: 'US' },\n        { condition: 'user.accountType', operator: 'equals', value: 'premium' }\n      ]\n    });\n    \n    this.createExperiment('homepage-hero', {\n      variants: {\n        control: { weight: 50, config: { title: 'Welcome to Our Site' } },\n        variant_a: { weight: 25, config: { title: 'Transform Your Business Today' } },\n        variant_b: { weight: 25, config: { title: 'Start Your Journey Here' } }\n      },\n      targetAudience: {\n        includeSegments: ['new-users'],\n        excludeSegments: ['returning-customers']\n      },\n      startDate: new Date(),\n      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days\n    });\n  }\n  \n  createFlag(name, config) {\n    this.flags.set(name, {\n      ...config,\n      createdAt: new Date(),\n      updatedAt: new Date()\n    });\n  }\n  \n  createExperiment(name, config) {\n    this.experiments.set(name, {\n      ...config,\n      createdAt: new Date(),\n      updatedAt: new Date(),\n      active: true\n    });\n  }\n  \n  // Check if flag is enabled for user\n  isEnabled(flagName, user) {\n    const flag = this.flags.get(flagName);\n    if (!flag || !flag.enabled) return false;\n    \n    // Check user segments\n    if (flag.targetSegments?.length > 0) {\n      const userSegments = this.getUserSegments(user);\n      const hasTargetSegment = flag.targetSegments.some(segment => \n        userSegments.includes(segment)\n      );\n      if (!hasTargetSegment) return false;\n    }\n    \n    // Check rules\n    if (flag.rules?.length > 0) {\n      const rulesMatch = flag.rules.every(rule => \n        this.evaluateRule(rule, user)\n      );\n      if (!rulesMatch) return false;\n    }\n    \n    // Check rollout percentage\n    if (flag.rolloutPercentage < 100) {\n      const userHash = this.hashUser(user.id + flagName);\n      return userHash < flag.rolloutPercentage;\n    }\n    \n    return true;\n  }\n  \n  // Get experiment variant for user\n  getExperimentVariant(experimentName, user) {\n    const experiment = this.experiments.get(experimentName);\n    if (!experiment || !experiment.active) {\n      return null;\n    }\n    \n    // Check date range\n    const now = new Date();\n    if (now < experiment.startDate || now > experiment.endDate) {\n      return null;\n    }\n    \n    // Check target audience\n    if (!this.isUserInTargetAudience(user, experiment.targetAudience)) {\n      return null;\n    }\n    \n    // Assign variant based on user hash and weights\n    const userHash = this.hashUser(user.id + experimentName);\n    let cumulativeWeight = 0;\n    \n    for (const [variantName, variant] of Object.entries(experiment.variants)) {\n      cumulativeWeight += variant.weight;\n      if (userHash < cumulativeWeight) {\n        return {\n          experiment: experimentName,\n          variant: variantName,\n          config: variant.config\n        };\n      }\n    }\n    \n    return null;\n  }\n  \n  evaluateRule(rule, user) {\n    const userValue = this.getNestedValue(user, rule.condition);\n    \n    switch (rule.operator) {\n      case 'equals':\n        return userValue === rule.value;\n      case 'not_equals':\n        return userValue !== rule.value;\n      case 'in':\n        return Array.isArray(rule.value) && rule.value.includes(userValue);\n      case 'greater_than':\n        return Number(userValue) > Number(rule.value);\n      case 'less_than':\n        return Number(userValue) < Number(rule.value);\n      default:\n        return false;\n    }\n  }\n  \n  getUserSegments(user) {\n    const segments = [];\n    \n    // Define segment logic\n    if (user.accountType === 'premium') segments.push('premium-users');\n    if (user.createdAt && new Date() - new Date(user.createdAt) < 30 * 24 * 60 * 60 * 1000) {\n      segments.push('new-users');\n    }\n    if (user.lastLoginAt && new Date() - new Date(user.lastLoginAt) > 30 * 24 * 60 * 60 * 1000) {\n      segments.push('returning-customers');\n    }\n    \n    return segments;\n  }\n  \n  isUserInTargetAudience(user, targetAudience) {\n    const userSegments = this.getUserSegments(user);\n    \n    // Check include segments\n    if (targetAudience.includeSegments?.length > 0) {\n      const hasIncludeSegment = targetAudience.includeSegments.some(segment =>\n        userSegments.includes(segment)\n      );\n      if (!hasIncludeSegment) return false;\n    }\n    \n    // Check exclude segments\n    if (targetAudience.excludeSegments?.length > 0) {\n      const hasExcludeSegment = targetAudience.excludeSegments.some(segment =>\n        userSegments.includes(segment)\n      );\n      if (hasExcludeSegment) return false;\n    }\n    \n    return true;\n  }\n  \n  hashUser(input) {\n    let hash = 0;\n    for (let i = 0; i < input.length; i++) {\n      const char = input.charCodeAt(i);\n      hash = ((hash << 5) - hash) + char;\n      hash = hash & hash; // Convert to 32-bit integer\n    }\n    return Math.abs(hash) % 100;\n  }\n  \n  getNestedValue(obj, path) {\n    return path.split('.').reduce((current, key) => current?.[key], obj);\n  }\n  \n  // Get all feature flags for user\n  getUserFlags(user) {\n    const userFlags = {};\n    \n    this.flags.forEach((flag, name) => {\n      userFlags[name] = this.isEnabled(name, user);\n    });\n    \n    return userFlags;\n  }\n  \n  // Get all experiments for user\n  getUserExperiments(user) {\n    const userExperiments = {};\n    \n    this.experiments.forEach((experiment, name) => {\n      const variant = this.getExperimentVariant(name, user);\n      if (variant) {\n        userExperiments[name] = variant;\n      }\n    });\n    \n    return userExperiments;\n  }\n}\n\n// Feature flag API endpoints\nconst featureFlags = new FeatureFlagService();\n\napp.get('/api/feature-flags', (req, res) => {\n  if (!req.user) {\n    return res.status(401).json({ error: 'Authentication required' });\n  }\n  \n  const flags = featureFlags.getUserFlags(req.user);\n  const experiments = featureFlags.getUserExperiments(req.user);\n  \n  res.json({ flags, experiments });\n});\n\napp.get('/api/feature-flags/:flagName', (req, res) => {\n  if (!req.user) {\n    return res.status(401).json({ error: 'Authentication required' });\n  }\n  \n  const enabled = featureFlags.isEnabled(req.params.flagName, req.user);\n  res.json({ enabled });\n});\n\napp.get('/api/experiments/:experimentName', (req, res) => {\n  if (!req.user) {\n    return res.status(401).json({ error: 'Authentication required' });\n  }\n  \n  const variant = featureFlags.getExperimentVariant(req.params.experimentName, req.user);\n  res.json({ variant });\n});"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main purpose of a design system API?",
+      "options": [
+        "To store user data",
+        "To define how components are structured and consumed across applications",
+        "To handle authentication",
+        "To manage database connections"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Design system APIs define how components are structured, configured, and consumed across applications, ensuring consistency and reusability in design systems."
+    },
+    {
+      "id": 2,
+      "question": "What is a headless CMS?",
+      "options": [
+        "A CMS without a user interface",
+        "A content management system that decouples content from presentation",
+        "A CMS that only works with mobile apps",
+        "A database management system"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A headless CMS decouples content management from presentation, providing content through APIs that can be consumed by any frontend technology."
+    },
+    {
+      "id": 3,
+      "question": "What does i18n stand for in internationalization?",
+      "options": [
+        "Internet 18 Nations",
+        "Internationalization (18 letters between 'i' and 'n')",
+        "Integration 18 Networks",
+        "Interface 18 Nodes"
+      ],
+      "correctAnswer": 1,
+      "explanation": "i18n is a numeronym for 'internationalization' - there are 18 letters between the first 'i' and the last 'n' in the word."
+    },
+    {
+      "id": 4,
+      "question": "What is the purpose of feature flags?",
+      "options": [
+        "To flag errors in code",
+        "To control feature rollouts and enable/disable functionality dynamically",
+        "To mark important features",
+        "To create feature documentation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Feature flags allow controlled rollouts of features and the ability to enable/disable functionality without code deployments, useful for testing and gradual releases."
+    },
+    {
+      "id": 5,
+      "question": "What is A/B testing used for?",
+      "options": [
+        "Testing two different databases",
+        "Comparing two versions of a feature to determine which performs better",
+        "Testing API endpoints",
+        "Comparing server performance"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A/B testing compares two or more versions of a feature, page, or element to determine which performs better based on user behavior and metrics."
+    },
+    {
+      "id": 6,
+      "question": "What is content versioning in a CMS?",
+      "options": [
+        "Checking the CMS version number",
+        "Keeping track of different versions of content for rollback and history",
+        "Organizing content by version numbers",
+        "Creating different versions of the CMS"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Content versioning tracks changes to content over time, allowing editors to view history, compare versions, and rollback to previous versions when needed."
+    },
+    {
+      "id": 7,
+      "question": "What is the purpose of theme tokens in design systems?",
+      "options": [
+        "To authenticate themes",
+        "To define reusable design values like colors, spacing, and typography",
+        "To encrypt theme data",
+        "To compress theme files"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Theme tokens define reusable design values (colors, spacing, typography, etc.) that ensure consistency across applications and enable dynamic theming."
+    },
+    {
+      "id": 8,
+      "question": "What is locale fallback in internationalization?",
+      "options": [
+        "When the locale system fails",
+        "Using a default locale when a translation is missing",
+        "Falling back to English only",
+        "Automatic locale detection"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Locale fallback provides a default locale (usually English) when translations are missing for the user's preferred locale, ensuring the application remains functional."
+    },
+    {
+      "id": 9,
+      "question": "What is user segmentation in A/B testing?",
+      "options": [
+        "Dividing users into groups for targeted experiments",
+        "Segmenting user data in databases",
+        "Creating user profiles",
+        "Organizing user permissions"
+      ],
+      "correctAnswer": 0,
+      "explanation": "User segmentation divides users into groups based on characteristics (demographics, behavior, etc.) to run targeted experiments and personalized experiences."
+    },
+    {
+      "id": 10,
+      "question": "What is the benefit of configuration management APIs?",
+      "options": [
+        "They configure servers automatically",
+        "They allow dynamic updates to application settings without deployments",
+        "They manage user configurations only",
+        "They configure databases"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Configuration management APIs enable dynamic updates to application settings, feature flags, and environment configurations without requiring code deployments."
+    }
+  ]
+} 

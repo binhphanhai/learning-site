@@ -1,0 +1,341 @@
+{
+  "title": "Authentication & Authorization",
+  "description": "Comprehensive guide to implementing secure authentication and authorization systems, covering JWT tokens, OAuth2, session management, and modern security practices for backend systems.",
+  "sections": [
+    {
+      "id": "authentication-methods",
+      "title": "Authentication Methods",
+      "content": [
+        {
+          "type": "heading",
+          "text": "JWT (JSON Web Tokens)"
+        },
+        {
+          "type": "paragraph",
+          "text": "JWT is a compact, URL-safe means of representing claims between two parties. It consists of three parts: Header, Payload, and Signature."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// JWT Structure: header.payload.signature\nconst jwt = require('jsonwebtoken');\n\n// Creating a JWT\nconst token = jwt.sign(\n  { userId: 123, email: 'user@example.com' },\n  'your-secret-key',\n  { expiresIn: '1h' }\n);\n\n// Verifying a JWT\ntry {\n  const decoded = jwt.verify(token, 'your-secret-key');\n  console.log(decoded); // { userId: 123, email: 'user@example.com', iat: ..., exp: ... }\n} catch (error) {\n  console.error('Invalid token:', error.message);\n}"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Stateless: No server-side session storage needed",
+            "Scalable: Works well in distributed systems",
+            "Self-contained: Contains all necessary information",
+            "Cross-domain: Can be used across different domains"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Session-Based Authentication"
+        },
+        {
+          "type": "paragraph",
+          "text": "Traditional server-side session management where session data is stored on the server and referenced by a session ID."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express session example\nconst session = require('express-session');\nconst MongoStore = require('connect-mongo');\n\napp.use(session({\n  secret: 'your-session-secret',\n  resave: false,\n  saveUninitialized: false,\n  store: MongoStore.create({\n    mongoUrl: 'mongodb://localhost/session-store'\n  }),\n  cookie: {\n    secure: process.env.NODE_ENV === 'production',\n    httpOnly: true,\n    maxAge: 24 * 60 * 60 * 1000 // 24 hours\n  }\n}));\n\n// Login route\napp.post('/login', async (req, res) => {\n  const { email, password } = req.body;\n  const user = await User.findOne({ email });\n  \n  if (user && await bcrypt.compare(password, user.password)) {\n    req.session.userId = user._id;\n    res.json({ message: 'Login successful' });\n  } else {\n    res.status(401).json({ error: 'Invalid credentials' });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Token Refresh Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Implementing secure token refresh to maintain user sessions without compromising security."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Refresh token implementation\nclass AuthService {\n  generateTokens(user) {\n    const accessToken = jwt.sign(\n      { userId: user._id, email: user.email },\n      process.env.ACCESS_TOKEN_SECRET,\n      { expiresIn: '15m' }\n    );\n    \n    const refreshToken = jwt.sign(\n      { userId: user._id },\n      process.env.REFRESH_TOKEN_SECRET,\n      { expiresIn: '7d' }\n    );\n    \n    return { accessToken, refreshToken };\n  }\n  \n  async refreshAccessToken(refreshToken) {\n    try {\n      const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);\n      const user = await User.findById(decoded.userId);\n      \n      if (!user || !user.refreshTokens.includes(refreshToken)) {\n        throw new Error('Invalid refresh token');\n      }\n      \n      const newAccessToken = jwt.sign(\n        { userId: user._id, email: user.email },\n        process.env.ACCESS_TOKEN_SECRET,\n        { expiresIn: '15m' }\n      );\n      \n      return newAccessToken;\n    } catch (error) {\n      throw new Error('Token refresh failed');\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "oauth2-flows",
+      "title": "OAuth2 Flows",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Authorization Code Flow"
+        },
+        {
+          "type": "paragraph",
+          "text": "The most secure OAuth2 flow for web applications, involving server-side token exchange."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// OAuth2 Authorization Code Flow\nconst passport = require('passport');\nconst GoogleStrategy = require('passport-google-oauth20').Strategy;\n\npassport.use(new GoogleStrategy({\n  clientID: process.env.GOOGLE_CLIENT_ID,\n  clientSecret: process.env.GOOGLE_CLIENT_SECRET,\n  callbackURL: '/auth/google/callback'\n}, async (accessToken, refreshToken, profile, done) => {\n  try {\n    let user = await User.findOne({ googleId: profile.id });\n    \n    if (!user) {\n      user = await User.create({\n        googleId: profile.id,\n        email: profile.emails[0].value,\n        name: profile.displayName,\n        avatar: profile.photos[0].value\n      });\n    }\n    \n    return done(null, user);\n  } catch (error) {\n    return done(error, null);\n  }\n}));\n\n// Routes\napp.get('/auth/google', \n  passport.authenticate('google', { scope: ['profile', 'email'] })\n);\n\napp.get('/auth/google/callback',\n  passport.authenticate('google', { failureRedirect: '/login' }),\n  (req, res) => {\n    res.redirect('/dashboard');\n  }\n);"
+        },
+        {
+          "type": "heading",
+          "text": "Client Credentials Flow"
+        },
+        {
+          "type": "paragraph",
+          "text": "Used for server-to-server authentication where no user interaction is required."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Client Credentials Flow\nconst axios = require('axios');\n\nclass OAuth2Client {\n  constructor(clientId, clientSecret, tokenUrl) {\n    this.clientId = clientId;\n    this.clientSecret = clientSecret;\n    this.tokenUrl = tokenUrl;\n    this.accessToken = null;\n    this.tokenExpiry = null;\n  }\n  \n  async getAccessToken() {\n    if (this.accessToken && this.tokenExpiry > Date.now()) {\n      return this.accessToken;\n    }\n    \n    const response = await axios.post(this.tokenUrl, {\n      grant_type: 'client_credentials',\n      client_id: this.clientId,\n      client_secret: this.clientSecret\n    }, {\n      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }\n    });\n    \n    this.accessToken = response.data.access_token;\n    this.tokenExpiry = Date.now() + (response.data.expires_in * 1000);\n    \n    return this.accessToken;\n  }\n}"
+        }
+      ]
+    },
+    {
+      "id": "authorization-patterns",
+      "title": "Authorization Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Role-Based Access Control (RBAC)"
+        },
+        {
+          "type": "paragraph",
+          "text": "RBAC assigns permissions to roles, and users are assigned to roles. This provides a scalable way to manage permissions."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// RBAC Implementation\nclass RBACService {\n  constructor() {\n    this.roles = {\n      admin: ['read', 'write', 'delete', 'manage_users'],\n      editor: ['read', 'write'],\n      viewer: ['read']\n    };\n  }\n  \n  hasPermission(userRole, requiredPermission) {\n    const permissions = this.roles[userRole] || [];\n    return permissions.includes(requiredPermission);\n  }\n  \n  authorize(permission) {\n    return (req, res, next) => {\n      const userRole = req.user?.role;\n      \n      if (!userRole) {\n        return res.status(401).json({ error: 'Authentication required' });\n      }\n      \n      if (!this.hasPermission(userRole, permission)) {\n        return res.status(403).json({ error: 'Insufficient permissions' });\n      }\n      \n      next();\n    };\n  }\n}\n\nconst rbac = new RBACService();\n\n// Usage in routes\napp.get('/admin/users', \n  authenticateToken,\n  rbac.authorize('manage_users'),\n  (req, res) => {\n    // Admin-only route\n  }\n);\n\napp.put('/posts/:id',\n  authenticateToken,\n  rbac.authorize('write'),\n  (req, res) => {\n    // Editor and Admin can edit posts\n  }\n);"
+        },
+        {
+          "type": "heading",
+          "text": "Attribute-Based Access Control (ABAC)"
+        },
+        {
+          "type": "paragraph",
+          "text": "ABAC makes access decisions based on attributes of the user, resource, action, and environment."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// ABAC Implementation\nclass ABACService {\n  evaluatePolicy(policy, context) {\n    const { user, resource, action, environment } = context;\n    \n    // Example policy: Users can only edit their own posts\n    if (policy.name === 'own_resource_edit') {\n      return action === 'edit' && \n             resource.ownerId === user.id;\n    }\n    \n    // Example policy: Admin access during business hours\n    if (policy.name === 'admin_business_hours') {\n      const currentHour = new Date().getHours();\n      return user.role === 'admin' && \n             currentHour >= 9 && currentHour <= 17;\n    }\n    \n    return false;\n  }\n  \n  authorize(policyName) {\n    return async (req, res, next) => {\n      const context = {\n        user: req.user,\n        resource: await this.getResource(req),\n        action: this.getAction(req),\n        environment: this.getEnvironment(req)\n      };\n      \n      const policy = { name: policyName };\n      \n      if (this.evaluatePolicy(policy, context)) {\n        next();\n      } else {\n        res.status(403).json({ error: 'Access denied' });\n      }\n    };\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Resource-Level Security"
+        },
+        {
+          "type": "paragraph",
+          "text": "Implementing fine-grained access control at the resource level."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Resource-level authorization middleware\nconst authorizeResource = (resourceType, action) => {\n  return async (req, res, next) => {\n    try {\n      const resourceId = req.params.id;\n      const userId = req.user.id;\n      \n      // Check if user owns the resource\n      const resource = await getResource(resourceType, resourceId);\n      \n      if (!resource) {\n        return res.status(404).json({ error: 'Resource not found' });\n      }\n      \n      // Different authorization logic based on action\n      switch (action) {\n        case 'read':\n          if (resource.isPublic || resource.ownerId === userId || req.user.role === 'admin') {\n            next();\n          } else {\n            res.status(403).json({ error: 'Cannot read this resource' });\n          }\n          break;\n          \n        case 'write':\n        case 'delete':\n          if (resource.ownerId === userId || req.user.role === 'admin') {\n            next();\n          } else {\n            res.status(403).json({ error: `Cannot ${action} this resource` });\n          }\n          break;\n          \n        default:\n          res.status(403).json({ error: 'Unknown action' });\n      }\n    } catch (error) {\n      res.status(500).json({ error: 'Authorization failed' });\n    }\n  };\n};\n\n// Usage\napp.get('/posts/:id', \n  authenticateToken,\n  authorizeResource('post', 'read'),\n  getPost\n);\n\napp.delete('/posts/:id',\n  authenticateToken,\n  authorizeResource('post', 'delete'),\n  deletePost\n);"
+        }
+      ]
+    },
+    {
+      "id": "security-implementation",
+      "title": "Security Implementation",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Password Hashing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Secure password storage using bcrypt or similar hashing algorithms with salt."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const bcrypt = require('bcrypt');\nconst argon2 = require('argon2');\n\n// Using bcrypt\nclass PasswordService {\n  static async hashPassword(password) {\n    const saltRounds = 12;\n    return await bcrypt.hash(password, saltRounds);\n  }\n  \n  static async verifyPassword(password, hashedPassword) {\n    return await bcrypt.compare(password, hashedPassword);\n  }\n  \n  // Using Argon2 (recommended for new projects)\n  static async hashPasswordArgon2(password) {\n    return await argon2.hash(password, {\n      type: argon2.argon2id,\n      memoryCost: 2 ** 16, // 64 MB\n      timeCost: 3,\n      parallelism: 1,\n    });\n  }\n  \n  static async verifyPasswordArgon2(hashedPassword, password) {\n    return await argon2.verify(hashedPassword, password);\n  }\n}\n\n// User registration\napp.post('/register', async (req, res) => {\n  try {\n    const { email, password } = req.body;\n    \n    // Validate password strength\n    if (!isPasswordStrong(password)) {\n      return res.status(400).json({ \n        error: 'Password must be at least 8 characters with uppercase, lowercase, number, and symbol' \n      });\n    }\n    \n    const hashedPassword = await PasswordService.hashPassword(password);\n    \n    const user = await User.create({\n      email,\n      password: hashedPassword\n    });\n    \n    res.status(201).json({ message: 'User created successfully' });\n  } catch (error) {\n    res.status(500).json({ error: 'Registration failed' });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Secure Token Storage"
+        },
+        {
+          "type": "paragraph",
+          "text": "Best practices for storing and managing authentication tokens securely."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Secure cookie configuration\nconst cookieOptions = {\n  httpOnly: true,     // Prevent XSS attacks\n  secure: process.env.NODE_ENV === 'production', // HTTPS only in production\n  sameSite: 'strict', // CSRF protection\n  maxAge: 15 * 60 * 1000, // 15 minutes for access token\n  path: '/'\n};\n\n// Login with secure token storage\napp.post('/login', async (req, res) => {\n  try {\n    const { email, password } = req.body;\n    const user = await User.findOne({ email });\n    \n    if (!user || !await PasswordService.verifyPassword(password, user.password)) {\n      return res.status(401).json({ error: 'Invalid credentials' });\n    }\n    \n    const { accessToken, refreshToken } = generateTokens(user);\n    \n    // Store refresh token in httpOnly cookie\n    res.cookie('refreshToken', refreshToken, {\n      ...cookieOptions,\n      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days\n    });\n    \n    // Store access token in httpOnly cookie or send in response\n    res.cookie('accessToken', accessToken, cookieOptions);\n    \n    // Save refresh token hash in database\n    const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');\n    await User.findByIdAndUpdate(user._id, {\n      $push: { refreshTokens: refreshTokenHash }\n    });\n    \n    res.json({ \n      message: 'Login successful',\n      user: { id: user._id, email: user.email, role: user.role }\n    });\n  } catch (error) {\n    res.status(500).json({ error: 'Login failed' });\n  }\n});\n\n// Logout with token cleanup\napp.post('/logout', authenticateToken, async (req, res) => {\n  try {\n    const refreshToken = req.cookies.refreshToken;\n    \n    if (refreshToken) {\n      const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');\n      \n      // Remove refresh token from database\n      await User.findByIdAndUpdate(req.user.id, {\n        $pull: { refreshTokens: refreshTokenHash }\n      });\n    }\n    \n    // Clear cookies\n    res.clearCookie('accessToken');\n    res.clearCookie('refreshToken');\n    \n    res.json({ message: 'Logout successful' });\n  } catch (error) {\n    res.status(500).json({ error: 'Logout failed' });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "CORS Configuration"
+        },
+        {
+          "type": "paragraph",
+          "text": "Properly configuring Cross-Origin Resource Sharing for secure API access."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const cors = require('cors');\n\n// CORS configuration\nconst corsOptions = {\n  origin: function (origin, callback) {\n    const allowedOrigins = [\n      'https://yourdomain.com',\n      'https://www.yourdomain.com',\n      'https://app.yourdomain.com'\n    ];\n    \n    // Allow requests with no origin (mobile apps, postman, etc.)\n    if (!origin) return callback(null, true);\n    \n    if (allowedOrigins.includes(origin)) {\n      callback(null, true);\n    } else {\n      callback(new Error('Not allowed by CORS'));\n    }\n  },\n  credentials: true, // Allow cookies\n  optionsSuccessStatus: 200,\n  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],\n  allowedHeaders: [\n    'Origin',\n    'X-Requested-With',\n    'Content-Type',\n    'Accept',\n    'Authorization',\n    'X-CSRF-Token'\n  ]\n};\n\napp.use(cors(corsOptions));\n\n// Development CORS (less restrictive)\nif (process.env.NODE_ENV === 'development') {\n  app.use(cors({\n    origin: ['http://localhost:3000', 'http://localhost:3001'],\n    credentials: true\n  }));\n}"
+        }
+      ]
+    },
+    {
+      "id": "session-management",
+      "title": "Session Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Session Storage Strategies"
+        },
+        {
+          "type": "paragraph",
+          "text": "Different approaches to storing session data with their trade-offs."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Redis session store\nconst session = require('express-session');\nconst RedisStore = require('connect-redis')(session);\nconst redis = require('redis');\n\nconst redisClient = redis.createClient({\n  host: process.env.REDIS_HOST,\n  port: process.env.REDIS_PORT,\n  password: process.env.REDIS_PASSWORD\n});\n\napp.use(session({\n  store: new RedisStore({ client: redisClient }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false,\n  rolling: true, // Reset expiry on activity\n  cookie: {\n    secure: process.env.NODE_ENV === 'production',\n    httpOnly: true,\n    maxAge: 30 * 60 * 1000, // 30 minutes\n    sameSite: 'strict'\n  }\n}));\n\n// Database session store\nconst MongoStore = require('connect-mongo');\n\napp.use(session({\n  store: MongoStore.create({\n    mongoUrl: process.env.MONGODB_URI,\n    collectionName: 'sessions',\n    ttl: 24 * 60 * 60, // 1 day\n    autoRemove: 'native'\n  }),\n  secret: process.env.SESSION_SECRET,\n  resave: false,\n  saveUninitialized: false\n}));"
+        },
+        {
+          "type": "heading",
+          "text": "Session Expiration & Renewal"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Session management middleware\nconst sessionManager = {\n  // Extend session on activity\n  extendSession: (req, res, next) => {\n    if (req.session && req.session.userId) {\n      req.session.lastActivity = Date.now();\n      req.session.save((err) => {\n        if (err) console.error('Session save error:', err);\n      });\n    }\n    next();\n  },\n  \n  // Check session validity\n  validateSession: (req, res, next) => {\n    if (!req.session || !req.session.userId) {\n      return res.status(401).json({ error: 'No valid session' });\n    }\n    \n    const maxInactivity = 30 * 60 * 1000; // 30 minutes\n    const lastActivity = req.session.lastActivity || req.session.cookie.originalMaxAge;\n    \n    if (Date.now() - lastActivity > maxInactivity) {\n      req.session.destroy((err) => {\n        if (err) console.error('Session destroy error:', err);\n      });\n      return res.status(401).json({ error: 'Session expired due to inactivity' });\n    }\n    \n    next();\n  },\n  \n  // Concurrent session management\n  manageConcurrentSessions: async (userId, sessionId) => {\n    const maxConcurrentSessions = 3;\n    \n    // Get user's active sessions\n    const userSessions = await Session.find({ userId }).sort({ createdAt: -1 });\n    \n    if (userSessions.length >= maxConcurrentSessions) {\n      // Remove oldest sessions\n      const sessionsToRemove = userSessions.slice(maxConcurrentSessions - 1);\n      \n      for (const session of sessionsToRemove) {\n        await Session.deleteOne({ _id: session._id });\n        // Also remove from Redis/memory store\n        redisClient.del(`sess:${session.sessionId}`);\n      }\n    }\n    \n    // Create new session record\n    await Session.create({\n      userId,\n      sessionId,\n      createdAt: new Date(),\n      lastActivity: new Date()\n    });\n  }\n};\n\n// Usage\napp.use(sessionManager.extendSession);\napp.use('/api/protected', sessionManager.validateSession);"
+        },
+        {
+          "type": "heading",
+          "text": "Logout Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Complete logout implementation\napp.post('/logout', async (req, res) => {\n  try {\n    const userId = req.session?.userId;\n    const sessionId = req.sessionID;\n    \n    // Remove session from database\n    if (userId && sessionId) {\n      await Session.deleteOne({ userId, sessionId });\n    }\n    \n    // Destroy session\n    req.session.destroy((err) => {\n      if (err) {\n        console.error('Session destruction error:', err);\n        return res.status(500).json({ error: 'Logout failed' });\n      }\n      \n      // Clear session cookie\n      res.clearCookie('connect.sid');\n      res.json({ message: 'Logout successful' });\n    });\n  } catch (error) {\n    console.error('Logout error:', error);\n    res.status(500).json({ error: 'Logout failed' });\n  }\n});\n\n// Logout from all devices\napp.post('/logout-all', async (req, res) => {\n  try {\n    const userId = req.session?.userId;\n    \n    if (!userId) {\n      return res.status(401).json({ error: 'Not authenticated' });\n    }\n    \n    // Remove all user sessions from database\n    await Session.deleteMany({ userId });\n    \n    // Remove all user sessions from Redis\n    const userSessionKeys = await redisClient.keys(`sess:*`);\n    for (const key of userSessionKeys) {\n      const sessionData = await redisClient.get(key);\n      if (sessionData && JSON.parse(sessionData).userId === userId) {\n        await redisClient.del(key);\n      }\n    }\n    \n    // Destroy current session\n    req.session.destroy((err) => {\n      if (err) console.error('Session destruction error:', err);\n      res.clearCookie('connect.sid');\n      res.json({ message: 'Logged out from all devices' });\n    });\n  } catch (error) {\n    console.error('Logout all error:', error);\n    res.status(500).json({ error: 'Logout from all devices failed' });\n  }\n});"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What are the three parts of a JWT token?",
+      "options": [
+        "Header, Body, Signature",
+        "Header, Payload, Signature", 
+        "Type, Data, Hash",
+        "Algorithm, Claims, Secret"
+      ],
+      "correctAnswer": 1,
+      "explanation": "JWT consists of three parts separated by dots: Header (contains algorithm and token type), Payload (contains claims/data), and Signature (used to verify the token hasn't been tampered with)."
+    },
+    {
+      "id": 2,
+      "question": "Which OAuth2 flow is most secure for web applications?",
+      "options": [
+        "Implicit Flow",
+        "Client Credentials Flow",
+        "Authorization Code Flow",
+        "Resource Owner Password Flow"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Authorization Code Flow is the most secure for web applications because the client secret is kept on the server, and tokens are exchanged server-to-server rather than through the browser."
+    },
+    {
+      "id": 3,
+      "question": "What is the main advantage of RBAC over traditional permission systems?",
+      "options": [
+        "It's faster to execute",
+        "It provides scalable permission management through roles",
+        "It uses less memory",
+        "It's easier to implement"
+      ],
+      "correctAnswer": 1,
+      "explanation": "RBAC (Role-Based Access Control) provides scalable permission management by assigning permissions to roles rather than individual users, making it easier to manage permissions for large numbers of users."
+    },
+    {
+      "id": 4,
+      "question": "Which is the recommended hashing algorithm for new projects?",
+      "options": [
+        "MD5",
+        "SHA-1", 
+        "bcrypt",
+        "Argon2"
+      ],
+      "correctAnswer": 3,
+      "explanation": "Argon2 is the current recommended password hashing algorithm, winning the Password Hashing Competition. It provides better security against various attacks compared to older algorithms."
+    },
+    {
+      "id": 5,
+      "question": "What does the 'httpOnly' cookie flag prevent?",
+      "options": [
+        "CSRF attacks",
+        "XSS attacks by preventing JavaScript access",
+        "Man-in-the-middle attacks",
+        "Session hijacking"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The 'httpOnly' flag prevents client-side JavaScript from accessing the cookie, which helps protect against XSS (Cross-Site Scripting) attacks where malicious scripts try to steal authentication tokens."
+    },
+    {
+      "id": 6,
+      "question": "What is the difference between authentication and authorization?",
+      "options": [
+        "They are the same thing",
+        "Authentication verifies identity, authorization determines permissions",
+        "Authorization verifies identity, authentication determines permissions", 
+        "Authentication is for users, authorization is for systems"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Authentication verifies who you are (identity verification), while authorization determines what you're allowed to do (permission checking). Authentication comes first, then authorization."
+    },
+    {
+      "id": 7,
+      "question": "Which CORS header is required to allow cookies in cross-origin requests?",
+      "options": [
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Credentials",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Methods"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Access-Control-Allow-Credentials must be set to true to allow cookies, authorization headers, or TLS client certificates in cross-origin requests."
+    },
+    {
+      "id": 8,
+      "question": "What is a refresh token used for?",
+      "options": [
+        "To refresh the web page",
+        "To obtain new access tokens without re-authentication",
+        "To invalidate old tokens",
+        "To store user preferences"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Refresh tokens are used to obtain new access tokens without requiring the user to re-authenticate. They typically have longer lifespans than access tokens."
+    },
+    {
+      "id": 9,
+      "question": "What is the purpose of salt in password hashing?",
+      "options": [
+        "To make passwords taste better",
+        "To prevent rainbow table attacks and make each hash unique",
+        "To compress the password",
+        "To encrypt the password"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Salt is random data added to passwords before hashing to prevent rainbow table attacks and ensure that identical passwords produce different hashes."
+    },
+    {
+      "id": 10,
+      "question": "Which session storage approach provides the best scalability?",
+      "options": [
+        "In-memory storage",
+        "File-based storage",
+        "Database storage",
+        "Redis/distributed cache"
+      ],
+      "correctAnswer": 3,
+      "explanation": "Redis or other distributed caches provide the best scalability for session storage as they can be shared across multiple server instances and provide fast access times."
+    }
+  ]
+} 

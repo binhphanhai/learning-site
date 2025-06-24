@@ -1,0 +1,728 @@
+{
+  "title": "DevOps & Deployment",
+  "description": "Master DevOps practices and deployment strategies including containerization with Docker, CI/CD pipelines, environment management, Infrastructure as Code, and comprehensive monitoring and logging solutions",
+  "sections": [
+    {
+      "id": "containerization",
+      "title": "Containerization with Docker",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Docker Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Docker containerization packages applications with their dependencies into lightweight, portable containers that run consistently across different environments."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Container vs Virtual Machine: Containers share OS kernel, VMs include full OS",
+            "Docker Images: Read-only templates used to create containers",
+            "Docker Containers: Running instances of Docker images",
+            "Docker Registry: Central repository for Docker images (Docker Hub, ECR, etc.)",
+            "Dockerfile: Text file with instructions to build Docker images"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Writing Efficient Dockerfiles"
+        },
+        {
+          "type": "code",
+          "language": "dockerfile",
+          "text": "# Multi-stage build for Node.js application\n# Stage 1: Build stage\nFROM node:18-alpine AS builder\n\nWORKDIR /app\n\n# Copy package files first for better caching\nCOPY package*.json ./\nRUN npm ci --only=production\n\n# Copy source code\nCOPY . .\nRUN npm run build\n\n# Stage 2: Production stage\nFROM node:18-alpine AS production\n\n# Create non-root user for security\nRUN addgroup -g 1001 -S nodejs\nRUN adduser -S nextjs -u 1001\n\nWORKDIR /app\n\n# Copy built application from builder stage\nCOPY --from=builder --chown=nextjs:nodejs /app/dist ./dist\nCOPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules\nCOPY --from=builder --chown=nextjs:nodejs /app/package*.json ./\n\n# Switch to non-root user\nUSER nextjs\n\nEXPOSE 3000\n\nCMD [\"npm\", \"start\"]"
+        },
+        {
+          "type": "heading",
+          "text": "Docker Best Practices"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use specific image tags instead of 'latest' for reproducibility",
+            "Minimize layer count by combining RUN commands",
+            "Use .dockerignore to exclude unnecessary files",
+            "Run containers as non-root users for security",
+            "Use multi-stage builds to reduce final image size",
+            "Leverage Docker layer caching for faster builds",
+            "Keep images small by using Alpine Linux base images"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Container Orchestration"
+        },
+        {
+          "type": "paragraph",
+          "text": "Container orchestration manages multiple containers across clusters, handling deployment, scaling, networking, and service discovery."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Docker Compose: Multi-container applications on single host",
+            "Kubernetes: Enterprise-grade container orchestration platform",
+            "Docker Swarm: Docker's native clustering solution",
+            "Amazon ECS: AWS managed container service",
+            "Service Discovery: Automatic detection of services and endpoints",
+            "Load Balancing: Distribution of traffic across container instances"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "text": "# docker-compose.yml for development environment\nversion: '3.8'\n\nservices:\n  app:\n    build:\n      context: .\n      dockerfile: Dockerfile.dev\n    ports:\n      - \"3000:3000\"\n    environment:\n      - NODE_ENV=development\n      - DATABASE_URL=postgresql://user:password@db:5432/myapp\n    volumes:\n      - .:/app\n      - /app/node_modules\n    depends_on:\n      - db\n      - redis\n\n  db:\n    image: postgres:15-alpine\n    environment:\n      - POSTGRES_DB=myapp\n      - POSTGRES_USER=user\n      - POSTGRES_PASSWORD=password\n    volumes:\n      - postgres_data:/var/lib/postgresql/data\n    ports:\n      - \"5432:5432\"\n\n  redis:\n    image: redis:7-alpine\n    ports:\n      - \"6379:6379\"\n    volumes:\n      - redis_data:/data\n\n  nginx:\n    image: nginx:alpine\n    ports:\n      - \"80:80\"\n    volumes:\n      - ./nginx.conf:/etc/nginx/nginx.conf\n    depends_on:\n      - app\n\nvolumes:\n  postgres_data:\n  redis_data:"
+        },
+        {
+          "type": "heading",
+          "text": "Image Optimization Techniques"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Multi-stage builds: Separate build and runtime environments",
+            "Alpine Linux: Minimal base images for smaller size",
+            "Layer optimization: Order instructions by frequency of change",
+            "Dependency caching: Copy package files before source code",
+            "Remove unnecessary packages and files in same RUN command",
+            "Use .dockerignore to exclude build artifacts and logs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ci-cd-pipelines",
+      "title": "CI/CD Pipelines",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Continuous Integration (CI)"
+        },
+        {
+          "type": "paragraph",
+          "text": "CI automatically builds, tests, and validates code changes whenever developers push to the repository, catching issues early in the development process."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Automated Testing: Unit tests, integration tests, end-to-end tests",
+            "Code Quality Checks: Linting, formatting, security scanning",
+            "Build Automation: Compile code, generate artifacts",
+            "Test Coverage: Measure and enforce code coverage thresholds",
+            "Branch Protection: Require CI checks before merging"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Continuous Deployment (CD)"
+        },
+        {
+          "type": "paragraph",
+          "text": "CD automatically deploys validated code changes to staging and production environments, enabling rapid and reliable releases."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Deployment Automation: Automated deployment to multiple environments",
+            "Environment Promotion: Code moves through dev → staging → production",
+            "Rollback Procedures: Quick reversion to previous stable versions",
+            "Feature Flags: Control feature visibility without code deployment",
+            "Blue-Green Deployment: Zero-downtime deployments with parallel environments"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "text": "# GitHub Actions CI/CD Pipeline\nname: CI/CD Pipeline\n\non:\n  push:\n    branches: [ main, develop ]\n  pull_request:\n    branches: [ main ]\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    \n    strategy:\n      matrix:\n        node-version: [16.x, 18.x]\n    \n    steps:\n    - uses: actions/checkout@v3\n    \n    - name: Setup Node.js\n      uses: actions/setup-node@v3\n      with:\n        node-version: ${{ matrix.node-version }}\n        cache: 'npm'\n    \n    - name: Install dependencies\n      run: npm ci\n    \n    - name: Run linting\n      run: npm run lint\n    \n    - name: Run tests\n      run: npm run test:coverage\n    \n    - name: Upload coverage reports\n      uses: codecov/codecov-action@v3\n      with:\n        file: ./coverage/lcov.info\n\n  build:\n    needs: test\n    runs-on: ubuntu-latest\n    \n    steps:\n    - uses: actions/checkout@v3\n    \n    - name: Setup Docker Buildx\n      uses: docker/setup-buildx-action@v2\n    \n    - name: Login to DockerHub\n      uses: docker/login-action@v2\n      with:\n        username: ${{ secrets.DOCKER_USERNAME }}\n        password: ${{ secrets.DOCKER_PASSWORD }}\n    \n    - name: Build and push Docker image\n      uses: docker/build-push-action@v4\n      with:\n        context: .\n        platforms: linux/amd64,linux/arm64\n        push: true\n        tags: |\n          myapp:latest\n          myapp:${{ github.sha }}\n        cache-from: type=gha\n        cache-to: type=gha,mode=max\n\n  deploy:\n    needs: [test, build]\n    runs-on: ubuntu-latest\n    if: github.ref == 'refs/heads/main'\n    \n    steps:\n    - name: Deploy to production\n      uses: appleboy/ssh-action@v0.1.5\n      with:\n        host: ${{ secrets.PROD_HOST }}\n        username: ${{ secrets.PROD_USER }}\n        key: ${{ secrets.PROD_SSH_KEY }}\n        script: |\n          docker pull myapp:${{ github.sha }}\n          docker stop myapp || true\n          docker rm myapp || true\n          docker run -d --name myapp -p 3000:3000 myapp:${{ github.sha }}"
+        },
+        {
+          "type": "heading",
+          "text": "Deployment Strategies"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Rolling Deployment: Gradual replacement of old instances with new ones",
+            "Blue-Green Deployment: Switch traffic between two identical environments",
+            "Canary Deployment: Gradual rollout to subset of users",
+            "A/B Testing Deployment: Deploy different versions to different user groups",
+            "Immutable Deployment: Replace entire infrastructure instead of updating"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Rollback Procedures"
+        },
+        {
+          "type": "paragraph",
+          "text": "Quick and reliable rollback procedures are essential for maintaining system stability when deployments fail."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Automated Rollback: Trigger rollback based on health checks and metrics",
+            "Database Migrations: Plan backward-compatible schema changes",
+            "Feature Flags: Instantly disable problematic features",
+            "Traffic Routing: Redirect traffic back to previous version",
+            "Monitoring Integration: Rollback based on error rates and performance"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "CI/CD Best Practices"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Keep pipelines fast: Optimize build and test execution time",
+            "Fail fast: Run quick tests first, expensive tests later",
+            "Pipeline as Code: Version control CI/CD configurations",
+            "Secrets Management: Secure handling of API keys and credentials",
+            "Environment Parity: Keep dev/staging/prod environments similar",
+            "Monitoring: Track pipeline success rates and deployment frequency"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "environment-management",
+      "title": "Environment Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Environment Types"
+        },
+        {
+          "type": "paragraph",
+          "text": "Different environments serve specific purposes in the software development lifecycle, each with distinct configurations and access controls."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Development: Local and shared dev environments for feature development",
+            "Testing/QA: Dedicated environment for quality assurance testing",
+            "Staging: Production-like environment for final testing and validation",
+            "Production: Live environment serving real users",
+            "Sandbox: Isolated environment for experimentation and demos"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Configuration Management"
+        },
+        {
+          "type": "paragraph",
+          "text": "Manage application configuration across different environments while keeping sensitive data secure."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Environment Variables: Store configuration as environment variables",
+            "Configuration Files: Separate config files per environment",
+            "Secret Management: Secure storage of API keys, passwords, certificates",
+            "Feature Flags: Toggle features per environment without code changes",
+            "Configuration Validation: Ensure required config values are present"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Environment configuration management\nconst config = {\n  development: {\n    database: {\n      host: process.env.DB_HOST || 'localhost',\n      port: process.env.DB_PORT || 5432,\n      name: process.env.DB_NAME || 'myapp_dev',\n      user: process.env.DB_USER || 'dev_user',\n      password: process.env.DB_PASSWORD || 'dev_password'\n    },\n    redis: {\n      host: process.env.REDIS_HOST || 'localhost',\n      port: process.env.REDIS_PORT || 6379\n    },\n    api: {\n      baseUrl: process.env.API_BASE_URL || 'http://localhost:3000',\n      rateLimit: 1000\n    },\n    logging: {\n      level: 'debug'\n    }\n  },\n  \n  staging: {\n    database: {\n      host: process.env.DB_HOST,\n      port: process.env.DB_PORT || 5432,\n      name: process.env.DB_NAME,\n      user: process.env.DB_USER,\n      password: process.env.DB_PASSWORD\n    },\n    redis: {\n      host: process.env.REDIS_HOST,\n      port: process.env.REDIS_PORT || 6379\n    },\n    api: {\n      baseUrl: process.env.API_BASE_URL,\n      rateLimit: 500\n    },\n    logging: {\n      level: 'info'\n    }\n  },\n  \n  production: {\n    database: {\n      host: process.env.DB_HOST,\n      port: process.env.DB_PORT || 5432,\n      name: process.env.DB_NAME,\n      user: process.env.DB_USER,\n      password: process.env.DB_PASSWORD\n    },\n    redis: {\n      host: process.env.REDIS_HOST,\n      port: process.env.REDIS_PORT || 6379\n    },\n    api: {\n      baseUrl: process.env.API_BASE_URL,\n      rateLimit: 100\n    },\n    logging: {\n      level: 'error'\n    }\n  }\n};\n\nconst env = process.env.NODE_ENV || 'development';\nmodule.exports = config[env];\n\n// Validate required configuration\nconst requiredEnvVars = [\n  'DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',\n  'REDIS_HOST', 'API_BASE_URL'\n];\n\nif (env !== 'development') {\n  requiredEnvVars.forEach(envVar => {\n    if (!process.env[envVar]) {\n      throw new Error(`Required environment variable ${envVar} is not set`);\n    }\n  });\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Environment Parity"
+        },
+        {
+          "type": "paragraph",
+          "text": "Maintain consistency between environments to reduce deployment risks and ensure predictable behavior."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Infrastructure Consistency: Same OS, runtime versions, and dependencies",
+            "Data Consistency: Similar data structure and volume for realistic testing",
+            "Service Dependencies: Same external services and versions",
+            "Network Configuration: Similar security groups and access patterns",
+            "Monitoring Setup: Same observability tools across environments"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Secrets Management"
+        },
+        {
+          "type": "list",
+          "items": [
+            "AWS Secrets Manager: Managed secrets service with rotation",
+            "HashiCorp Vault: Enterprise secrets management platform",
+            "Azure Key Vault: Microsoft's cloud-based secrets service",
+            "Kubernetes Secrets: Native secret management in Kubernetes",
+            "Environment Variable Injection: Secure injection at runtime",
+            "Encryption at Rest: Encrypt stored configuration and secrets"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Environment Isolation"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Network Isolation: Separate VPCs/subnets for each environment",
+            "Database Isolation: Separate database instances per environment",
+            "Access Control: Role-based access to different environments",
+            "Resource Tagging: Tag resources by environment for cost tracking",
+            "Separate Deployment Pipelines: Independent CI/CD for each environment"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "infrastructure-as-code",
+      "title": "Infrastructure as Code (IaC)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "IaC Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Infrastructure as Code manages and provisions infrastructure through machine-readable configuration files, enabling version control, automation, and reproducible deployments."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Declarative Configuration: Define desired state, not step-by-step procedures",
+            "Version Control: Track infrastructure changes like application code",
+            "Reproducibility: Create identical environments consistently",
+            "Automation: Eliminate manual infrastructure provisioning",
+            "Documentation: Infrastructure configuration serves as documentation"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "IaC Tools and Platforms"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Terraform: Multi-cloud infrastructure provisioning tool",
+            "AWS CloudFormation: AWS-native infrastructure templates",
+            "Azure Resource Manager (ARM): Azure infrastructure templates",
+            "Google Cloud Deployment Manager: GCP infrastructure automation",
+            "Pulumi: Programming language-based infrastructure",
+            "Ansible: Configuration management and orchestration"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "hcl",
+          "text": "# Terraform configuration for AWS infrastructure\nterraform {\n  required_version = \">= 1.0\"\n  required_providers {\n    aws = {\n      source  = \"hashicorp/aws\"\n      version = \"~> 5.0\"\n    }\n  }\n}\n\nprovider \"aws\" {\n  region = var.aws_region\n}\n\n# VPC\nresource \"aws_vpc\" \"main\" {\n  cidr_block           = var.vpc_cidr\n  enable_dns_hostnames = true\n  enable_dns_support   = true\n  \n  tags = {\n    Name        = \"${var.project_name}-vpc\"\n    Environment = var.environment\n  }\n}\n\n# Internet Gateway\nresource \"aws_internet_gateway\" \"main\" {\n  vpc_id = aws_vpc.main.id\n  \n  tags = {\n    Name        = \"${var.project_name}-igw\"\n    Environment = var.environment\n  }\n}\n\n# Public Subnets\nresource \"aws_subnet\" \"public\" {\n  count = length(var.availability_zones)\n  \n  vpc_id                  = aws_vpc.main.id\n  cidr_block              = var.public_subnet_cidrs[count.index]\n  availability_zone       = var.availability_zones[count.index]\n  map_public_ip_on_launch = true\n  \n  tags = {\n    Name        = \"${var.project_name}-public-${count.index + 1}\"\n    Environment = var.environment\n    Type        = \"Public\"\n  }\n}\n\n# Application Load Balancer\nresource \"aws_lb\" \"main\" {\n  name               = \"${var.project_name}-alb\"\n  internal           = false\n  load_balancer_type = \"application\"\n  security_groups    = [aws_security_group.alb.id]\n  subnets            = aws_subnet.public[*].id\n  \n  enable_deletion_protection = false\n  \n  tags = {\n    Name        = \"${var.project_name}-alb\"\n    Environment = var.environment\n  }\n}\n\n# ECS Cluster\nresource \"aws_ecs_cluster\" \"main\" {\n  name = \"${var.project_name}-cluster\"\n  \n  setting {\n    name  = \"containerInsights\"\n    value = \"enabled\"\n  }\n  \n  tags = {\n    Name        = \"${var.project_name}-cluster\"\n    Environment = var.environment\n  }\n}\n\n# Variables\nvariable \"project_name\" {\n  description = \"Name of the project\"\n  type        = string\n}\n\nvariable \"environment\" {\n  description = \"Environment name\"\n  type        = string\n}\n\nvariable \"aws_region\" {\n  description = \"AWS region\"\n  type        = string\n  default     = \"us-west-2\"\n}\n\nvariable \"vpc_cidr\" {\n  description = \"CIDR block for VPC\"\n  type        = string\n  default     = \"10.0.0.0/16\"\n}\n\nvariable \"availability_zones\" {\n  description = \"List of availability zones\"\n  type        = list(string)\n  default     = [\"us-west-2a\", \"us-west-2b\"]\n}\n\nvariable \"public_subnet_cidrs\" {\n  description = \"CIDR blocks for public subnets\"\n  type        = list(string)\n  default     = [\"10.0.1.0/24\", \"10.0.2.0/24\"]\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Environment Provisioning"
+        },
+        {
+          "type": "paragraph",
+          "text": "Automated provisioning creates consistent environments on-demand, reducing setup time and human error."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Environment Templates: Reusable templates for different environment types",
+            "Parameter Files: Environment-specific configuration values",
+            "Resource Modules: Reusable infrastructure components",
+            "State Management: Track infrastructure state and changes",
+            "Dependency Management: Handle resource creation order and dependencies"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Infrastructure Versioning"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Git-based Versioning: Store IaC templates in version control",
+            "Semantic Versioning: Tag infrastructure releases with version numbers",
+            "Change Tracking: Track what changed between infrastructure versions",
+            "Rollback Capability: Revert to previous infrastructure configurations",
+            "Branch Strategy: Use Git branches for infrastructure environments"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "IaC Best Practices"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Modular Design: Break infrastructure into reusable modules",
+            "State Management: Use remote state storage with locking",
+            "Planning Phase: Always review changes before applying",
+            "Resource Naming: Use consistent naming conventions",
+            "Security by Default: Apply security best practices in templates",
+            "Cost Optimization: Include cost-aware resource configurations"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monitoring-logging",
+      "title": "Monitoring & Logging",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Application Logging"
+        },
+        {
+          "type": "paragraph",
+          "text": "Structured logging provides insights into application behavior, errors, and performance for debugging and monitoring."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Log Levels: ERROR, WARN, INFO, DEBUG for appropriate log filtering",
+            "Structured Logging: JSON format for machine-readable logs",
+            "Contextual Information: Include request IDs, user IDs, timestamps",
+            "Performance Logging: Track request duration and resource usage",
+            "Security Logging: Log authentication attempts and access patterns"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Structured logging implementation\nconst winston = require('winston');\nconst { v4: uuidv4 } = require('uuid');\n\n// Create logger instance\nconst logger = winston.createLogger({\n  level: process.env.LOG_LEVEL || 'info',\n  format: winston.format.combine(\n    winston.format.timestamp(),\n    winston.format.errors({ stack: true }),\n    winston.format.json()\n  ),\n  defaultMeta: {\n    service: 'api-server',\n    version: process.env.APP_VERSION || '1.0.0'\n  },\n  transports: [\n    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),\n    new winston.transports.File({ filename: 'logs/combined.log' }),\n    new winston.transports.Console({\n      format: winston.format.combine(\n        winston.format.colorize(),\n        winston.format.simple()\n      )\n    })\n  ]\n});\n\n// Request logging middleware\nconst requestLogger = (req, res, next) => {\n  const requestId = uuidv4();\n  req.requestId = requestId;\n  \n  const startTime = Date.now();\n  \n  logger.info('Request started', {\n    requestId,\n    method: req.method,\n    url: req.url,\n    userAgent: req.get('User-Agent'),\n    ip: req.ip,\n    userId: req.user?.id\n  });\n  \n  res.on('finish', () => {\n    const duration = Date.now() - startTime;\n    \n    logger.info('Request completed', {\n      requestId,\n      method: req.method,\n      url: req.url,\n      statusCode: res.statusCode,\n      duration: `${duration}ms`,\n      contentLength: res.get('Content-Length')\n    });\n  });\n  \n  next();\n};\n\n// Error logging\nconst errorHandler = (error, req, res, next) => {\n  logger.error('Unhandled error', {\n    requestId: req.requestId,\n    error: {\n      message: error.message,\n      stack: error.stack,\n      name: error.name\n    },\n    url: req.url,\n    method: req.method,\n    userId: req.user?.id\n  });\n  \n  res.status(500).json({\n    error: 'Internal server error',\n    requestId: req.requestId\n  });\n};\n\n// Business logic logging\nconst processOrder = async (orderId, userId) => {\n  const startTime = Date.now();\n  \n  try {\n    logger.info('Processing order', {\n      orderId,\n      userId,\n      action: 'order_processing_started'\n    });\n    \n    // Process order logic here\n    const order = await orderService.process(orderId);\n    \n    const duration = Date.now() - startTime;\n    \n    logger.info('Order processed successfully', {\n      orderId,\n      userId,\n      duration: `${duration}ms`,\n      action: 'order_processing_completed',\n      orderStatus: order.status\n    });\n    \n    return order;\n  } catch (error) {\n    logger.error('Order processing failed', {\n      orderId,\n      userId,\n      error: {\n        message: error.message,\n        stack: error.stack\n      },\n      action: 'order_processing_failed'\n    });\n    \n    throw error;\n  }\n};\n\nmodule.exports = { logger, requestLogger, errorHandler };"
+        },
+        {
+          "type": "heading",
+          "text": "Error Tracking"
+        },
+        {
+          "type": "paragraph",
+          "text": "Centralized error tracking helps identify, prioritize, and resolve application issues quickly."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Error Aggregation: Group similar errors together for better analysis",
+            "Stack Trace Capture: Full error context with source code references",
+            "User Context: Track which users are affected by errors",
+            "Error Alerting: Real-time notifications for critical errors",
+            "Error Trends: Track error rates and patterns over time"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Performance Monitoring"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Response Time Monitoring: Track API response times and percentiles",
+            "Database Query Performance: Monitor slow queries and execution plans",
+            "Memory Usage: Track heap usage and garbage collection metrics",
+            "CPU Utilization: Monitor processor usage across instances",
+            "Custom Metrics: Business-specific metrics like conversion rates"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Alerting Systems"
+        },
+        {
+          "type": "paragraph",
+          "text": "Proactive alerting ensures issues are detected and addressed before they impact users significantly."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Threshold-based Alerts: Trigger when metrics exceed predefined limits",
+            "Anomaly Detection: Identify unusual patterns in application behavior",
+            "Alert Routing: Send different alerts to appropriate team members",
+            "Alert Escalation: Escalate unacknowledged alerts to higher levels",
+            "Alert Fatigue Prevention: Avoid too many false positive alerts"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "yaml",
+          "text": "# Prometheus alerting rules\ngroups:\n- name: api-server-alerts\n  rules:\n  # High error rate alert\n  - alert: HighErrorRate\n    expr: |\n      (\n        rate(http_requests_total{status=~\"5..\"}[5m]) /\n        rate(http_requests_total[5m])\n      ) * 100 > 5\n    for: 2m\n    labels:\n      severity: critical\n      service: api-server\n    annotations:\n      summary: \"High error rate detected\"\n      description: \"Error rate is {{ $value }}% for the last 5 minutes\"\n      \n  # High response time alert\n  - alert: HighResponseTime\n    expr: |\n      histogram_quantile(0.95,\n        rate(http_request_duration_seconds_bucket[5m])\n      ) > 2\n    for: 3m\n    labels:\n      severity: warning\n      service: api-server\n    annotations:\n      summary: \"High response time detected\"\n      description: \"95th percentile response time is {{ $value }}s\"\n      \n  # Database connection alert\n  - alert: DatabaseConnectionHigh\n    expr: database_connections_active / database_connections_max * 100 > 80\n    for: 1m\n    labels:\n      severity: warning\n      service: database\n    annotations:\n      summary: \"Database connection usage high\"\n      description: \"Database connection usage is {{ $value }}%\"\n      \n  # Memory usage alert\n  - alert: HighMemoryUsage\n    expr: |\n      (\n        process_resident_memory_bytes /\n        container_spec_memory_limit_bytes\n      ) * 100 > 85\n    for: 5m\n    labels:\n      severity: warning\n      service: api-server\n    annotations:\n      summary: \"High memory usage detected\"\n      description: \"Memory usage is {{ $value }}% of container limit\""
+        },
+        {
+          "type": "heading",
+          "text": "Log Aggregation and Analysis"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Centralized Logging: Collect logs from all services in one place",
+            "Log Parsing: Extract structured data from unstructured logs",
+            "Log Retention: Define retention policies for different log types",
+            "Log Search: Fast full-text search across all application logs",
+            "Log Visualization: Dashboards and charts for log analysis"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Monitoring Tools and Platforms"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Prometheus + Grafana: Open-source monitoring and visualization",
+            "ELK Stack: Elasticsearch, Logstash, Kibana for log management",
+            "DataDog: All-in-one monitoring and analytics platform",
+            "New Relic: Application performance monitoring (APM)",
+            "Sentry: Error tracking and performance monitoring",
+            "AWS CloudWatch: AWS-native monitoring and logging"
+          ]
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main advantage of multi-stage Docker builds?",
+      "options": [
+        "Faster build times",
+        "Better security through smaller final images",
+        "Easier debugging",
+        "Better caching"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Multi-stage builds create smaller, more secure final images by separating build dependencies from runtime dependencies, including only what's needed to run the application."
+    },
+    {
+      "id": 2,
+      "question": "What is the difference between Continuous Integration and Continuous Deployment?",
+      "options": [
+        "CI builds code, CD tests code",
+        "CI tests code automatically, CD deploys code automatically",
+        "CI is for development, CD is for production",
+        "There is no difference"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CI automatically builds and tests code changes when committed to version control. CD automatically deploys validated code changes to environments, extending the automation beyond testing to deployment."
+    },
+    {
+      "id": 3,
+      "question": "What is a blue-green deployment strategy?",
+      "options": [
+        "Deploying to servers with blue and green colored indicators",
+        "Gradually rolling out changes to a subset of servers",
+        "Maintaining two identical environments and switching traffic between them",
+        "Using feature flags to control deployments"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Blue-green deployment maintains two identical production environments (blue and green). Traffic is switched from one to the other during deployment, enabling zero-downtime deployments and easy rollbacks."
+    },
+    {
+      "id": 4,
+      "question": "What is the purpose of a .dockerignore file?",
+      "options": [
+        "To ignore Docker errors during build",
+        "To exclude files and directories from the Docker build context",
+        "To specify which Docker images to ignore",
+        "To ignore Docker containers during runtime"
+      ],
+      "correctAnswer": 1,
+      "explanation": ".dockerignore excludes files and directories from the Docker build context, reducing build time and final image size by preventing unnecessary files from being sent to the Docker daemon."
+    },
+    {
+      "id": 5,
+      "question": "Which approach provides the best security for running containers?",
+      "options": [
+        "Running containers as root user",
+        "Running containers as non-root user with minimal permissions",
+        "Using privileged containers",
+        "Sharing the host network"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Running containers as non-root users with minimal permissions follows the principle of least privilege, reducing the attack surface if the container is compromised."
+    },
+    {
+      "id": 6,
+      "question": "What is Infrastructure as Code (IaC)?",
+      "options": [
+        "Writing application code for infrastructure",
+        "Managing infrastructure through machine-readable configuration files",
+        "Coding infrastructure manually",
+        "Infrastructure that writes its own code"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Infrastructure as Code manages and provisions infrastructure through machine-readable configuration files, enabling version control, automation, and reproducible deployments."
+    },
+    {
+      "id": 7,
+      "question": "What is the main benefit of environment parity?",
+      "options": [
+        "Reduced infrastructure costs",
+        "Faster deployment times",
+        "Reduced deployment risks and predictable behavior",
+        "Better performance"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Environment parity ensures consistency between development, staging, and production environments, reducing deployment risks and ensuring applications behave predictably across environments."
+    },
+    {
+      "id": 8,
+      "question": "What is the purpose of structured logging?",
+      "options": [
+        "To make logs look prettier",
+        "To create machine-readable logs that can be easily parsed and analyzed",
+        "To reduce log file sizes",
+        "To encrypt log data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Structured logging formats logs in a machine-readable format (like JSON) with consistent fields, making it easier to parse, search, and analyze logs programmatically."
+    },
+    {
+      "id": 9,
+      "question": "What is a canary deployment?",
+      "options": [
+        "Deploying to a subset of users before full rollout",
+        "Deploying only during specific hours",
+        "Deploying with yellow warning indicators",
+        "Rolling back deployments automatically"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Canary deployment gradually rolls out changes to a small subset of users first, allowing you to monitor for issues before deploying to all users, reducing the blast radius of potential problems."
+    },
+    {
+      "id": 10,
+      "question": "What is the main purpose of container orchestration?",
+      "options": [
+        "To create containers faster",
+        "To manage multiple containers across clusters with automated deployment, scaling, and networking",
+        "To reduce container sizes",
+        "To encrypt container communications"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Container orchestration platforms like Kubernetes manage multiple containers across clusters, handling deployment, scaling, networking, service discovery, and health monitoring automatically."
+    },
+    {
+      "id": 11,
+      "question": "What should be included in application logs for effective debugging?",
+      "options": [
+        "Only error messages",
+        "Request IDs, timestamps, user context, and structured data",
+        "Only performance metrics",
+        "Raw database queries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Effective application logs should include contextual information like request IDs for tracing, timestamps, user context, and structured data that makes logs searchable and correlatable."
+    },
+    {
+      "id": 12,
+      "question": "What is the circuit breaker pattern in deployment strategies?",
+      "options": [
+        "A method to stop electrical circuits",
+        "Automatically stopping traffic to failing services to prevent cascading failures",
+        "A way to break Docker containers",
+        "A database connection method"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The circuit breaker pattern monitors service calls and automatically stops sending requests to failing services, preventing cascading failures and allowing time for recovery."
+    },
+    {
+      "id": 13,
+      "question": "What is the benefit of using Alpine Linux as a base Docker image?",
+      "options": [
+        "Better performance",
+        "Smaller image size and reduced attack surface",
+        "Faster container startup",
+        "Better compatibility"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Alpine Linux is a minimal Linux distribution that creates much smaller Docker images, reducing storage, transfer time, and attack surface while maintaining functionality."
+    },
+    {
+      "id": 14,
+      "question": "What is the purpose of health checks in containerized applications?",
+      "options": [
+        "To check container disk space",
+        "To verify that the application inside the container is working correctly",
+        "To monitor container CPU usage",
+        "To check container network connectivity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Health checks verify that the application inside the container is functioning correctly and can handle requests, allowing orchestrators to route traffic only to healthy instances."
+    },
+    {
+      "id": 15,
+      "question": "What is the main advantage of using secrets management systems?",
+      "options": [
+        "Faster application startup",
+        "Secure storage and centralized management of sensitive configuration data",
+        "Better application performance",
+        "Easier debugging"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Secrets management systems provide secure storage, access control, audit trails, and often rotation capabilities for sensitive data like API keys, passwords, and certificates."
+    },
+    {
+      "id": 16,
+      "question": "What is the purpose of CI pipeline caching?",
+      "options": [
+        "To cache user data",
+        "To speed up builds by reusing previously downloaded dependencies and build artifacts",
+        "To cache database queries",
+        "To cache API responses"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CI pipeline caching stores dependencies, build artifacts, and intermediate results between builds, significantly reducing build times by avoiding redundant downloads and computations."
+    },
+    {
+      "id": 17,
+      "question": "What is the difference between horizontal and vertical scaling in container orchestration?",
+      "options": [
+        "Horizontal adds more containers, vertical adds more resources to existing containers",
+        "Vertical adds more containers, horizontal adds more resources",
+        "They are the same thing",
+        "Horizontal is for databases, vertical is for applications"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Horizontal scaling (scaling out) adds more container instances to handle load, while vertical scaling (scaling up) increases resources (CPU, memory) allocated to existing containers."
+    },
+    {
+      "id": 18,
+      "question": "What is the primary purpose of log aggregation?",
+      "options": [
+        "To compress log files",
+        "To collect logs from multiple sources into a centralized location for analysis",
+        "To delete old logs automatically",
+        "To encrypt log data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Log aggregation collects logs from multiple services and servers into a centralized location, making it easier to search, analyze, and correlate events across the entire system."
+    },
+    {
+      "id": 19,
+      "question": "What is feature flagging in deployment strategies?",
+      "options": [
+        "Flagging features as complete",
+        "Controlling feature visibility without code deployment",
+        "Adding flags to feature documentation",
+        "Marking features for deletion"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Feature flagging allows controlling feature visibility and behavior through configuration rather than code deployment, enabling safer releases and A/B testing."
+    },
+    {
+      "id": 20,
+      "question": "What is the main benefit of immutable infrastructure?",
+      "options": [
+        "Lower costs",
+        "Predictable, reproducible deployments with reduced configuration drift",
+        "Faster performance",
+        "Better security only"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Immutable infrastructure replaces entire infrastructure components instead of updating them, ensuring predictable, reproducible deployments and eliminating configuration drift over time."
+    }
+  ]
+} 

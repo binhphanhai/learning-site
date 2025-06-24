@@ -1,0 +1,439 @@
+{
+  "title": "Security Considerations",
+  "description": "Essential security practices for backend-for-frontend development including input validation, API security, data protection, and vulnerability management",
+  "sections": [
+    {
+      "id": "input-validation",
+      "title": "Input Validation & Sanitization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Data Sanitization"
+        },
+        {
+          "type": "paragraph",
+          "text": "Input validation is the first line of defense against security vulnerabilities. Never trust user input and always validate, sanitize, and escape data before processing."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Whitelist validation: Only allow known good characters/patterns",
+            "Input length limits: Prevent buffer overflow attacks",
+            "Data type validation: Ensure correct data types",
+            "Format validation: Use regex patterns for emails, URLs, etc.",
+            "Business logic validation: Check against business rules"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express.js input validation with joi\nconst Joi = require('joi');\n\nconst userSchema = Joi.object({\n  email: Joi.string().email().required(),\n  password: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]')),\n  age: Joi.number().integer().min(18).max(120),\n  name: Joi.string().alphanum().min(2).max(50).required()\n});\n\napp.post('/api/users', async (req, res) => {\n  try {\n    const { error, value } = userSchema.validate(req.body);\n    if (error) {\n      return res.status(400).json({ error: error.details[0].message });\n    }\n    \n    // Process validated data\n    const user = await createUser(value);\n    res.status(201).json(user);\n  } catch (err) {\n    res.status(500).json({ error: 'Internal server error' });\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "SQL Injection Prevention"
+        },
+        {
+          "type": "paragraph",
+          "text": "SQL injection occurs when user input is directly concatenated into SQL queries. Always use parameterized queries or prepared statements."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// BAD: Vulnerable to SQL injection\nconst query = `SELECT * FROM users WHERE email = '${userEmail}'`;\n\n// GOOD: Parameterized query\nconst query = 'SELECT * FROM users WHERE email = ?';\nconst result = await db.query(query, [userEmail]);\n\n// GOOD: With Sequelize ORM\nconst user = await User.findOne({\n  where: {\n    email: userEmail\n  }\n});\n\n// GOOD: With prepared statements\nconst stmt = await db.prepare('SELECT * FROM users WHERE email = ? AND status = ?');\nconst result = await stmt.all(userEmail, 'active');"
+        },
+        {
+          "type": "heading",
+          "text": "XSS Protection"
+        },
+        {
+          "type": "paragraph",
+          "text": "Cross-Site Scripting (XSS) attacks inject malicious scripts into web pages. Implement proper output encoding and Content Security Policy."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// HTML encoding for output\nconst escapeHtml = (text) => {\n  const map = {\n    '&': '&amp;',\n    '<': '&lt;',\n    '>': '&gt;',\n    '\"': '&quot;',\n    \"'\": '&#039;'\n  };\n  return text.replace(/[&<>\"']/g, (m) => map[m]);\n};\n\n// Content Security Policy headers\napp.use((req, res, next) => {\n  res.setHeader('Content-Security-Policy', \n    \"default-src 'self'; \" +\n    \"script-src 'self' 'unsafe-inline'; \" +\n    \"style-src 'self' 'unsafe-inline'; \" +\n    \"img-src 'self' data: https:;\"\n  );\n  next();\n});\n\n// DOMPurify for sanitizing HTML\nconst createDOMPurify = require('isomorphic-dompurify');\nconst DOMPurify = createDOMPurify();\n\nconst cleanHtml = DOMPurify.sanitize(userInput);"
+        },
+        {
+          "type": "heading",
+          "text": "CSRF Protection"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// CSRF token implementation\nconst csrf = require('csurf');\nconst csrfProtection = csrf({ cookie: true });\n\napp.use(csrfProtection);\n\napp.get('/api/csrf-token', (req, res) => {\n  res.json({ csrfToken: req.csrfToken() });\n});\n\n// Double-submit cookie pattern\nconst generateCSRFToken = () => {\n  return require('crypto').randomBytes(32).toString('hex');\n};\n\napp.use((req, res, next) => {\n  if (req.method === 'GET') {\n    const token = generateCSRFToken();\n    res.cookie('csrf-token', token, { httpOnly: false, secure: true });\n    req.csrfToken = token;\n  }\n  next();\n});"
+        }
+      ]
+    },
+    {
+      "id": "api-security",
+      "title": "API Security",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Rate Limiting"
+        },
+        {
+          "type": "paragraph",
+          "text": "Rate limiting prevents abuse by limiting the number of requests a client can make within a time window."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express rate limiting\nconst rateLimit = require('express-rate-limit');\n\n// Basic rate limiting\nconst apiLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000, // 15 minutes\n  max: 100, // limit each IP to 100 requests per windowMs\n  message: 'Too many requests from this IP',\n  standardHeaders: true,\n  legacyHeaders: false\n});\n\n// Strict rate limiting for authentication\nconst authLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000,\n  max: 5, // 5 attempts per 15 minutes\n  skipSuccessfulRequests: true\n});\n\napp.use('/api/', apiLimiter);\napp.use('/api/auth', authLimiter);\n\n// Redis-based rate limiting\nconst { RateLimiterRedis } = require('rate-limiter-flexible');\n\nconst rateLimiter = new RateLimiterRedis({\n  storeClient: redisClient,\n  keyPrefix: 'middleware',\n  points: 10, // Number of requests\n  duration: 1, // Per 1 second\n});\n\napp.use(async (req, res, next) => {\n  try {\n    await rateLimiter.consume(req.ip);\n    next();\n  } catch (rejRes) {\n    res.status(429).send('Too Many Requests');\n  }\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Authentication Headers"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// JWT authentication middleware\nconst jwt = require('jsonwebtoken');\n\nconst authenticateToken = (req, res, next) => {\n  const authHeader = req.headers['authorization'];\n  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN\n\n  if (!token) {\n    return res.status(401).json({ error: 'Access token required' });\n  }\n\n  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {\n    if (err) {\n      return res.status(403).json({ error: 'Invalid or expired token' });\n    }\n    req.user = user;\n    next();\n  });\n};\n\n// API key authentication\nconst authenticateApiKey = (req, res, next) => {\n  const apiKey = req.headers['x-api-key'];\n  \n  if (!apiKey) {\n    return res.status(401).json({ error: 'API key required' });\n  }\n  \n  // Verify API key (example with database lookup)\n  const isValidKey = await validateApiKey(apiKey);\n  if (!isValidKey) {\n    return res.status(403).json({ error: 'Invalid API key' });\n  }\n  \n  next();\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Secure Endpoints"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use HTTPS for all communications",
+            "Implement proper authentication and authorization",
+            "Validate all input parameters",
+            "Use security headers (HSTS, CSP, X-Frame-Options)",
+            "Implement CORS properly",
+            "Hide sensitive information in error messages"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Security headers middleware\nconst helmet = require('helmet');\n\napp.use(helmet({\n  contentSecurityPolicy: {\n    directives: {\n      defaultSrc: [\"'self'\"],\n      styleSrc: [\"'self'\", \"'unsafe-inline'\"],\n      scriptSrc: [\"'self'\"],\n      imgSrc: [\"'self'\", \"data:\", \"https:\"],\n    },\n  },\n  hsts: {\n    maxAge: 31536000,\n    includeSubDomains: true,\n    preload: true\n  }\n}));\n\n// CORS configuration\nconst cors = require('cors');\n\nconst corsOptions = {\n  origin: process.env.NODE_ENV === 'production' \n    ? ['https://yourdomain.com', 'https://www.yourdomain.com']\n    : ['http://localhost:3000'],\n  credentials: true,\n  optionsSuccessStatus: 200\n};\n\napp.use(cors(corsOptions));"
+        },
+        {
+          "type": "heading",
+          "text": "Data Encryption"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "const crypto = require('crypto');\nconst bcrypt = require('bcrypt');\n\n// Password hashing\nconst hashPassword = async (password) => {\n  const saltRounds = 12;\n  return await bcrypt.hash(password, saltRounds);\n};\n\nconst verifyPassword = async (password, hash) => {\n  return await bcrypt.compare(password, hash);\n};\n\n// Data encryption/decryption\nconst algorithm = 'aes-256-gcm';\nconst secretKey = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);\n\nconst encrypt = (text) => {\n  const iv = crypto.randomBytes(12);\n  const cipher = crypto.createCipher(algorithm, secretKey, iv);\n  \n  let encrypted = cipher.update(text, 'utf8', 'hex');\n  encrypted += cipher.final('hex');\n  \n  const authTag = cipher.getAuthTag();\n  \n  return {\n    encrypted,\n    iv: iv.toString('hex'),\n    authTag: authTag.toString('hex')\n  };\n};\n\nconst decrypt = (encryptedData) => {\n  const decipher = crypto.createDecipher(algorithm, secretKey, Buffer.from(encryptedData.iv, 'hex'));\n  decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));\n  \n  let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');\n  decrypted += decipher.final('utf8');\n  \n  return decrypted;\n};"
+        }
+      ]
+    },
+    {
+      "id": "data-protection",
+      "title": "Data Protection & Privacy",
+      "content": [
+        {
+          "type": "heading",
+          "text": "GDPR Compliance"
+        },
+        {
+          "type": "paragraph",
+          "text": "General Data Protection Regulation (GDPR) requires specific handling of personal data. Implement privacy by design and ensure user rights."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Data minimization: Collect only necessary data",
+            "Purpose limitation: Use data only for stated purposes",
+            "Consent management: Obtain and track user consent",
+            "Right to access: Allow users to view their data",
+            "Right to rectification: Allow users to correct data",
+            "Right to erasure: Implement data deletion",
+            "Data portability: Provide data export functionality"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// GDPR compliance implementation\nclass GDPRManager {\n  // Get user data (Right to access)\n  async getUserData(userId) {\n    const userData = {\n      profile: await User.findById(userId),\n      posts: await Post.findByUserId(userId),\n      activities: await Activity.findByUserId(userId)\n    };\n    \n    return this.anonymizeInternalData(userData);\n  }\n  \n  // Delete user data (Right to erasure)\n  async deleteUserData(userId) {\n    const transaction = await db.transaction();\n    \n    try {\n      // Anonymize instead of hard delete for legal/audit requirements\n      await User.update(userId, {\n        email: `deleted_${userId}@example.com`,\n        name: 'Deleted User',\n        phone: null,\n        address: null,\n        deletedAt: new Date()\n      }, { transaction });\n      \n      // Delete or anonymize related data\n      await Post.anonymizeByUserId(userId, { transaction });\n      await Comment.anonymizeByUserId(userId, { transaction });\n      \n      await transaction.commit();\n    } catch (error) {\n      await transaction.rollback();\n      throw error;\n    }\n  }\n  \n  // Export user data (Data portability)\n  async exportUserData(userId) {\n    const userData = await this.getUserData(userId);\n    \n    return {\n      format: 'JSON',\n      exportDate: new Date().toISOString(),\n      data: userData,\n      notice: 'This export contains all personal data we have about you.'\n    };\n  }\n  \n  // Consent management\n  async updateConsent(userId, consentTypes) {\n    await UserConsent.upsert({\n      userId,\n      consentTypes,\n      updatedAt: new Date()\n    });\n  }\n  \n  async getConsent(userId) {\n    return await UserConsent.findOne({ where: { userId } });\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Data Anonymization"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Data anonymization utilities\nclass DataAnonymizer {\n  static anonymizeEmail(email) {\n    const [local, domain] = email.split('@');\n    const anonymizedLocal = local.substring(0, 2) + '*'.repeat(local.length - 2);\n    return `${anonymizedLocal}@${domain}`;\n  }\n  \n  static anonymizePhone(phone) {\n    return phone.replace(/.(?=.{4})/g, '*');\n  }\n  \n  static anonymizeText(text, keepChars = 2) {\n    if (text.length <= keepChars * 2) {\n      return '*'.repeat(text.length);\n    }\n    \n    const start = text.substring(0, keepChars);\n    const end = text.substring(text.length - keepChars);\n    const middle = '*'.repeat(text.length - keepChars * 2);\n    \n    return start + middle + end;\n  }\n  \n  static generatePseudoId() {\n    return 'user_' + crypto.randomBytes(8).toString('hex');\n  }\n  \n  // K-anonymity implementation\n  static kAnonymize(dataset, k = 5, identifiers = []) {\n    // Group records by quasi-identifiers\n    const groups = this.groupByQuasiIdentifiers(dataset, identifiers);\n    \n    // Ensure each group has at least k records\n    return groups.filter(group => group.length >= k)\n                 .flatMap(group => group);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Secure Data Storage"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Database encryption at rest\nconst sequelize = new Sequelize({\n  dialect: 'postgres',\n  dialectOptions: {\n    ssl: {\n      require: true,\n      rejectUnauthorized: false\n    }\n  },\n  // Enable encryption\n  define: {\n    defaultScope: {\n      attributes: {\n        exclude: ['password', 'ssn', 'creditCard']\n      }\n    }\n  }\n});\n\n// Field-level encryption\nconst User = sequelize.define('User', {\n  email: {\n    type: DataTypes.STRING,\n    allowNull: false,\n    unique: true\n  },\n  // Encrypted field\n  ssn: {\n    type: DataTypes.STRING,\n    get() {\n      const encrypted = this.getDataValue('ssn');\n      return encrypted ? decrypt(encrypted) : null;\n    },\n    set(value) {\n      this.setDataValue('ssn', value ? encrypt(value) : null);\n    }\n  }\n});\n\n// Backup encryption\nconst createEncryptedBackup = async () => {\n  const data = await exportDatabaseData();\n  const encrypted = encrypt(JSON.stringify(data));\n  \n  await fs.writeFile(`backup_${Date.now()}.enc`, JSON.stringify(encrypted));\n};"
+        }
+      ]
+    },
+    {
+      "id": "network-security",
+      "title": "Network Security",
+      "content": [
+        {
+          "type": "heading",
+          "text": "HTTPS Implementation"
+        },
+        {
+          "type": "paragraph",
+          "text": "HTTPS encrypts data in transit and should be used for all communications. Implement HTTP Strict Transport Security (HSTS) to enforce HTTPS."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// HTTPS server setup\nconst https = require('https');\nconst fs = require('fs');\n\nconst options = {\n  key: fs.readFileSync('path/to/private-key.pem'),\n  cert: fs.readFileSync('path/to/certificate.pem'),\n  // Additional security options\n  secureProtocol: 'TLSv1_2_method',\n  ciphers: [\n    'ECDHE-RSA-AES128-GCM-SHA256',\n    'ECDHE-RSA-AES256-GCM-SHA384',\n    'ECDHE-RSA-AES128-SHA256',\n    'ECDHE-RSA-AES256-SHA384'\n  ].join(':'),\n  honorCipherOrder: true\n};\n\nhttps.createServer(options, app).listen(443);\n\n// Redirect HTTP to HTTPS\nconst http = require('http');\nhttp.createServer((req, res) => {\n  res.writeHead(301, { Location: `https://${req.headers.host}${req.url}` });\n  res.end();\n}).listen(80);\n\n// HSTS header\napp.use((req, res, next) => {\n  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');\n  next();\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Certificate Management"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Use certificates from trusted Certificate Authorities",
+            "Implement certificate pinning for mobile apps",
+            "Monitor certificate expiration dates",
+            "Use automated certificate renewal (Let's Encrypt)",
+            "Implement Certificate Transparency monitoring"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Certificate expiration monitoring\nconst tls = require('tls');\n\nconst checkCertificateExpiry = (hostname, port = 443) => {\n  return new Promise((resolve, reject) => {\n    const socket = tls.connect(port, hostname, { servername: hostname }, () => {\n      const cert = socket.getPeerCertificate();\n      const expiryDate = new Date(cert.valid_to);\n      const daysUntilExpiry = Math.floor((expiryDate - new Date()) / (1000 * 60 * 60 * 24));\n      \n      socket.end();\n      resolve({\n        hostname,\n        expiryDate,\n        daysUntilExpiry,\n        isExpired: daysUntilExpiry < 0,\n        isExpiringSoon: daysUntilExpiry < 30\n      });\n    });\n    \n    socket.on('error', reject);\n  });\n};\n\n// Automated certificate renewal check\nconst checkCertificates = async () => {\n  const domains = ['api.example.com', 'app.example.com'];\n  \n  for (const domain of domains) {\n    try {\n      const certInfo = await checkCertificateExpiry(domain);\n      \n      if (certInfo.isExpiringSoon) {\n        console.warn(`Certificate for ${domain} expires in ${certInfo.daysUntilExpiry} days`);\n        // Send alert notification\n        await sendCertificateAlert(certInfo);\n      }\n    } catch (error) {\n      console.error(`Failed to check certificate for ${domain}:`, error);\n    }\n  }\n};\n\n// Run certificate check daily\nsetInterval(checkCertificates, 24 * 60 * 60 * 1000);"
+        }
+      ]
+    },
+    {
+      "id": "vulnerability-management",
+      "title": "Vulnerability Management",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Security Scanning"
+        },
+        {
+          "type": "paragraph",
+          "text": "Regular security scanning helps identify vulnerabilities in dependencies and code. Implement automated scanning in CI/CD pipelines."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// package.json security scripts\n{\n  \"scripts\": {\n    \"security:audit\": \"npm audit\",\n    \"security:audit-fix\": \"npm audit fix\",\n    \"security:snyk\": \"snyk test\",\n    \"security:snyk-monitor\": \"snyk monitor\",\n    \"security:retire\": \"retire --js --node\"\n  },\n  \"devDependencies\": {\n    \"snyk\": \"^1.x.x\",\n    \"retire\": \"^3.x.x\"\n  }\n}\n\n// Automated security scanning in CI/CD\n// .github/workflows/security.yml\nname: Security Scan\non: [push, pull_request]\n\njobs:\n  security:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v2\n      - uses: actions/setup-node@v2\n        with:\n          node-version: '16'\n      \n      # NPM Audit\n      - name: Run npm audit\n        run: npm audit --audit-level moderate\n      \n      # Snyk security scan\n      - name: Run Snyk\n        uses: snyk/actions/node@master\n        env:\n          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}\n        with:\n          args: --severity-threshold=high"
+        },
+        {
+          "type": "heading",
+          "text": "Dependency Updates"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Automated dependency updates with Dependabot\n// .github/dependabot.yml\nversion: 2\nupdates:\n  - package-ecosystem: \"npm\"\n    directory: \"/\"\n    schedule:\n      interval: \"weekly\"\n    assignees:\n      - \"security-team\"\n    reviewers:\n      - \"security-team\"\n    commit-message:\n      prefix: \"security\"\n      include: \"scope\"\n\n// Security-focused dependency management\nconst checkDependencyVulnerabilities = async () => {\n  const { execSync } = require('child_process');\n  \n  try {\n    // Check for known vulnerabilities\n    const auditResult = execSync('npm audit --json', { encoding: 'utf8' });\n    const audit = JSON.parse(auditResult);\n    \n    if (audit.vulnerabilities && Object.keys(audit.vulnerabilities).length > 0) {\n      console.warn('Vulnerabilities found:');\n      console.table(audit.vulnerabilities);\n      \n      // Auto-fix if possible\n      execSync('npm audit fix --force');\n      \n      return false; // Build should fail if critical vulnerabilities remain\n    }\n    \n    return true;\n  } catch (error) {\n    console.error('Security audit failed:', error);\n    return false;\n  }\n};"
+        },
+        {
+          "type": "heading",
+          "text": "Incident Response"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Incident response plan: Document procedures for security incidents",
+            "Monitoring and alerting: Real-time security event detection",
+            "Log analysis: Centralized logging for security events",
+            "Forensic capabilities: Ability to investigate security incidents",
+            "Communication plan: Stakeholder notification procedures",
+            "Recovery procedures: Steps to restore normal operations"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Security incident detection\nclass SecurityMonitor {\n  constructor() {\n    this.suspiciousEvents = new Map();\n    this.alertThresholds = {\n      failedLogins: 5,\n      unusualTraffic: 1000,\n      suspiciousPatterns: 3\n    };\n  }\n  \n  logSecurityEvent(event) {\n    const logEntry = {\n      timestamp: new Date().toISOString(),\n      type: event.type,\n      severity: event.severity,\n      source: event.source,\n      details: event.details,\n      userAgent: event.userAgent,\n      ip: event.ip\n    };\n    \n    // Log to security log\n    console.log('SECURITY_EVENT:', JSON.stringify(logEntry));\n    \n    // Check for patterns\n    this.detectPatterns(event);\n    \n    // Send to SIEM if configured\n    if (process.env.SIEM_ENDPOINT) {\n      this.sendToSIEM(logEntry);\n    }\n  }\n  \n  detectPatterns(event) {\n    const key = `${event.type}:${event.ip}`;\n    const count = (this.suspiciousEvents.get(key) || 0) + 1;\n    this.suspiciousEvents.set(key, count);\n    \n    // Check thresholds\n    if (event.type === 'failed_login' && count >= this.alertThresholds.failedLogins) {\n      this.triggerAlert({\n        type: 'BRUTE_FORCE_DETECTED',\n        ip: event.ip,\n        count: count\n      });\n    }\n  }\n  \n  async triggerAlert(alert) {\n    console.error('SECURITY_ALERT:', alert);\n    \n    // Send notifications\n    await this.sendSlackAlert(alert);\n    await this.sendEmailAlert(alert);\n    \n    // Auto-block if configured\n    if (alert.type === 'BRUTE_FORCE_DETECTED') {\n      await this.blockIP(alert.ip, '1 hour');\n    }\n  }\n  \n  async blockIP(ip, duration) {\n    // Implementation depends on your infrastructure\n    console.log(`Blocking IP ${ip} for ${duration}`);\n  }\n}"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main purpose of input validation?",
+      "options": [
+        "To improve performance",
+        "To prevent security vulnerabilities by validating user input",
+        "To format data properly",
+        "To reduce server load"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Input validation is the first line of defense against security vulnerabilities, ensuring that only safe, expected data is processed by the application."
+    },
+    {
+      "id": 2,
+      "question": "Which is the correct way to prevent SQL injection?",
+      "options": [
+        "Escape special characters manually",
+        "Use parameterized queries or prepared statements",
+        "Validate input length only",
+        "Use string concatenation with validation"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Parameterized queries or prepared statements separate SQL code from data, making SQL injection impossible regardless of the input content."
+    },
+    {
+      "id": 3,
+      "question": "What does XSS stand for?",
+      "options": ["Cross-Site Scripting", "Cross-Server Security", "Extended Security System", "XML Security Scanner"],
+      "correctAnswer": 0,
+      "explanation": "XSS stands for Cross-Site Scripting, which is an attack where malicious scripts are injected into trusted websites."
+    },
+    {
+      "id": 4,
+      "question": "What is the purpose of CSRF tokens?",
+      "options": [
+        "To encrypt user passwords",
+        "To prevent Cross-Site Request Forgery attacks",
+        "To validate user sessions",
+        "To compress data transmission"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSRF tokens prevent Cross-Site Request Forgery attacks by ensuring that requests are intentionally made by the authenticated user."
+    },
+    {
+      "id": 5,
+      "question": "What is rate limiting used for?",
+      "options": [
+        "To improve server performance",
+        "To prevent abuse by limiting request frequency",
+        "To compress responses",
+        "To encrypt data"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Rate limiting prevents abuse and DoS attacks by restricting the number of requests a client can make within a specified time period."
+    },
+    {
+      "id": 6,
+      "question": "What does HTTPS provide?",
+      "options": [
+        "Faster data transfer",
+        "Encryption of data in transit",
+        "Better SEO rankings only",
+        "Reduced server load"
+      ],
+      "correctAnswer": 1,
+      "explanation": "HTTPS provides encryption of data in transit, ensuring that communication between client and server cannot be intercepted or modified."
+    },
+    {
+      "id": 7,
+      "question": "What is the purpose of Content Security Policy (CSP)?",
+      "options": [
+        "To improve page load speed",
+        "To prevent XSS attacks by controlling resource loading",
+        "To encrypt user data",
+        "To compress images"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CSP helps prevent XSS attacks by defining which sources of content are allowed to be loaded by the web page."
+    },
+    {
+      "id": 8,
+      "question": "What is the recommended way to store passwords?",
+      "options": [
+        "Plain text",
+        "Hashed with a strong algorithm like bcrypt",
+        "Encrypted with AES",
+        "Base64 encoded"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Passwords should be hashed using strong, slow algorithms like bcrypt that include salt and are resistant to brute force attacks."
+    },
+    {
+      "id": 9,
+      "question": "What does GDPR require for personal data?",
+      "options": [
+        "Only encryption",
+        "User consent, data minimization, and user rights (access, deletion, etc.)",
+        "Only secure storage",
+        "Only data backup"
+      ],
+      "correctAnswer": 1,
+      "explanation": "GDPR requires user consent for data processing, data minimization, and provides users with rights to access, correct, and delete their data."
+    },
+    {
+      "id": 10,
+      "question": "What is the purpose of HSTS (HTTP Strict Transport Security)?",
+      "options": [
+        "To compress HTTP responses",
+        "To force browsers to use HTTPS and prevent downgrade attacks",
+        "To cache static resources",
+        "To validate SSL certificates"
+      ],
+      "correctAnswer": 1,
+      "explanation": "HSTS forces browsers to use HTTPS for all connections to a domain, preventing man-in-the-middle attacks and protocol downgrade attacks."
+    },
+    {
+      "id": 11,
+      "question": "What is the difference between authentication and authorization?",
+      "options": [
+        "They are the same thing",
+        "Authentication verifies identity, authorization determines permissions",
+        "Authorization verifies identity, authentication determines permissions",
+        "Authentication is for APIs, authorization is for web apps"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Authentication verifies who you are (identity), while authorization determines what you're allowed to do (permissions)."
+    },
+    {
+      "id": 12,
+      "question": "What is data anonymization?",
+      "options": [
+        "Encrypting sensitive data",
+        "Removing or masking personally identifiable information",
+        "Compressing data for storage",
+        "Backing up data securely"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Data anonymization involves removing or masking personally identifiable information to protect user privacy while preserving data utility."
+    },
+    {
+      "id": 13,
+      "question": "What should you do if a security vulnerability is found in a dependency?",
+      "options": [
+        "Ignore it if it's not critical",
+        "Update to a patched version immediately",
+        "Wait for the next scheduled update",
+        "Remove the dependency completely"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Security vulnerabilities in dependencies should be addressed immediately by updating to a patched version or finding alternative solutions."
+    },
+    {
+      "id": 14,
+      "question": "What is the principle of least privilege?",
+      "options": [
+        "Give users maximum permissions",
+        "Give users only the minimum permissions needed for their role",
+        "Give all users the same permissions",
+        "Remove all permissions by default"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The principle of least privilege means giving users, processes, or systems only the minimum access rights necessary to perform their functions."
+    },
+    {
+      "id": 15,
+      "question": "What is the purpose of security monitoring and logging?",
+      "options": [
+        "To improve application performance",
+        "To detect and respond to security incidents",
+        "To reduce storage costs",
+        "To speed up database queries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Security monitoring and logging help detect suspicious activities, security incidents, and provide audit trails for forensic analysis."
+    }
+  ]
+} 

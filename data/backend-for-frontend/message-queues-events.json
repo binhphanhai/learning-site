@@ -1,0 +1,200 @@
+{
+  "title": "Message Queues & Events",
+  "description": "Master asynchronous communication patterns including message queues, event-driven architecture, real-time communication with WebSockets and Server-Sent Events, and robust background processing systems",
+  "sections": [
+    {
+      "id": "queue-systems",
+      "title": "Queue Systems & Message Patterns",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Message Queue Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Message queues enable asynchronous communication between services, improving system resilience and scalability by decoupling producers from consumers."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Producer: Service that sends messages to the queue",
+            "Consumer: Service that processes messages from the queue", 
+            "Message Broker: Middleware that manages message routing and delivery",
+            "Queue: Storage mechanism that holds messages until they're processed",
+            "Dead Letter Queue: Storage for messages that couldn't be processed"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Redis Queue Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Redis Queue with Bull\nconst Queue = require('bull');\nconst Redis = require('redis');\n\n// Create queue\nconst emailQueue = new Queue('email processing', {\n  redis: { host: 'localhost', port: 6379 }\n});\n\n// Add job to queue\nconst sendWelcomeEmail = async (userId, email) => {\n  await emailQueue.add('welcome-email', {\n    userId,\n    email,\n    template: 'welcome'\n  }, {\n    delay: 5000, // 5 second delay\n    attempts: 3, // Retry up to 3 times\n    backoff: 'exponential'\n  });\n};\n\n// Process jobs\nemailQueue.process('welcome-email', async (job) => {\n  const { userId, email, template } = job.data;\n  \n  try {\n    await emailService.send({\n      to: email,\n      template: template,\n      userId: userId\n    });\n    \n    console.log(`Welcome email sent to ${email}`);\n  } catch (error) {\n    console.error('Failed to send email:', error);\n    throw error; // Will trigger retry\n  }\n});\n\n// Monitor queue events\nemailQueue.on('completed', (job) => {\n  console.log(`Job ${job.id} completed`);\n});\n\nemailQueue.on('failed', (job, err) => {\n  console.log(`Job ${job.id} failed:`, err.message);\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Amazon SQS Integration"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// AWS SQS Queue Implementation\nconst AWS = require('aws-sdk');\nconst sqs = new AWS.SQS({ region: 'us-west-2' });\n\nclass SQSQueue {\n  constructor(queueUrl) {\n    this.queueUrl = queueUrl;\n  }\n\n  // Send message to queue\n  async sendMessage(messageBody, attributes = {}) {\n    const params = {\n      QueueUrl: this.queueUrl,\n      MessageBody: JSON.stringify(messageBody),\n      MessageAttributes: attributes\n    };\n\n    try {\n      const result = await sqs.sendMessage(params).promise();\n      console.log('Message sent:', result.MessageId);\n      return result.MessageId;\n    } catch (error) {\n      console.error('Error sending message:', error);\n      throw error;\n    }\n  }\n\n  // Receive and process messages\n  async processMessages(handler) {\n    const params = {\n      QueueUrl: this.queueUrl,\n      MaxNumberOfMessages: 10,\n      WaitTimeSeconds: 20, // Long polling\n      VisibilityTimeout: 60\n    };\n\n    while (true) {\n      try {\n        const data = await sqs.receiveMessage(params).promise();\n        \n        if (data.Messages) {\n          for (const message of data.Messages) {\n            try {\n              const body = JSON.parse(message.Body);\n              await handler(body, message);\n              \n              // Delete message after successful processing\n              await this.deleteMessage(message.ReceiptHandle);\n            } catch (error) {\n              console.error('Error processing message:', error);\n              // Message will become visible again after VisibilityTimeout\n            }\n          }\n        }\n      } catch (error) {\n        console.error('Error receiving messages:', error);\n        await new Promise(resolve => setTimeout(resolve, 5000));\n      }\n    }\n  }\n\n  async deleteMessage(receiptHandle) {\n    const params = {\n      QueueUrl: this.queueUrl,\n      ReceiptHandle: receiptHandle\n    };\n\n    await sqs.deleteMessage(params).promise();\n  }\n}\n\n// Usage\nconst orderQueue = new SQSQueue('https://sqs.us-west-2.amazonaws.com/123456789/order-processing');\n\n// Send order processing message\norderQueue.sendMessage({\n  orderId: '12345',\n  customerId: '67890',\n  items: [{ productId: 'ABC', quantity: 2 }]\n});\n\n// Process orders\norderQueue.processMessages(async (orderData, message) => {\n  console.log('Processing order:', orderData.orderId);\n  await orderService.processOrder(orderData);\n  console.log('Order processed successfully');\n});"
+        }
+      ]
+    },
+    {
+      "id": "event-driven-architecture", 
+      "title": "Event-Driven Architecture",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Event-Driven Patterns"
+        },
+        {
+          "type": "paragraph",
+          "text": "Event-driven architecture uses events to trigger and communicate between decoupled services, enabling reactive and scalable systems."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Event: Notification that something has happened in the system",
+            "Event Producer: Service that publishes events when state changes",
+            "Event Consumer: Service that subscribes to and handles events",
+            "Event Bus: Central hub for routing events between services",
+            "Event Store: Persistent storage for events in event sourcing"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Pub/Sub Pattern Implementation"
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Event Bus Implementation\nclass EventBus {\n  constructor() {\n    this.subscribers = new Map();\n  }\n\n  // Subscribe to events\n  subscribe(eventType, handler) {\n    if (!this.subscribers.has(eventType)) {\n      this.subscribers.set(eventType, []);\n    }\n    this.subscribers.get(eventType).push(handler);\n    \n    // Return unsubscribe function\n    return () => {\n      const handlers = this.subscribers.get(eventType);\n      const index = handlers.indexOf(handler);\n      if (index > -1) {\n        handlers.splice(index, 1);\n      }\n    };\n  }\n\n  // Publish events\n  async publish(eventType, eventData) {\n    const handlers = this.subscribers.get(eventType) || [];\n    \n    // Execute all handlers concurrently\n    const promises = handlers.map(handler => {\n      try {\n        return Promise.resolve(handler(eventData));\n      } catch (error) {\n        console.error(`Error in event handler for ${eventType}:`, error);\n        return Promise.resolve();\n      }\n    });\n    \n    await Promise.allSettled(promises);\n  }\n}\n\n// Global event bus\nconst eventBus = new EventBus();\n\n// User service - publishes events\nclass UserService {\n  async createUser(userData) {\n    const user = await db.users.create(userData);\n    \n    // Publish user created event\n    await eventBus.publish('user.created', {\n      userId: user.id,\n      email: user.email,\n      timestamp: new Date().toISOString()\n    });\n    \n    return user;\n  }\n}\n\n// Email service - subscribes to events\nclass EmailService {\n  constructor() {\n    // Subscribe to user events\n    eventBus.subscribe('user.created', this.sendWelcomeEmail.bind(this));\n    eventBus.subscribe('user.password_reset', this.sendPasswordResetEmail.bind(this));\n  }\n\n  async sendWelcomeEmail(event) {\n    console.log(`Sending welcome email to user ${event.userId}`);\n    await this.sendEmail({\n      to: event.email,\n      template: 'welcome',\n      data: { userId: event.userId }\n    });\n  }\n}\n\n// Analytics service - subscribes to events\nclass AnalyticsService {\n  constructor() {\n    eventBus.subscribe('user.created', this.trackUserRegistration.bind(this));\n    eventBus.subscribe('order.completed', this.trackPurchase.bind(this));\n  }\n\n  async trackUserRegistration(event) {\n    await analytics.track('User Registered', {\n      userId: event.userId,\n      timestamp: event.timestamp\n    });\n  }\n}\n\n// Initialize services\nconst userService = new UserService();\nconst emailService = new EmailService();\nconst analyticsService = new AnalyticsService();"
+        }
+      ]
+    },
+    {
+      "id": "websocket-communication",
+      "title": "WebSocket Communication", 
+      "content": [
+        {
+          "type": "heading",
+          "text": "Real-time Communication"
+        },
+        {
+          "type": "paragraph",
+          "text": "WebSockets provide full-duplex communication channels over a single TCP connection, enabling real-time features like chat, live updates, and collaborative editing."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// WebSocket Server Implementation\nconst WebSocket = require('ws');\nconst http = require('http');\n\nclass WebSocketManager {\n  constructor() {\n    this.clients = new Map();\n    this.rooms = new Map();\n  }\n\n  init(server) {\n    this.wss = new WebSocket.Server({ server });\n    \n    this.wss.on('connection', (ws, req) => {\n      const clientId = this.generateClientId();\n      this.clients.set(clientId, {\n        ws,\n        rooms: new Set(),\n        userId: null\n      });\n\n      ws.on('message', (data) => {\n        this.handleMessage(clientId, data);\n      });\n\n      ws.on('close', () => {\n        this.handleDisconnect(clientId);\n      });\n\n      // Send welcome message\n      this.sendToClient(clientId, {\n        type: 'connected',\n        clientId\n      });\n    });\n  }\n\n  handleMessage(clientId, data) {\n    try {\n      const message = JSON.parse(data);\n      \n      switch (message.type) {\n        case 'join_room':\n          this.joinRoom(clientId, message.room);\n          break;\n        case 'leave_room':\n          this.leaveRoom(clientId, message.room);\n          break;\n        case 'chat_message':\n          this.broadcastToRoom(message.room, {\n            type: 'chat_message',\n            message: message.message,\n            userId: this.clients.get(clientId).userId,\n            timestamp: new Date().toISOString()\n          });\n          break;\n        case 'authenticate':\n          this.authenticateClient(clientId, message.token);\n          break;\n      }\n    } catch (error) {\n      console.error('Error handling message:', error);\n    }\n  }\n\n  joinRoom(clientId, roomId) {\n    const client = this.clients.get(clientId);\n    if (!client) return;\n\n    client.rooms.add(roomId);\n    \n    if (!this.rooms.has(roomId)) {\n      this.rooms.set(roomId, new Set());\n    }\n    this.rooms.get(roomId).add(clientId);\n\n    this.sendToClient(clientId, {\n      type: 'joined_room',\n      room: roomId\n    });\n  }\n\n  leaveRoom(clientId, roomId) {\n    const client = this.clients.get(clientId);\n    if (!client) return;\n\n    client.rooms.delete(roomId);\n    \n    if (this.rooms.has(roomId)) {\n      this.rooms.get(roomId).delete(clientId);\n      if (this.rooms.get(roomId).size === 0) {\n        this.rooms.delete(roomId);\n      }\n    }\n  }\n\n  broadcastToRoom(roomId, message) {\n    const room = this.rooms.get(roomId);\n    if (!room) return;\n\n    room.forEach(clientId => {\n      this.sendToClient(clientId, message);\n    });\n  }\n\n  sendToClient(clientId, message) {\n    const client = this.clients.get(clientId);\n    if (client && client.ws.readyState === WebSocket.OPEN) {\n      client.ws.send(JSON.stringify(message));\n    }\n  }\n\n  handleDisconnect(clientId) {\n    const client = this.clients.get(clientId);\n    if (!client) return;\n\n    // Remove from all rooms\n    client.rooms.forEach(roomId => {\n      this.leaveRoom(clientId, roomId);\n    });\n\n    this.clients.delete(clientId);\n  }\n\n  generateClientId() {\n    return Math.random().toString(36).substr(2, 9);\n  }\n}\n\n// Usage\nconst server = http.createServer();\nconst wsManager = new WebSocketManager();\nwsManager.init(server);\n\nserver.listen(3000, () => {\n  console.log('WebSocket server listening on port 3000');\n});"
+        }
+      ]
+    },
+    {
+      "id": "server-sent-events",
+      "title": "Server-Sent Events (SSE)",
+      "content": [
+        {
+          "type": "heading",
+          "text": "One-way Real-time Communication"
+        },
+        {
+          "type": "paragraph",
+          "text": "Server-Sent Events enable servers to push data to web pages over HTTP, providing a simpler alternative to WebSockets for one-way communication."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Server-Sent Events Implementation\nconst express = require('express');\nconst app = express();\n\nclass SSEManager {\n  constructor() {\n    this.clients = new Map();\n  }\n\n  addClient(clientId, res) {\n    // Set SSE headers\n    res.writeHead(200, {\n      'Content-Type': 'text/event-stream',\n      'Cache-Control': 'no-cache',\n      'Connection': 'keep-alive',\n      'Access-Control-Allow-Origin': '*'\n    });\n\n    this.clients.set(clientId, res);\n\n    // Send initial connection message\n    this.sendToClient(clientId, {\n      type: 'connected',\n      clientId,\n      timestamp: new Date().toISOString()\n    });\n\n    // Handle client disconnect\n    res.on('close', () => {\n      this.clients.delete(clientId);\n      console.log(`Client ${clientId} disconnected`);\n    });\n  }\n\n  sendToClient(clientId, data) {\n    const client = this.clients.get(clientId);\n    if (client) {\n      client.write(`data: ${JSON.stringify(data)}\\n\\n`);\n    }\n  }\n\n  broadcast(data) {\n    this.clients.forEach((client, clientId) => {\n      this.sendToClient(clientId, data);\n    });\n  }\n\n  sendToUser(userId, data) {\n    // In a real implementation, you'd track user-to-client mapping\n    this.clients.forEach((client, clientId) => {\n      if (client.userId === userId) {\n        this.sendToClient(clientId, data);\n      }\n    });\n  }\n}\n\nconst sseManager = new SSEManager();\n\n// SSE endpoint\napp.get('/events', (req, res) => {\n  const clientId = req.query.clientId || Math.random().toString(36).substr(2, 9);\n  sseManager.addClient(clientId, res);\n});\n\n// API endpoint to send notifications\napp.post('/notify', express.json(), (req, res) => {\n  const { message, userId } = req.body;\n  \n  if (userId) {\n    sseManager.sendToUser(userId, {\n      type: 'notification',\n      message,\n      timestamp: new Date().toISOString()\n    });\n  } else {\n    sseManager.broadcast({\n      type: 'broadcast',\n      message,\n      timestamp: new Date().toISOString()\n    });\n  }\n  \n  res.json({ success: true });\n});\n\n// Example: Send periodic updates\nsetInterval(() => {\n  sseManager.broadcast({\n    type: 'server_time',\n    time: new Date().toISOString()\n  });\n}, 30000); // Every 30 seconds\n\napp.listen(3001, () => {\n  console.log('SSE server listening on port 3001');\n});"
+        }
+      ]
+    },
+    {
+      "id": "background-processing",
+      "title": "Background Processing",
+      "content": [
+        {
+          "type": "heading", 
+          "text": "Job Processing Systems"
+        },
+        {
+          "type": "paragraph",
+          "text": "Background processing handles time-consuming tasks asynchronously, improving user experience and system responsiveness."
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Advanced Job Processing System\nconst cron = require('node-cron');\n\nclass JobProcessor {\n  constructor() {\n    this.jobs = new Map();\n    this.scheduledJobs = new Map();\n  }\n\n  // Register job types\n  registerJob(jobType, handler, options = {}) {\n    this.jobs.set(jobType, {\n      handler,\n      retries: options.retries || 3,\n      backoff: options.backoff || 'exponential',\n      timeout: options.timeout || 30000\n    });\n  }\n\n  // Schedule recurring jobs\n  scheduleJob(name, cronExpression, jobType, data) {\n    const task = cron.schedule(cronExpression, async () => {\n      console.log(`Running scheduled job: ${name}`);\n      await this.processJob({ type: jobType, data });\n    }, { scheduled: false });\n\n    this.scheduledJobs.set(name, task);\n    task.start();\n  }\n\n  // Process job with retry logic\n  async processJob(job, attempt = 1) {\n    const jobConfig = this.jobs.get(job.type);\n    if (!jobConfig) {\n      throw new Error(`Unknown job type: ${job.type}`);\n    }\n\n    try {\n      // Set timeout for job execution\n      const timeoutPromise = new Promise((_, reject) => {\n        setTimeout(() => reject(new Error('Job timeout')), jobConfig.timeout);\n      });\n\n      const jobPromise = jobConfig.handler(job.data);\n      await Promise.race([jobPromise, timeoutPromise]);\n      \n      console.log(`Job ${job.type} completed successfully`);\n    } catch (error) {\n      console.error(`Job ${job.type} failed (attempt ${attempt}):`, error.message);\n      \n      if (attempt < jobConfig.retries) {\n        const delay = this.calculateBackoffDelay(attempt, jobConfig.backoff);\n        console.log(`Retrying job ${job.type} in ${delay}ms`);\n        \n        setTimeout(() => {\n          this.processJob(job, attempt + 1);\n        }, delay);\n      } else {\n        console.error(`Job ${job.type} failed after ${jobConfig.retries} attempts`);\n        await this.handleFailedJob(job, error);\n      }\n    }\n  }\n\n  calculateBackoffDelay(attempt, backoffType) {\n    switch (backoffType) {\n      case 'exponential':\n        return Math.pow(2, attempt) * 1000; // 2s, 4s, 8s, 16s...\n      case 'linear':\n        return attempt * 1000; // 1s, 2s, 3s, 4s...\n      case 'fixed':\n      default:\n        return 5000; // 5s\n    }\n  }\n\n  async handleFailedJob(job, error) {\n    // Send to dead letter queue or notification system\n    console.log('Moving job to dead letter queue:', job);\n    // In a real implementation, you'd save this to a database or send to a DLQ\n  }\n\n  // Graceful shutdown\n  shutdown() {\n    console.log('Shutting down job processor...');\n    this.scheduledJobs.forEach((task, name) => {\n      console.log(`Stopping scheduled job: ${name}`);\n      task.stop();\n    });\n  }\n}\n\n// Usage example\nconst jobProcessor = new JobProcessor();\n\n// Register job handlers\njobProcessor.registerJob('send-email', async (data) => {\n  console.log(`Sending email to ${data.email}`);\n  await emailService.send(data);\n}, { retries: 3, timeout: 10000 });\n\njobProcessor.registerJob('generate-report', async (data) => {\n  console.log(`Generating report for ${data.reportType}`);\n  await reportService.generate(data);\n}, { retries: 2, timeout: 60000 });\n\njobProcessor.registerJob('cleanup-temp-files', async () => {\n  console.log('Cleaning up temporary files');\n  await fileService.cleanupTempFiles();\n}, { retries: 1 });\n\n// Schedule recurring jobs\njobProcessor.scheduleJob('daily-cleanup', '0 2 * * *', 'cleanup-temp-files', {});\njobProcessor.scheduleJob('weekly-report', '0 9 * * 1', 'generate-report', {\n  reportType: 'weekly-summary'\n});\n\n// Process immediate jobs\njobProcessor.processJob({\n  type: 'send-email',\n  data: {\n    email: 'user@example.com',\n    subject: 'Welcome!',\n    template: 'welcome'\n  }\n});\n\n// Graceful shutdown handling\nprocess.on('SIGTERM', () => {\n  jobProcessor.shutdown();\n  process.exit(0);\n});"
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main benefit of using message queues?",
+      "options": [
+        "Faster processing speed",
+        "Decoupling services and enabling asynchronous processing",
+        "Reduced memory usage",
+        "Better security"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Message queues decouple services by allowing producers to send messages without waiting for consumers to process them, enabling asynchronous processing and improving system resilience."
+    },
+    {
+      "id": 2,
+      "question": "What is a dead letter queue?",
+      "options": [
+        "A queue that processes messages very slowly",
+        "A queue for storing messages that couldn't be processed successfully",
+        "A queue that automatically deletes messages",
+        "A queue for high-priority messages"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Dead letter queues store messages that couldn't be processed successfully after multiple retry attempts, allowing for manual investigation and reprocessing."
+    },
+    {
+      "id": 3,
+      "question": "What is the main difference between WebSockets and Server-Sent Events?",
+      "options": [
+        "WebSockets are faster than SSE",
+        "WebSockets provide full-duplex communication, SSE is one-way from server to client",
+        "SSE is more secure than WebSockets",
+        "WebSockets only work in browsers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "WebSockets provide full-duplex (bidirectional) communication between client and server, while Server-Sent Events only allow one-way communication from server to client."
+    },
+    {
+      "id": 4,
+      "question": "In event-driven architecture, what is an event bus?",
+      "options": [
+        "A physical hardware component",
+        "A central hub for routing events between services",
+        "A type of message queue",
+        "A database for storing events"
+      ],
+      "correctAnswer": 1,
+      "explanation": "An event bus is a central hub that routes events between services, allowing publishers to send events and subscribers to receive relevant events without direct coupling."
+    },
+    {
+      "id": 5,
+      "question": "What is the purpose of exponential backoff in retry mechanisms?",
+      "options": [
+        "To make retries happen faster",
+        "To gradually increase delay between retries to avoid overwhelming the system",
+        "To reduce the number of retries",
+        "To make retries more predictable"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Exponential backoff gradually increases the delay between retries (e.g., 2s, 4s, 8s) to avoid overwhelming a system that might be temporarily overloaded or experiencing issues."
+    }
+  ]
+} 

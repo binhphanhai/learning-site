@@ -11,10 +11,10 @@ import {
   Divider,
 } from "antd";
 import {
-  ApartmentOutlined,
   BookOutlined,
   TrophyOutlined,
   ReadOutlined,
+  DatabaseOutlined,
 } from "@ant-design/icons";
 import Link from "next/link";
 import ThemeToggle from "../components/ThemeToggle";
@@ -118,39 +118,41 @@ export default function HomePage() {
                 </div>
               </Card>
             </Col>
+
             <Col xs={24} md={12} lg={8}>
               <Card
                 hoverable
                 className="h-full"
                 cover={
                   <div className="p-8 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-                    <ApartmentOutlined className="text-5xl text-blue-500" />
+                    <DatabaseOutlined className="text-5xl text-blue-500" />
                   </div>
                 }
                 actions={[
-                  <Link key="view" href="/frontend-learning-roadmap">
+                  <Link key="view" href="/backend-for-frontend">
                     <Button type="primary" size="large">
-                      Start Learning
+                      Learn Backend
                     </Button>
                   </Link>,
                 ]}
               >
                 <div className="card-content-wrapper">
                   <Card.Meta
-                    title="Frontend Learning Roadmap"
-                    description="Complete roadmap from junior to senior frontend engineer, covering all essential skills and technologies."
+                    title="Backend for Frontend"
+                    description="Essential backend knowledge for frontend developers, covering databases, APIs, and server-side concepts."
                   />
                   <div className="mt-4 flex-grow">
                     <Space direction="vertical" size="small">
-                      <span>• Core Frontend Skills</span>
-                      <span>• Backend & API Integration</span>
-                      <span>• Testing & Debugging</span>
-                      <span>• Performance Optimization</span>
+                      <span>• Database Fundamentals</span>
+                      <span>• API Design & Integration</span>
+                      <span>• Server-Side Architecture</span>
+                      <span>• Authentication & Security</span>
                     </Space>
                   </div>
                 </div>
               </Card>
             </Col>
+
           </Row>
         </div>
       </Content>

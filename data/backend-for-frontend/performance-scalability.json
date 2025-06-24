@@ -1,0 +1,677 @@
+{
+  "title": "Performance & Scalability",
+  "description": "Master backend performance optimization and scalability techniques including load balancing, database scaling, async processing, response optimization, and monitoring strategies for high-performance applications",
+  "sections": [
+    {
+      "id": "load-balancing",
+      "title": "Load Balancing & Horizontal Scaling",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Load Balancing Fundamentals"
+        },
+        {
+          "type": "paragraph",
+          "text": "Load balancing distributes incoming network traffic across multiple servers to ensure no single server becomes overwhelmed, improving application availability and performance."
+        },
+        {
+          "type": "heading",
+          "text": "Types of Load Balancers"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Layer 4 (Transport): Routes based on IP and port information, faster but less intelligent",
+            "Layer 7 (Application): Routes based on HTTP headers, URLs, cookies - more flexible and feature-rich",
+            "Hardware Load Balancers: Physical devices, high performance but expensive",
+            "Software Load Balancers: Applications like Nginx, HAProxy, AWS ALB",
+            "DNS Load Balancing: Distributes traffic using DNS resolution"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Load Balancing Algorithms"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Round Robin: Requests distributed sequentially across servers",
+            "Weighted Round Robin: Servers with higher weights receive more requests",
+            "Least Connections: Routes to server with fewest active connections",
+            "Least Response Time: Routes to server with fastest response time",
+            "IP Hash: Routes based on client IP hash for session persistence",
+            "Random: Randomly selects a server (surprisingly effective for large scale)"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Sticky Sessions vs Session Sharing"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sticky sessions route users to the same server to maintain session state, but this can create hot spots and complicate scaling."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Sticky Sessions: Simple but limits scalability and fault tolerance",
+            "Session Sharing: Store sessions in Redis/database for true statelessness",
+            "JWT Tokens: Stateless authentication eliminates server-side sessions",
+            "Database Session Store: Centralized session storage across all servers"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "nginx",
+          "text": "# Nginx Load Balancer Configuration\nupstream backend {\n    least_conn;  # Load balancing method\n    server backend1.example.com:8080 weight=3;\n    server backend2.example.com:8080 weight=2;\n    server backend3.example.com:8080 backup;\n}\n\nserver {\n    listen 80;\n    location / {\n        proxy_pass http://backend;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        \n        # Health check\n        proxy_next_upstream error timeout invalid_header http_500 http_502 http_503;\n    }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Health Checks"
+        },
+        {
+          "type": "paragraph",
+          "text": "Health checks ensure traffic is only routed to healthy servers, improving overall system reliability."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Active Health Checks: Load balancer proactively checks server health",
+            "Passive Health Checks: Monitor response codes and timeouts from real traffic",
+            "Application-Level Checks: Verify database connections and critical dependencies",
+            "Circuit Breaker Pattern: Automatically stop sending traffic to failing services"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "database-scaling",
+      "title": "Database Scaling Strategies",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Vertical vs Horizontal Scaling"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Vertical Scaling (Scale Up): Increase CPU, RAM, storage on existing server",
+            "Horizontal Scaling (Scale Out): Add more database servers to distribute load",
+            "Vertical scaling is simpler but has limits and single points of failure",
+            "Horizontal scaling is more complex but offers better fault tolerance"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Read Replicas"
+        },
+        {
+          "type": "paragraph",
+          "text": "Read replicas handle read-heavy workloads by creating copies of the primary database that can serve read queries."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Master-Slave Replication: One write node, multiple read nodes",
+            "Asynchronous Replication: Replicas may lag behind master slightly",
+            "Read/Write Splitting: Application routes reads to replicas, writes to master",
+            "Load Distribution: Spread read traffic across multiple replicas"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Database connection configuration with read replicas\nconst mysql = require('mysql2/promise');\n\nconst masterConfig = {\n  host: 'master-db.example.com',\n  user: 'app_user',\n  password: 'password',\n  database: 'myapp'\n};\n\nconst replicaConfigs = [\n  { host: 'replica1-db.example.com', user: 'app_user', password: 'password', database: 'myapp' },\n  { host: 'replica2-db.example.com', user: 'app_user', password: 'password', database: 'myapp' }\n];\n\nclass DatabaseManager {\n  constructor() {\n    this.masterPool = mysql.createPool(masterConfig);\n    this.replicaPools = replicaConfigs.map(config => mysql.createPool(config));\n    this.replicaIndex = 0;\n  }\n\n  async executeWrite(query, params) {\n    return await this.masterPool.execute(query, params);\n  }\n\n  async executeRead(query, params) {\n    // Round-robin through read replicas\n    const pool = this.replicaPools[this.replicaIndex];\n    this.replicaIndex = (this.replicaIndex + 1) % this.replicaPools.length;\n    return await pool.execute(query, params);\n  }\n}"
+        },
+        {
+          "type": "heading",
+          "text": "Database Sharding"
+        },
+        {
+          "type": "paragraph",
+          "text": "Sharding splits data across multiple databases based on a sharding key, enabling horizontal scaling of write operations."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Horizontal Partitioning: Split data across multiple databases",
+            "Sharding Key: Field used to determine which shard stores the data",
+            "Hash-based Sharding: Use hash function on sharding key",
+            "Range-based Sharding: Partition data based on value ranges",
+            "Directory-based Sharding: Lookup table maps keys to shards"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Connection Pooling"
+        },
+        {
+          "type": "paragraph",
+          "text": "Connection pooling reuses database connections to reduce overhead and improve performance."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Pre-established Connections: Maintain pool of ready connections",
+            "Connection Reuse: Avoid overhead of creating/destroying connections",
+            "Pool Size Tuning: Balance between resource usage and performance",
+            "Connection Lifecycle Management: Handle timeouts and connection validation"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Query Optimization"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Index Optimization: Create appropriate indexes for frequent queries",
+            "Query Analysis: Use EXPLAIN to understand query execution plans",
+            "N+1 Query Problem: Avoid multiple queries when one would suffice",
+            "Batch Operations: Process multiple records in single queries",
+            "Query Caching: Cache frequently executed query results"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "async-processing",
+      "title": "Asynchronous Processing",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Background Jobs"
+        },
+        {
+          "type": "paragraph",
+          "text": "Background jobs handle time-consuming tasks asynchronously, improving user experience and system responsiveness."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Email Sending: Send emails without blocking user requests",
+            "Image Processing: Resize, optimize images after upload",
+            "Report Generation: Create reports asynchronously",
+            "Data Import/Export: Handle large data operations in background",
+            "Cleanup Tasks: Periodic maintenance and cleanup operations"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Message Queues"
+        },
+        {
+          "type": "paragraph",
+          "text": "Message queues enable asynchronous communication between services and provide reliable job processing."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Redis Queue: Simple, fast queue using Redis lists and pub/sub",
+            "RabbitMQ: Feature-rich message broker with routing and durability",
+            "Amazon SQS: Managed queue service with high availability",
+            "Apache Kafka: High-throughput, distributed streaming platform",
+            "Bull Queue: Node.js queue library built on Redis"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Redis Queue Implementation with Bull\nconst Queue = require('bull');\nconst Redis = require('redis');\n\n// Create queue\nconst emailQueue = new Queue('email processing', {\n  redis: { host: 'localhost', port: 6379 }\n});\n\n// Add job to queue\nconst sendWelcomeEmail = async (userId, email) => {\n  await emailQueue.add('welcome-email', {\n    userId,\n    email,\n    template: 'welcome'\n  }, {\n    delay: 5000, // 5 second delay\n    attempts: 3, // Retry up to 3 times\n    backoff: 'exponential'\n  });\n};\n\n// Process jobs\nemailQueue.process('welcome-email', async (job) => {\n  const { userId, email, template } = job.data;\n  \n  try {\n    await emailService.send({\n      to: email,\n      template: template,\n      userId: userId\n    });\n    \n    console.log(`Welcome email sent to ${email}`);\n  } catch (error) {\n    console.error('Failed to send email:', error);\n    throw error; // Will trigger retry\n  }\n});\n\n// Monitor queue events\nemailQueue.on('completed', (job) => {\n  console.log(`Job ${job.id} completed`);\n});\n\nemailQueue.on('failed', (job, err) => {\n  console.log(`Job ${job.id} failed:`, err.message);\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Event-Driven Architecture"
+        },
+        {
+          "type": "paragraph",
+          "text": "Event-driven processing enables loose coupling between services and scalable, reactive systems."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Event Producers: Services that generate events when state changes",
+            "Event Consumers: Services that react to specific events",
+            "Event Bus: Central hub for routing events between services",
+            "Event Sourcing: Store all state changes as events",
+            "CQRS: Separate read and write models for better scalability"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Worker Patterns"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Single Worker: One process handles all jobs sequentially",
+            "Multiple Workers: Scale by running multiple worker processes",
+            "Worker Pools: Group of workers sharing job queue",
+            "Specialized Workers: Different workers for different job types",
+            "Auto-scaling Workers: Dynamically adjust worker count based on queue size"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "response-optimization",
+      "title": "Response Optimization",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Compression Techniques"
+        },
+        {
+          "type": "paragraph",
+          "text": "Compression reduces response size, improving transfer speeds and reducing bandwidth costs."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Gzip Compression: General-purpose compression for text-based responses",
+            "Brotli Compression: More efficient than gzip, better compression ratios",
+            "Dynamic Compression: Compress responses on-the-fly",
+            "Static Compression: Pre-compress static assets",
+            "Content-Type Aware: Only compress appropriate content types"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Express.js compression middleware\nconst express = require('express');\nconst compression = require('compression');\n\nconst app = express();\n\n// Enable compression with custom options\napp.use(compression({\n  level: 6, // Compression level (1-9)\n  threshold: 1024, // Only compress responses > 1KB\n  filter: (req, res) => {\n    // Don't compress if client doesn't support it\n    if (req.headers['x-no-compression']) {\n      return false;\n    }\n    \n    // Use compression filter\n    return compression.filter(req, res);\n  }\n}));\n\n// Nginx compression configuration\n/*\ngzip on;\ngzip_vary on;\ngzip_min_length 1024;\ngzip_proxied any;\ngzip_comp_level 6;\ngzip_types\n  text/plain\n  text/css\n  text/js\n  text/xml\n  text/javascript\n  application/javascript\n  application/xml+rss\n  application/json;\n*/"
+        },
+        {
+          "type": "heading",
+          "text": "Response Caching"
+        },
+        {
+          "type": "paragraph",
+          "text": "Caching responses reduces server load and improves response times for frequently requested data."
+        },
+        {
+          "type": "list",
+          "items": [
+            "In-Memory Caching: Store responses in application memory (Redis, Memcached)",
+            "HTTP Caching Headers: Control browser and proxy caching behavior",
+            "CDN Caching: Cache responses at edge locations globally",
+            "Application-Level Caching: Cache computed results and database queries",
+            "Cache Invalidation: Strategies for keeping cached data fresh"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Payload Optimization"
+        },
+        {
+          "type": "list",
+          "items": [
+            "JSON Optimization: Remove unnecessary fields, use shorter field names",
+            "Pagination: Limit response size with offset/limit or cursor-based pagination",
+            "Field Selection: Allow clients to specify which fields to return",
+            "Data Aggregation: Combine multiple API calls into single requests",
+            "Binary Formats: Use Protocol Buffers or MessagePack for efficiency"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// GraphQL-style field selection for REST APIs\nconst selectFields = (obj, fields) => {\n  if (!fields) return obj;\n  \n  const selected = {};\n  const fieldList = fields.split(',');\n  \n  fieldList.forEach(field => {\n    if (obj.hasOwnProperty(field)) {\n      selected[field] = obj[field];\n    }\n  });\n  \n  return selected;\n};\n\n// API endpoint with field selection\napp.get('/api/users/:id', async (req, res) => {\n  const { fields } = req.query;\n  const user = await User.findById(req.params.id);\n  \n  // Return only requested fields\n  const response = selectFields(user.toJSON(), fields);\n  res.json(response);\n});\n\n// Usage: GET /api/users/123?fields=id,name,email"
+        },
+        {
+          "type": "heading",
+          "text": "Streaming Responses"
+        },
+        {
+          "type": "paragraph",
+          "text": "Streaming allows sending data to clients as it becomes available, reducing perceived latency."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Server-Sent Events (SSE): Stream real-time updates to browsers",
+            "Response Streaming: Send large responses in chunks",
+            "JSON Streaming: Stream JSON arrays as individual objects",
+            "File Streaming: Stream file uploads/downloads efficiently",
+            "Database Streaming: Stream query results without loading all into memory"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "monitoring-profiling",
+      "title": "Monitoring & Profiling",
+      "content": [
+        {
+          "type": "heading",
+          "text": "Performance Metrics"
+        },
+        {
+          "type": "paragraph",
+          "text": "Key metrics to monitor for understanding application performance and identifying bottlenecks."
+        },
+        {
+          "type": "list",
+          "items": [
+            "Response Time: Average, median, 95th/99th percentile response times",
+            "Throughput: Requests per second, transactions per minute",
+            "Error Rate: Percentage of requests resulting in errors",
+            "CPU Usage: Processor utilization across server instances",
+            "Memory Usage: RAM consumption and garbage collection metrics",
+            "Disk I/O: Read/write operations and disk utilization",
+            "Network I/O: Bandwidth usage and connection counts"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Application Performance Monitoring (APM)"
+        },
+        {
+          "type": "list",
+          "items": [
+            "New Relic: Comprehensive APM with transaction tracing",
+            "DataDog: Infrastructure and application monitoring",
+            "AppDynamics: Enterprise application performance management",
+            "Elastic APM: Open-source APM built on Elasticsearch",
+            "Prometheus + Grafana: Open-source monitoring and visualization"
+          ]
+        },
+        {
+          "type": "code",
+          "language": "javascript",
+          "text": "// Custom performance monitoring middleware\nconst performanceMonitor = (req, res, next) => {\n  const startTime = Date.now();\n  const startMemory = process.memoryUsage();\n  \n  // Capture response time\n  res.on('finish', () => {\n    const duration = Date.now() - startTime;\n    const endMemory = process.memoryUsage();\n    \n    // Log performance metrics\n    console.log({\n      method: req.method,\n      url: req.url,\n      statusCode: res.statusCode,\n      duration: `${duration}ms`,\n      memoryDelta: {\n        rss: endMemory.rss - startMemory.rss,\n        heapUsed: endMemory.heapUsed - startMemory.heapUsed\n      },\n      timestamp: new Date().toISOString()\n    });\n    \n    // Send metrics to monitoring service\n    metricsCollector.record('http_request_duration', duration, {\n      method: req.method,\n      route: req.route?.path || req.url,\n      status_code: res.statusCode\n    });\n  });\n  \n  next();\n};\n\n// Prometheus metrics example\nconst promClient = require('prom-client');\n\nconst httpRequestDuration = new promClient.Histogram({\n  name: 'http_request_duration_seconds',\n  help: 'Duration of HTTP requests in seconds',\n  labelNames: ['method', 'route', 'status_code'],\n  buckets: [0.1, 0.5, 1, 2, 5]\n});\n\nconst httpRequestTotal = new promClient.Counter({\n  name: 'http_requests_total',\n  help: 'Total number of HTTP requests',\n  labelNames: ['method', 'route', 'status_code']\n});"
+        },
+        {
+          "type": "heading",
+          "text": "Bottleneck Identification"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Database Query Analysis: Slow query logs and execution plans",
+            "CPU Profiling: Identify hot code paths and optimization opportunities",
+            "Memory Profiling: Find memory leaks and excessive allocations",
+            "I/O Analysis: Identify disk and network bottlenecks",
+            "Lock Contention: Database and application-level locking issues",
+            "Third-party Service Dependencies: External API response times"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Resource Utilization Monitoring"
+        },
+        {
+          "type": "paragraph",
+          "text": "Monitor system resources to ensure optimal performance and plan for scaling."
+        },
+        {
+          "type": "list",
+          "items": [
+            "CPU Utilization: Track across multiple cores and instances",
+            "Memory Usage: Monitor heap size, garbage collection frequency",
+            "Disk Space: Track storage usage and I/O wait times",
+            "Network Bandwidth: Monitor inbound/outbound traffic",
+            "Connection Pools: Database and cache connection utilization",
+            "Queue Lengths: Monitor job queues and message queues"
+          ]
+        },
+        {
+          "type": "heading",
+          "text": "Alerting and Notifications"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Threshold-based Alerts: Trigger when metrics exceed limits",
+            "Anomaly Detection: Identify unusual patterns in metrics",
+            "Error Rate Monitoring: Alert on increased error rates",
+            "Availability Monitoring: Track uptime and service health",
+            "Performance Degradation: Alert on response time increases",
+            "Resource Exhaustion: Alert before running out of resources"
+          ]
+        }
+      ]
+    }
+  ],
+  "testQuestions": [
+    {
+      "id": 1,
+      "question": "What is the main difference between Layer 4 and Layer 7 load balancing?",
+      "options": [
+        "Layer 4 is faster, Layer 7 has more features",
+        "Layer 7 is faster, Layer 4 has more features", 
+        "They work at the same network layer",
+        "Layer 4 only works with HTTP traffic"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Layer 4 load balancing works at the transport layer using IP and port information, making it faster but less intelligent. Layer 7 works at the application layer with HTTP headers and URLs, providing more features but with additional overhead."
+    },
+    {
+      "id": 2,
+      "question": "What is the main benefit of read replicas in database scaling?",
+      "options": [
+        "They handle write operations more efficiently",
+        "They distribute read traffic across multiple servers",
+        "They automatically shard data",
+        "They eliminate the need for caching"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Read replicas create copies of the primary database that can handle read queries, distributing read traffic across multiple servers and reducing load on the master database."
+    },
+    {
+      "id": 3,
+      "question": "Which queue processing pattern provides the best fault tolerance?",
+      "options": [
+        "First In, First Out (FIFO)",
+        "Last In, First Out (LIFO)",
+        "At-least-once delivery with idempotent processing",
+        "Fire-and-forget messaging"
+      ],
+      "correctAnswer": 2,
+      "explanation": "At-least-once delivery ensures messages aren't lost, and idempotent processing ensures that duplicate message processing doesn't cause issues, providing the best fault tolerance."
+    },
+    {
+      "id": 4,
+      "question": "What is the primary advantage of Brotli compression over Gzip?",
+      "options": [
+        "Faster compression speed",
+        "Better compression ratios",
+        "Lower CPU usage",
+        "Better browser support"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Brotli provides better compression ratios than Gzip, meaning smaller file sizes, though it may take slightly more CPU time to compress and has less universal browser support."
+    },
+    {
+      "id": 5,
+      "question": "What is database sharding?",
+      "options": [
+        "Creating read replicas of the database",
+        "Vertically partitioning tables by columns",
+        "Horizontally partitioning data across multiple databases",
+        "Creating database backups"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Database sharding is horizontal partitioning where data is split across multiple databases based on a sharding key, enabling horizontal scaling of write operations."
+    },
+    {
+      "id": 6,
+      "question": "Which HTTP caching header prevents any caching of the response?",
+      "options": [
+        "Cache-Control: no-store",
+        "Cache-Control: no-cache",
+        "Cache-Control: max-age=0",
+        "Expires: 0"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Cache-Control: no-store prevents any caching of the response. no-cache allows caching but requires revalidation, while max-age=0 sets immediate expiration."
+    },
+    {
+      "id": 7,
+      "question": "What is the N+1 query problem?",
+      "options": [
+        "Making N+1 database connections",
+        "Running one query to get N records, then N additional queries for related data",
+        "Having N+1 database servers",
+        "Creating N+1 indexes on a table"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The N+1 query problem occurs when you run one query to get N records, then execute N additional queries to fetch related data for each record, instead of using joins or batch loading."
+    },
+    {
+      "id": 8,
+      "question": "What is the purpose of connection pooling?",
+      "options": [
+        "To limit the number of database connections",
+        "To reuse existing connections and avoid connection overhead",
+        "To encrypt database connections",
+        "To distribute connections across multiple databases"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Connection pooling maintains a pool of reusable database connections to avoid the overhead of creating and destroying connections for each request, improving performance."
+    },
+    {
+      "id": 9,
+      "question": "Which metric is most important for measuring user experience?",
+      "options": [
+        "CPU utilization",
+        "Memory usage",
+        "95th percentile response time",
+        "Disk I/O operations"
+      ],
+      "correctAnswer": 2,
+      "explanation": "95th percentile response time shows the experience of the slowest 5% of users, giving a better picture of user experience than average response time, which can hide outliers."
+    },
+    {
+      "id": 10,
+      "question": "What is the main advantage of event-driven architecture?",
+      "options": [
+        "Faster processing speed",
+        "Lower memory usage",
+        "Loose coupling between services",
+        "Simpler code structure"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Event-driven architecture promotes loose coupling between services - services only need to know about events, not about each other directly, making the system more flexible and scalable."
+    },
+    {
+      "id": 11,
+      "question": "What is the difference between sticky sessions and session sharing?",
+      "options": [
+        "Sticky sessions are faster but less scalable",
+        "Session sharing is simpler to implement",
+        "Sticky sessions provide better security",
+        "There is no difference"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Sticky sessions route users to the same server (faster, no external storage needed) but create scaling limitations and single points of failure. Session sharing stores sessions externally for better scalability."
+    },
+    {
+      "id": 12,
+      "question": "What is the circuit breaker pattern?",
+      "options": [
+        "A method to encrypt network traffic",
+        "A pattern to automatically stop calling failing services",
+        "A database connection management technique",
+        "A load balancing algorithm"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The circuit breaker pattern monitors service calls and automatically stops sending requests to failing services, preventing cascading failures and allowing time for recovery."
+    },
+    {
+      "id": 13,
+      "question": "Which caching strategy provides the best performance but highest memory usage?",
+      "options": [
+        "Cache-aside (lazy loading)",
+        "Write-through caching",
+        "Write-behind caching",
+        "Cache-everything (eager loading)"
+      ],
+      "correctAnswer": 3,
+      "explanation": "Cache-everything (eager loading) provides the best performance since all data is pre-loaded in cache, but uses the most memory since it caches data that might not be accessed."
+    },
+    {
+      "id": 14,
+      "question": "What is the purpose of database read replicas lag monitoring?",
+      "options": [
+        "To measure query performance",
+        "To track how far behind replicas are from the master",
+        "To monitor connection counts",
+        "To measure disk usage"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Read replica lag monitoring tracks how far behind the replica databases are from the master, ensuring that read operations don't return stale data beyond acceptable thresholds."
+    },
+    {
+      "id": 15,
+      "question": "What is the main benefit of response streaming?",
+      "options": [
+        "Reduced memory usage on the server",
+        "Better compression ratios",
+        "Lower CPU usage",
+        "Reduced perceived latency for large responses"
+      ],
+      "correctAnswer": 3,
+      "explanation": "Response streaming reduces perceived latency by sending data to clients as it becomes available, rather than waiting for the entire response to be ready before sending."
+    },
+    {
+      "id": 16,
+      "question": "Which queue pattern provides the best message ordering guarantees?",
+      "options": [
+        "Multiple worker processes",
+        "Single worker with FIFO queue",
+        "Round-robin message distribution",
+        "Random message processing"
+      ],
+      "correctAnswer": 1,
+      "explanation": "A single worker processing messages in FIFO (First In, First Out) order provides the strongest message ordering guarantees, though it limits parallelism."
+    },
+    {
+      "id": 17,
+      "question": "What is the purpose of health checks in load balancing?",
+      "options": [
+        "To monitor CPU usage",
+        "To ensure traffic is only sent to healthy servers",
+        "To measure response times",
+        "To balance server loads evenly"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Health checks verify that servers are functioning properly and can handle requests, ensuring the load balancer only routes traffic to healthy servers."
+    },
+    {
+      "id": 18,
+      "question": "What is horizontal scaling?",
+      "options": [
+        "Adding more CPU and RAM to existing servers",
+        "Adding more servers to handle increased load",
+        "Optimizing database queries",
+        "Implementing caching layers"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Horizontal scaling (scaling out) means adding more servers to handle increased load, as opposed to vertical scaling which means adding more power to existing servers."
+    },
+    {
+      "id": 19,
+      "question": "Which compression technique should be avoided for real-time applications?",
+      "options": [
+        "Gzip with level 1",
+        "Brotli with level 1",
+        "Maximum compression levels",
+        "No compression"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Maximum compression levels provide the best compression ratios but use significantly more CPU time, which can introduce latency that's unacceptable for real-time applications."
+    },
+    {
+      "id": 20,
+      "question": "What is the main purpose of CDN (Content Delivery Network) caching?",
+      "options": [
+        "To reduce server CPU usage",
+        "To serve content from locations closer to users",
+        "To compress content automatically", 
+        "To provide database caching"
+      ],
+      "correctAnswer": 1,
+      "explanation": "CDN caching serves content from edge locations that are geographically closer to users, reducing latency and improving load times while also reducing load on origin servers."
+    }
+  ]
+} 
